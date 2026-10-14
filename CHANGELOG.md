@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.9.3 — 2026-10-14
 
 - Validate outgoing translations before caching them. Rejected spoiler, Markdown and length results regenerate on the next manual retry; existing invalid entries are evicted individually. Valid caches survive cancellation, with no automatic retries.
 - Separated original text, translation and the AI label into independent paragraphs to preserve closing code fences and ordinary quote/list boundaries.
