@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.9.1 — 2026-10-14
+
+- The default target language now saves and applies immediately when selected. Closing BetterDiscord's settings modal no longer discards the choice.
+- Native input/change events for the same selection are deduplicated. Other unfinished settings remain in the form and are not persisted by the language selector.
+- The current automatic translation switch and independent outgoing language are preserved.
+
 ## 0.9.0 — 2026-10-14
 
 - Unified automatic translation language updates. Settings preserve newer defaults selected from a message menu unless the setting is explicitly edited.

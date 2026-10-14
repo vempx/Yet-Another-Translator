@@ -137,7 +137,7 @@
   "pluginDescription": "Discord-Übersetzung mit LLM: automatisch, für einzelne Nachrichten und vor dem Senden.",
   "settingsHeading": "Nachrichtenübersetzung mit LLM",
   "settingsIntro": "Unterstützt automatische Übersetzung, einzelne Nachrichten und Übersetzung vor dem Senden. Automatisch übersetzte Nachrichten zeigen nur die Übersetzung; per Rechtsklick lässt sich das Original anzeigen. Ein Klick auf das Sprachlabel ändert die Zielsprache einer Nachricht, die kreisförmigen Pfeile ändern die Standardsprache der automatischen Übersetzung. Der Papierflieger-Schalter am Eingabefeld steuert die Übersetzung vor dem Senden. Kanalthemen, Gesprächskontext, Originalantworten und eigene Glossare können berücksichtigt werden.",
-  "defaultLanguageHelp": "Eine neue Auswahl speichern oder die Standardsprache anwenden setzt einzelne Nachrichtensprachen zurück und aktualisiert Übersetzungen. Automatische Übersetzung behält ihren Ein/Aus-Zustand. Die ausgehende Sprache ist unabhängig.",
+  "defaultLanguageHelp": "Die Sprachauswahl wird sofort gespeichert und angewendet. Einzelne Nachrichtensprachen werden zurückgesetzt und Übersetzungen aktualisiert. Die Speichern-Schaltfläche unten ist nicht nötig. Der Ein/Aus-Zustand bleibt erhalten; die ausgehende Sprache ist unabhängig.",
   "applyDefaultLanguage": "Standardsprache anwenden und Nachrichtensprachen zurücksetzen",
   "unknownUser": "Unbekannter Benutzer",
   "unknownRole": "Unbekannte Rolle",

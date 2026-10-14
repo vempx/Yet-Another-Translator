@@ -137,7 +137,7 @@
   "pluginDescription": "Traduction de Discord par LLM : traduction automatique, par message et avant envoi.",
   "settingsHeading": "Traduction de messages par LLM",
   "settingsIntro": "Traduction automatique, par message et avant envoi. La traduction automatique affiche uniquement le texte traduit ; un clic droit permet de voir l’original. Cliquez sur une étiquette de langue pour modifier la traduction d’un message, ou sur les flèches circulaires pour changer la langue automatique par défaut. L’interrupteur en forme d’avion en papier près du champ de saisie contrôle la traduction avant envoi. Les traductions peuvent tenir compte du sujet du salon, du contexte, des réponses originales et des glossaires personnalisés.",
-  "defaultLanguageHelp": "Enregistrer une nouvelle langue ou appliquer la langue par défaut efface les choix par message et actualise les traductions. La traduction automatique conserve son état activé ou désactivé. La langue des messages envoyés est indépendante.",
+  "defaultLanguageHelp": "Le choix de langue est enregistré et appliqué immédiatement, en réinitialisant les choix par message et les traductions. Le bouton Enregistrer en bas est inutile. La traduction automatique conserve son état ; la langue des messages envoyés est indépendante.",
   "applyDefaultLanguage": "Appliquer la langue par défaut et réinitialiser les choix par message",
   "unknownUser": "Utilisateur inconnu",
   "unknownRole": "Rôle inconnu",

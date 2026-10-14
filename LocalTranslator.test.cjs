@@ -15,6 +15,32 @@ function load(BdApi, environment = {}) {
 const Plugin = load();
 const {DEFAULTS, validateSettings, TranslationClient, AutoTranslator, areaTopicFor, GlossaryStore} = Plugin.testing;
 
+test("default language persists immediately without Save, deduplicates native events and preserves other drafts", () => {
+    const host = settingsHost({autoTranslate: false}, {deferUpdates: true});
+    const panel = host.plugin.getSettingsPanel();
+    let tree = host.render(panel), restarts = 0;
+    host.plugin.restartAutoTranslation = () => restarts++;
+    find(tree, node => node.props?.name === "model").props.onInput({target: {value: "unsaved model"}});
+    find(tree, node => node.props?.name === "baseUrl").props.onInput({target: {value: "unfinished URL"}});
+    tree = host.render(panel);
+    const select = find(tree, node => node.props?.name === "targetLanguage");
+    select.props.onInput({target: {value: "日本語"}});
+    select.props.onChange({target: {value: "日本語"}});
+    assert.equal(host.writes.length, 1);
+    assert.equal(host.writes[0].value.targetLanguage, "日本語");
+    assert.equal(host.plugin.settings.targetLanguage, "日本語");
+    assert.equal(host.writes[0].value.model, DEFAULTS.model);
+    assert.equal(host.writes[0].value.baseUrl, DEFAULTS.baseUrl);
+    assert.equal(host.writes[0].value.autoTranslate, false);
+    assert.equal(host.writes[0].value.outgoingLanguage, "English");
+    assert.equal(restarts, 1);
+    tree = host.render(panel);
+    assert.equal(find(tree, node => node.props?.name === "model").props.value, "unsaved model");
+    assert.equal(find(tree, node => node.props?.name === "baseUrl").props.value, "unfinished URL");
+    const reopened = settingsHost(host.writes[0].value), reopenedPanel = reopened.plugin.getSettingsPanel();
+    assert.equal(find(reopened.render(reopenedPanel), node => node.props?.name === "targetLanguage").props.value, "日本語");
+});
+
 test("T4 settings preserve a newer external default until the user explicitly edits the default", () => {
     const host = settingsHost();
     const panel = host.plugin.getSettingsPanel();
@@ -48,7 +74,7 @@ test("T4 explicit apply resets same-language overrides while ordinary save prese
     find(tree, node => node.props?.name === "targetLanguage").props.onChange({target: {value: DEFAULTS.targetLanguage}});
     tree = host.render(panel);
     find(tree, node => node.type === "button" && node.props.children[0] === "保存设置").props.onClick();
-    assert.equal(restarts, 2);
+    assert.equal(restarts, 1);
 });
 
 test("T4 known errors and nested parameters follow locale; external errors remain untouched", () => {
@@ -636,11 +662,11 @@ test("all six settings accept edits through input events with deferred React upd
         assert.equal(find(tree, node => node.props?.name === key).props.value, value);
     }
     find(tree, node => node.type === "button" && node.props.children[0] === "保存设置").props.onClick();
-    assert.equal(host.writes.length, 1);
-    assert.equal(host.writes[0].value.baseUrl, "http://localhost:9090/v1");
-    for (const key of ["model", "apiKey", "targetLanguage"]) assert.equal(host.writes[0].value[key], changes[key]);
-    assert.equal(host.writes[0].value.timeoutSeconds, 240);
-    assert.equal(host.writes[0].value.maxTokens, 4096);
+    assert.equal(host.writes.length, 2);
+    assert.equal(host.writes.at(-1).value.baseUrl, "http://localhost:9090/v1");
+    for (const key of ["model", "apiKey", "targetLanguage"]) assert.equal(host.writes.at(-1).value[key], changes[key]);
+    assert.equal(host.writes.at(-1).value.timeoutSeconds, 240);
+    assert.equal(host.writes.at(-1).value.maxTokens, 4096);
 });
 
 test("numeric settings can be cleared and retyped without resetting other unsaved inputs", () => {

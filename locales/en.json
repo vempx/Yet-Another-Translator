@@ -137,7 +137,7 @@
   "pluginDescription": "LLM-powered Discord translation with automatic, per-message, and pre-send translation.",
   "settingsHeading": "LLM message translation",
   "settingsIntro": "Supports automatic, per-message, and pre-send translation. Automatic translation shows only the translation; right-click to view the original. Click a language badge to change one message's target language, or use the circular arrows to change the default automatic target. The paper-plane toggle beside the composer controls pre-send translation. Translations can use channel topics, chat context, original replies, and custom glossaries.",
-  "defaultLanguageHelp": "Saving a new selection or applying the default language clears message overrides and refreshes translations. Automatic translation keeps its current on/off state. The outgoing language is independent.",
+  "defaultLanguageHelp": "Selecting a language saves and applies it immediately, clears message overrides and refreshes translations. No bottom Save button is needed. Automatic translation keeps its on/off state; the outgoing language is independent.",
   "applyDefaultLanguage": "Apply default language and clear message overrides",
   "unknownUser": "Unknown user",
   "unknownRole": "Unknown role",
