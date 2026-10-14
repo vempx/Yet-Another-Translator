@@ -177,5 +177,11 @@
   "effortMax": "Максимальная",
   "deepseekHelp": "Рассуждения по умолчанию выключены. Выходные tokens включают рассуждения и перевод; рассуждения не отображаются и не отправляются. Проверка использует текущие настройки и максимум 2048 tokens при включённых рассуждениях.",
   "deepseekModelHelp": "Введите ID модели DeepSeek, например deepseek-flash или deepseek-v4-pro. Пустое поле означает deepseek-flash.",
-  "deepseekEffortInvalid": "Интенсивность DeepSeek должна быть low, high или max."
+  "deepseekEffortInvalid": "Интенсивность DeepSeek должна быть low, high или max.",
+  "connectionIncomplete": "API ответил, но не завершил корректный вывод в пределах тестового лимита {budget} tokens. Снизьте интенсивность рассуждений или отключите их перед ручным повтором. Увеличение лимита перевода не меняет фиксированный лимит теста.",
+  "translationUsage": "Использование перевода: ",
+  "testUsageCounts": "Тесты: генераций {requests}, списков моделей {modelChecks}, отмен {cancelled}, ошибок {failures}.",
+  "testUsageActual": "Использование тестов: вход {promptTokens} tokens, выход {completionTokens} tokens; без usage {missing} генераций.",
+  "testUsageUnavailable": "Реальное использование тестов неизвестно: usage не получено; отменённые запросы тоже могут расходовать tokens.",
+  "testUsageEmpty": "Генераций для проверки подключения ещё не было."
 }

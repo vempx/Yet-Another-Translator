@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Fixed connection-test budget feedback and separately tracked test requests, failures, cancellations and server-reported token usage, including incomplete responses. Translation statistics remain independent; no automatic test retries.
 - Added a dedicated DeepSeek provider with explicit thinking on/off and low/high/max effort, shared translation/test request parameters, reasoning-safe output and cache isolation. Kept custom endpoints and models editable; extended DeepSeek token limits.
 - Spaced the native settings footer actions and matched their colors to the plugin's other buttons, preserving save/cancel behavior and cleanup.
 - Cycle the outgoing button through original, translation-only and bilingual modes. Bilingual mode uses a teal highlight and shares the include-original setting; switching modes cancels pending sends and preserves the draft. Added localized mode hints and regression coverage.

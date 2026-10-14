@@ -177,5 +177,11 @@
   "effortMax": "Maximum",
   "deepseekHelp": "Thinking is off by default. When enabled, output tokens include reasoning and translation; reasoning is never displayed or sent. Connection tests use the current thinking settings, capped at 2048 generated tokens when thinking is on.",
   "deepseekModelHelp": "Enter a DeepSeek model ID, e.g. deepseek-flash or deepseek-v4-pro. A blank ID defaults to deepseek-flash.",
-  "deepseekEffortInvalid": "DeepSeek thinking effort must be low, high or max."
+  "deepseekEffortInvalid": "DeepSeek thinking effort must be low, high or max.",
+  "connectionIncomplete": "The API responded but did not complete valid output within this test budget of {budget} tokens. If thinking is enabled, reduce its effort or disable it before retrying manually. Raising the translation output allowance does not exceed the fixed test cap.",
+  "translationUsage": "Translation usage: ",
+  "testUsageCounts": "Connection tests: {requests} generation requests, {modelChecks} model-list checks, {cancelled} cancellations, {failures} failures.",
+  "testUsageActual": "Server-reported test usage: {promptTokens} input tokens, {completionTokens} output tokens; {missing} test generation requests did not return usage.",
+  "testUsageUnavailable": "Actual test token usage unavailable: no test usage received (cancelled requests may still consume tokens).",
+  "testUsageEmpty": "No connection-test generation requests yet."
 }

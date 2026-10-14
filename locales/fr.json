@@ -177,5 +177,11 @@
   "effortMax": "Maximale",
   "deepseekHelp": "La réflexion est désactivée par défaut. Les tokens de sortie incluent réflexion et traduction. La réflexion n’est ni affichée ni envoyée. Le test utilise les réglages actuels, avec un plafond de 2048 tokens si la réflexion est active.",
   "deepseekModelHelp": "Saisir un ID de modèle DeepSeek, par exemple deepseek-flash ou deepseek-v4-pro. Vide utilise deepseek-flash.",
-  "deepseekEffortInvalid": "L’intensité DeepSeek doit être low, high ou max."
+  "deepseekEffortInvalid": "L’intensité DeepSeek doit être low, high ou max.",
+  "connectionIncomplete": "L’API a répondu sans terminer une sortie valide dans le budget de test de {budget} tokens. Réduisez l’intensité de réflexion ou désactivez-la avant de réessayer manuellement. Augmenter le budget de traduction ne relève pas ce plafond fixe.",
+  "translationUsage": "Utilisation des traductions : ",
+  "testUsageCounts": "Tests : {requests} générations, {modelChecks} listes de modèles, {cancelled} annulations, {failures} échecs.",
+  "testUsageActual": "Utilisation des tests : {promptTokens} tokens en entrée, {completionTokens} tokens en sortie ; {missing} générations sans usage.",
+  "testUsageUnavailable": "Utilisation réelle des tests inconnue : aucune usage reçue ; une requête annulée peut consommer des tokens.",
+  "testUsageEmpty": "Aucune génération de test pour le moment."
 }

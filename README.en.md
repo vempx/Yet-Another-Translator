@@ -53,6 +53,8 @@ Use the supplied [glossaries](glossaries/README.md), or create your own using th
 
 ## Notes
 
+- Request usage separates translations from connection tests. Usage returned by a test is retained even when its output budget is exhausted. Model-list checks are counted separately, and cache hits do not increase generation requests. Actual consumption of cancelled requests is unknown if no usage was received.
+- An incomplete thinking test reports its actual budget and suggests reducing thinking effort or disabling thinking before a manual retry. Raising the translation allowance does not bypass the fixed test cap; tests do not retry automatically.
 - Select Local, Online or DeepSeek under Model service type. Local mode retains the loopback restriction; Online and DeepSeek support HTTPS APIs compatible with Chat Completions, including providers and compatible proxies. Dedicated thinking parameters are sent only when DeepSeek is selected.
 - Messages and selected conversation context are sent to the configured LLM service. A proxy may forward them to its upstream provider. API keys are stored unencrypted in BetterDiscord's configuration.
 - Incoming translations are visible only to you. Translate-before-sending submits the final content to the conversation; enabling include-original also sends the original text.

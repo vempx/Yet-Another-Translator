@@ -177,5 +177,11 @@
   "effortMax": "最大",
   "deepseekHelp": "思考は既定でオフです。出力 token は思考と訳文を含みます。思考内容は表示も送信もされません。接続テストは現在の設定を使い、思考がオンの場合は最大 2048 tokens です。",
   "deepseekModelHelp": "DeepSeek モデル ID を入力します（deepseek-flash、deepseek-v4-pro など）。空欄は deepseek-flash を使用します。",
-  "deepseekEffortInvalid": "DeepSeek の思考強度は low、high、max のいずれかです。"
+  "deepseekEffortInvalid": "DeepSeek の思考強度は low、high、max のいずれかです。",
+  "connectionIncomplete": "API は応答しましたが、テスト上限 {budget} tokens 内で有効な出力が完了しませんでした。思考が有効なら強度を下げるか無効にして手動で再試行してください。翻訳の出力枠を増やしても固定テスト上限は変わりません。",
+  "translationUsage": "翻訳の使用量：",
+  "testUsageCounts": "接続テスト：生成 {requests}、モデル一覧 {modelChecks}、キャンセル {cancelled}、失敗 {failures}。",
+  "testUsageActual": "テスト使用量：入力 {promptTokens} tokens、出力 {completionTokens} tokens。使用量未報告 {missing} 件。",
+  "testUsageUnavailable": "テストの usage が未受信のため実使用量は不明です。キャンセルしたリクエストも tokens を消費する場合があります。",
+  "testUsageEmpty": "接続テストの生成リクエストはまだありません。"
 }

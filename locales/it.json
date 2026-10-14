@@ -177,5 +177,11 @@
   "effortMax": "Massima",
   "deepseekHelp": "Il ragionamento è disattivato per impostazione predefinita. I tokens di output includono ragionamento e traduzione; il ragionamento non viene mostrato né inviato. Il test usa le impostazioni correnti, con un limite di 2048 tokens se attivo.",
   "deepseekModelHelp": "Inserisci un ID modello DeepSeek, ad esempio deepseek-flash o deepseek-v4-pro. Vuoto usa deepseek-flash.",
-  "deepseekEffortInvalid": "L’intensità DeepSeek deve essere low, high o max."
+  "deepseekEffortInvalid": "L’intensità DeepSeek deve essere low, high o max.",
+  "connectionIncomplete": "L’API ha risposto senza completare un output valido nel budget di test di {budget} tokens. Riduci il ragionamento o disattivalo prima di riprovare manualmente. Aumentare l’output della traduzione non supera il limite fisso del test.",
+  "translationUsage": "Uso delle traduzioni: ",
+  "testUsageCounts": "Test: {requests} generazioni, {modelChecks} elenchi modelli, {cancelled} annullamenti, {failures} errori.",
+  "testUsageActual": "Uso dei test: {promptTokens} tokens in ingresso, {completionTokens} tokens in uscita; {missing} generazioni senza usage.",
+  "testUsageUnavailable": "Uso reale dei test non disponibile: nessuna usage ricevuta; annullare può consumare tokens.",
+  "testUsageEmpty": "Ancora nessuna generazione di test."
 }

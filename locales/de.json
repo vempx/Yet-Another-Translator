@@ -177,5 +177,11 @@
   "effortMax": "Maximum",
   "deepseekHelp": "Denken ist standardmäßig aus. Ausgabe-tokens umfassen Denken und Übersetzung. Denktext wird weder angezeigt noch gesendet. Verbindungstests nutzen die aktuellen Einstellungen, mit maximal 2048 tokens bei aktiviertem Denken.",
   "deepseekModelHelp": "DeepSeek-Modell-ID eingeben, etwa deepseek-flash oder deepseek-v4-pro. Leer verwendet deepseek-flash.",
-  "deepseekEffortInvalid": "DeepSeek-Denkaufwand muss low, high oder max sein."
+  "deepseekEffortInvalid": "DeepSeek-Denkaufwand muss low, high oder max sein.",
+  "connectionIncomplete": "Die API hat geantwortet, aber innerhalb des Testbudgets von {budget} tokens keine gültige Ausgabe abgeschlossen. Denkaufwand reduzieren oder Denken deaktivieren und manuell erneut testen. Mehr Übersetzungstokens erhöhen nicht das feste Testlimit.",
+  "translationUsage": "Übersetzungsnutzung: ",
+  "testUsageCounts": "Verbindungstests: {requests} Generierungen, {modelChecks} Modelllisten, {cancelled} Abbrüche, {failures} Fehler.",
+  "testUsageActual": "Testnutzung: {promptTokens} Eingabe-tokens, {completionTokens} Ausgabe-tokens; {missing} Generierungen ohne Nutzungsdaten.",
+  "testUsageUnavailable": "Testnutzung unbekannt: keine usage empfangen; abgebrochene Anfragen können tokens verbrauchen.",
+  "testUsageEmpty": "Noch keine Testgenerierungen."
 }

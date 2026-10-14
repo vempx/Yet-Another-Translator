@@ -177,5 +177,11 @@
   "effortMax": "Máxima",
   "deepseekHelp": "El razonamiento está desactivado por defecto. Los tokens de salida incluyen razonamiento y traducción; el razonamiento no se muestra ni se envía. La prueba usa la configuración actual, con un límite de 2048 tokens cuando está activado.",
   "deepseekModelHelp": "Introduzca un ID de modelo DeepSeek, como deepseek-flash o deepseek-v4-pro. Si está vacío se usa deepseek-flash.",
-  "deepseekEffortInvalid": "La intensidad DeepSeek debe ser low, high o max."
+  "deepseekEffortInvalid": "La intensidad DeepSeek debe ser low, high o max.",
+  "connectionIncomplete": "La API respondió sin completar una salida válida dentro del presupuesto de prueba de {budget} tokens. Reduzca el razonamiento o desactívelo antes de reintentar manualmente. Aumentar la salida de traducción no supera el límite fijo de prueba.",
+  "translationUsage": "Uso de traducción: ",
+  "testUsageCounts": "Pruebas: {requests} generaciones, {modelChecks} listas de modelos, {cancelled} cancelaciones, {failures} fallos.",
+  "testUsageActual": "Uso de pruebas: {promptTokens} tokens de entrada, {completionTokens} tokens de salida; {missing} generaciones sin usage.",
+  "testUsageUnavailable": "Uso real de pruebas no disponible: no se recibió usage; cancelar puede consumir tokens.",
+  "testUsageEmpty": "Todavía no hay generaciones de prueba."
 }

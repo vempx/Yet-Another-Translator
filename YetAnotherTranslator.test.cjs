@@ -634,6 +634,63 @@ test("root, /v1 and legacy completion URLs normalize to one API base", () => {
     assert.throws(() => validateSettings({...DEFAULTS, baseUrl: "ftp://localhost/v1"}));
 });
 
+test("T10 bounded thinking tests report actual budget and never suggest an ineffective larger translation limit", async () => {
+    for(const maxTokens of [128,2048,8192]) for(const outcome of ["length","reasoning-only","success"]) {
+        let requests=0,body;
+        const client=new TranslationClient(async(url,options)=>{requests++;body=JSON.parse(options.body);return {status:200,arrayBuffer:async()=>Buffer.from(JSON.stringify({
+            choices:[{finish_reason:outcome==="length"?"length":"stop",message:{content:outcome==="success"?"OK":"",reasoning_content:"must not display"}}],
+            usage:{prompt_tokens:10,completion_tokens:Math.min(maxTokens,2048)}}))};});
+        const settings={...DEFAULTS,providerMode:"deepseek",baseUrl:"https://api.deepseek.com",deepseekThinking:true,deepseekReasoningEffort:"max",maxTokens,contextTokens:32768};
+        if(outcome==="success") assert.equal((await client.testConnection(settings)).generated,true);
+        else await assert.rejects(client.testConnection(settings),error=>{
+            assert.match(error.message,new RegExp(String(Math.min(maxTokens,2048))));assert.match(error.message,/测试上限/);
+            assert.match(error.message,/降低思考强度或关闭思考/);assert.ok(!error.message.includes("请增加最大输出"));assert.ok(!error.message.includes("must not display"));return true;
+        });
+        assert.equal(requests,1);assert.equal(body.max_tokens,Math.min(maxTokens,2048));
+        assert.equal(client.testStats.requests,1);assert.equal(client.testStats.usageResponses,1);
+        assert.equal(client.testStats.promptTokens,10);assert.equal(client.testStats.completionTokens,Math.min(maxTokens,2048));
+        assert.equal(client.testStats.failures,outcome==="success"?0:1);assert.equal(client.stats.generations,0);
+    }
+});
+
+test("T10 connection usage stays separate from translations and includes failed and missing-usage responses once", async () => {
+    let calls=0;
+    const responses=[{choices:[{finish_reason:"length",message:{content:""}}],usage:{prompt_tokens:10,completion_tokens:2048}},
+        {choices:[{message:{content:"OK"}}]},
+        {choices:[{message:{content:"OK"}}],usage:{prompt_tokens:0,completion_tokens:0}},
+        {choices:[{message:{content:"hello"}}],usage:{prompt_tokens:20,completion_tokens:5}}];
+    const client=new TranslationClient(async()=>({status:200,arrayBuffer:async()=>Buffer.from(JSON.stringify(responses[calls++]))}));
+    const input={...DEFAULTS,providerMode:"online",baseUrl:"https://api.example.test",model:"test"};
+    await assert.rejects(client.testConnection(input));await client.testConnection(input);await client.testConnection(input);
+    assert.equal(client.testStats.requests,3);assert.equal(client.testStats.failures,1);assert.equal(client.testStats.usageResponses,2);
+    assert.equal(client.testStats.promptTokens,10);assert.equal(client.testStats.completionTokens,2048);
+    assert.equal(client.stats.usageResponses,0);assert.match(client.usageSummary(),/连接测试/);assert.match(client.usageSummary(),/1 次测试生成请求未返回用量/);
+    await client.translate("你好",input);await client.translate("你好",input);
+    assert.equal(calls,4);assert.equal(client.stats.generations,1);assert.equal(client.stats.cacheHits,1);
+    assert.equal(client.stats.promptTokens,20);assert.equal(client.stats.completionTokens,5);assert.equal(client.testStats.requests,3);
+    assert.ok(!client.usageSummary().includes("-1"));
+});
+
+test("T10 cancellation aborts one test promptly and ignores late usage without recording a failure", async () => {
+    let finish,calls=0,innerSignal;
+    const client=new TranslationClient(async(url,options)=>{calls++;innerSignal=options.signal;return new Promise(resolve=>finish=resolve);});
+    const controller=new AbortController(),input={...DEFAULTS,providerMode:"deepseek",baseUrl:"https://api.deepseek.com",deepseekThinking:true};
+    const pending=client.testConnection(input,controller.signal);controller.abort();await assert.rejects(pending,error=>error.name==="AbortError");
+    assert.equal(innerSignal.aborted,true);assert.equal(client.testStats.requests,1);assert.equal(client.testStats.cancelled,1);assert.equal(client.testStats.failures,0);
+    finish({status:200,arrayBuffer:async()=>Buffer.from(JSON.stringify({choices:[{message:{content:"OK"}}],usage:{prompt_tokens:10,completion_tokens:99}}))});await new Promise(setImmediate);
+    assert.equal(calls,1);assert.equal(client.testStats.usageResponses,0);assert.equal(client.controllers.size,0);assert.equal(client.active,0);
+    assert.match(client.usageSummary(),/取消的请求也可能已消耗/);
+});
+
+test("T10 model-list checks are not counted as generation and invalid usage cannot corrupt missing counts", async () => {
+    let response={data:[{id:"local"}]};
+    const client=new TranslationClient(async()=>({status:200,arrayBuffer:async()=>Buffer.from(JSON.stringify(response))}));
+    await client.testConnection(DEFAULTS);assert.equal(client.testStats.modelChecks,1);assert.equal(client.testStats.requests,0);assert.match(client.usageSummary(),/尚无连接测试生成请求/);
+    response={choices:[{message:{content:"OK"}}],usage:{prompt_tokens:-1,completion_tokens:5}};
+    await client.testConnection({...DEFAULTS,providerMode:"online",baseUrl:"https://api.example.test",model:"test"});
+    assert.equal(client.testStats.usageResponses,0);assert.equal(client.testStats.promptTokens,0);assert.match(client.usageSummary(),/未收到服务返回的测试 usage/);
+});
+
 test("DeepSeek validates effort, uses an explicit default model and permits its documented token limits", () => {
     const settings=validateSettings({...DEFAULTS,providerMode:"deepseek",baseUrl:"https://api.deepseek.com/v1/chat/completions",maxTokens:32768,contextTokens:1048576});
     assert.equal(settings.model,"deepseek-flash");assert.equal(settings.baseUrl,"https://api.deepseek.com/v1");assert.equal(settings.deepseekThinking,false);

@@ -177,5 +177,11 @@
   "effortMax": "최대",
   "deepseekHelp": "사고 모드는 기본적으로 꺼져 있습니다. 출력 token에는 사고와 번역문이 포함됩니다. 사고 내용은 표시하거나 보내지 않습니다. 연결 테스트는 현재 설정을 사용하며 사고 모드에서 최대 2048 tokens를 생성합니다.",
   "deepseekModelHelp": "DeepSeek 모델 ID를 입력하세요(예: deepseek-flash 또는 deepseek-v4-pro). 비워두면 deepseek-flash입니다.",
-  "deepseekEffortInvalid": "DeepSeek 사고 강도는 low, high 또는 max여야 합니다."
+  "deepseekEffortInvalid": "DeepSeek 사고 강도는 low, high 또는 max여야 합니다.",
+  "connectionIncomplete": "API가 응답했지만 테스트 한도 {budget} tokens 안에서 유효한 출력이 완료되지 않았습니다. 사고 강도를 낮추거나 사고를 끄고 수동으로 다시 시도하세요. 번역 출력 한도를 늘려도 고정 테스트 한도는 바뀌지 않습니다.",
+  "translationUsage": "번역 사용량: ",
+  "testUsageCounts": "연결 테스트: 생성 {requests}, 모델 목록 {modelChecks}, 취소 {cancelled}, 실패 {failures}.",
+  "testUsageActual": "테스트 사용량: 입력 {promptTokens} tokens, 출력 {completionTokens} tokens; 미보고 {missing}건.",
+  "testUsageUnavailable": "테스트 usage를 받지 못해 실제 사용량을 알 수 없습니다. 취소한 요청도 tokens를 소모할 수 있습니다.",
+  "testUsageEmpty": "아직 연결 테스트 생성 요청이 없습니다."
 }

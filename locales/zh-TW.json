@@ -177,5 +177,11 @@
   "effortMax": "最大",
   "deepseekHelp": "思考預設關閉。開啟後輸出 token 包含思考與譯文，思考內容不會顯示或傳送。測試連線使用目前設定，開啟思考時最多生成 2048 tokens。",
   "deepseekModelHelp": "填寫 DeepSeek 模型 ID，例如 deepseek-flash 或 deepseek-v4-pro；留空預設 deepseek-flash。",
-  "deepseekEffortInvalid": "DeepSeek 思考強度須為 low、high 或 max。"
+  "deepseekEffortInvalid": "DeepSeek 思考強度須為 low、high 或 max。",
+  "connectionIncomplete": "介面已回應，但未在本次 {budget} tokens 測試上限內完成有效輸出。若開啟思考，請降低強度或關閉後手動重試；提高翻譯輸出額度不會突破固定測試上限。",
+  "translationUsage": "翻譯用量：",
+  "testUsageCounts": "連線測試：生成請求 {requests}，模型清單檢查 {modelChecks}，取消 {cancelled}，失敗 {failures}。",
+  "testUsageActual": "測試回報用量：輸入 {promptTokens} tokens，輸出 {completionTokens} tokens；{missing} 次生成請求未回報用量。",
+  "testUsageUnavailable": "測試實際用量不可用：未收到測試 usage（取消請求也可能消耗 tokens）。",
+  "testUsageEmpty": "尚無連線測試生成請求。"
 }
