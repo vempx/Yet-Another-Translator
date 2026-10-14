@@ -1,6 +1,17 @@
 # Changelog
 
-## Unreleased
+## 0.9.4 — 2026-10-14
+
+### 中文
+
+- 新增在线 LLM 配置，支持兼容 Chat Completions 的 HTTPS 地址、模型 ID 和 API Key，并保留自定义路径和端口。
+- 设置改为统一“保存并关闭”或“取消”；测试连接使用草稿配置，不保存修改。
+- 修复译文 Markdown 显示，支持标题、副文本和跨空行引用，保留表情、提及和隐藏剧透。
+- 普通译文的 AI 标注改为行内小灰字；代码块、引用和列表保留安全分隔。字号和颜色仅本机生效。
+- 插件文件与默认术语目录改为 YetAnotherTranslator 命名，更新双语使用文档与校验说明。
+- 通过代码复核、124 项离线测试、真实库模拟渲染及 Windows／Linux CI；真实 Discord 界面与在线服务商尚未现场实测。
+
+### English
 
 - Settings now use a draft with Save and close and Cancel in the native modal footer. All edits apply together when saved; cancellation and dismissal discard them. Connection tests use the draft without persisting it. Custom API ports are retained.
 - Prefer Discord's message parser for translated Markdown, with headings and lists enabled. Compatibility rules cover headings followed immediately by body text, subtext and multiline quotes across blank lines; real React DOM regressions also verify emoji, mentions, hidden spoilers, unsafe links and cleanup.
