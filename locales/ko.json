@@ -168,5 +168,14 @@
   "outgoingOriginalMode": "원문 전송; 클릭하면 번역문만 전송",
   "outgoingTranslatedMode": "번역문만 전송; 클릭하면 원문과 번역문 전송",
   "outgoingBilingualMode": "원문과 번역문 전송; 클릭하면 원문만 전송",
-  "outgoingSwitchBusy": "전송 전 번역 중; 클릭하면 취소하고 전송 모드 변경"
+  "outgoingSwitchBusy": "전송 전 번역 중; 클릭하면 취소하고 전송 모드 변경",
+  "deepseekProvider": "DeepSeek",
+  "deepseekThinking": "사고 모드 활성화",
+  "deepseekEffort": "사고 강도",
+  "effortLow": "낮음",
+  "effortHigh": "높음",
+  "effortMax": "최대",
+  "deepseekHelp": "사고 모드는 기본적으로 꺼져 있습니다. 출력 token에는 사고와 번역문이 포함됩니다. 사고 내용은 표시하거나 보내지 않습니다. 연결 테스트는 현재 설정을 사용하며 사고 모드에서 최대 2048 tokens를 생성합니다.",
+  "deepseekModelHelp": "DeepSeek 모델 ID를 입력하세요(예: deepseek-flash 또는 deepseek-v4-pro). 비워두면 deepseek-flash입니다.",
+  "deepseekEffortInvalid": "DeepSeek 사고 강도는 low, high 또는 max여야 합니다."
 }

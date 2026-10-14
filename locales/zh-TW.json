@@ -168,5 +168,14 @@
   "outgoingOriginalMode": "傳送原文；點擊切換為僅傳送譯文",
   "outgoingTranslatedMode": "僅傳送譯文；點擊切換為傳送原文及譯文",
   "outgoingBilingualMode": "傳送原文及譯文；點擊切換為傳送原文",
-  "outgoingSwitchBusy": "正在翻譯，完成後傳送；點擊可取消並切換傳送模式"
+  "outgoingSwitchBusy": "正在翻譯，完成後傳送；點擊可取消並切換傳送模式",
+  "deepseekProvider": "DeepSeek",
+  "deepseekThinking": "開啟思考模式",
+  "deepseekEffort": "思考強度",
+  "effortLow": "低",
+  "effortHigh": "高",
+  "effortMax": "最大",
+  "deepseekHelp": "思考預設關閉。開啟後輸出 token 包含思考與譯文，思考內容不會顯示或傳送。測試連線使用目前設定，開啟思考時最多生成 2048 tokens。",
+  "deepseekModelHelp": "填寫 DeepSeek 模型 ID，例如 deepseek-flash 或 deepseek-v4-pro；留空預設 deepseek-flash。",
+  "deepseekEffortInvalid": "DeepSeek 思考強度須為 low、high 或 max。"
 }

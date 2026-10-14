@@ -20,10 +20,12 @@ An LLM-powered BetterDiscord plugin for automatic message translation, individua
 
 1. Download the plugin ZIP from [Releases](https://github.com/vempx/Yet-Another-Translator/releases) and extract `YetAnotherTranslator.plugin.js`. Each release includes `SHA256SUMS.txt` to verify the ZIP. Interface translations are bundled; no separate language pack is needed.
 2. Open the plugins folder from BetterDiscord settings, place the file there, and enable it. When upgrading, replace the old plugin and keep only one copy.
-3. Select Local or Online under Model service type, then enter the API base URL, model ID and required API key. Local supports the service root or `/v1`. Online preserves provider paths such as `https://api.deepseek.com/v1` or `https://openrouter.ai/api/v1`; full `/chat/completions` URLs are also accepted. Online endpoints must support Chat Completions.
+3. Select Local, Online or the dedicated DeepSeek service type, then enter the API base URL, model ID and required API key. Local supports the service root or `/v1`. Online preserves provider paths such as `https://openrouter.ai/api/v1`; full `/chat/completions` URLs are also accepted. Online endpoints must support Chat Completions.
 4. Test the connection using the current form without saving. Then choose Save and close in the modal footer to apply changes. Cancel or dismissing the window discards edits. Specify a model name when multiple models are available, and use supported context/output limits. The port entered in the URL is used; 8080 is only the default.
 
 Online connection tests with a specified model send one short synthetic message, potentially incurring provider charges, without sending chat history. Without a model ID, `/models` is used for discovery. Providers without that endpoint require a model ID. See the [DeepSeek](https://api-docs.deepseek.com/guides/multi_round_chat/) and [OpenRouter](https://openrouter.ai/docs/api/api-reference/chat/send-chat-completion-request) API documentation for endpoint details.
+
+Selecting DeepSeek fills the untouched local default URL with `https://api.deepseek.com` and an empty model with `deepseek-flash`, preserving custom URLs and model IDs. Enter your DeepSeek API key; `deepseek-v4-pro` is another model option. Thinking is off by default; enable it and choose low, high or maximum effort. Reasoning and the final translation share the output-token allowance; only the final translation is displayed or sent. Connection tests use the current thinking settings and cap thinking-enabled output at the smaller of your allowance and 2048 tokens, potentially incurring charges. This does not guarantee every translation fits that budget; adjust timeout and output limits as needed. See the [thinking guide](https://api-docs.deepseek.com/guides/thinking_mode/) and [API reference](https://api-docs.deepseek.com/api/create-chat-completion/).
 
 ### Translate messages
 
@@ -51,7 +53,7 @@ Use the supplied [glossaries](glossaries/README.md), or create your own using th
 
 ## Notes
 
-- Select Local or Online under Model service type. Local mode retains the loopback restriction; Online supports HTTPS APIs compatible with Chat Completions, including providers and compatible proxies.
+- Select Local, Online or DeepSeek under Model service type. Local mode retains the loopback restriction; Online and DeepSeek support HTTPS APIs compatible with Chat Completions, including providers and compatible proxies. Dedicated thinking parameters are sent only when DeepSeek is selected.
 - Messages and selected conversation context are sent to the configured LLM service. A proxy may forward them to its upstream provider. API keys are stored unencrypted in BetterDiscord's configuration.
 - Incoming translations are visible only to you. Translate-before-sending submits the final content to the conversation; enabling include-original also sends the original text.
 - Changing the draft, reply, channel, target language, or sending options during translation cancels the task. Failures and oversized messages retain the draft without automatically sending the original. Attachment-only messages pass through; edits to existing messages do not use translate-before-sending.

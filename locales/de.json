@@ -168,5 +168,14 @@
   "outgoingOriginalMode": "Original senden; klicken für nur Übersetzung",
   "outgoingTranslatedMode": "Nur Übersetzung senden; klicken für Original und Übersetzung",
   "outgoingBilingualMode": "Original und Übersetzung senden; klicken für nur Original",
-  "outgoingSwitchBusy": "Übersetzung vor dem Senden; klicken zum Abbrechen und Moduswechsel"
+  "outgoingSwitchBusy": "Übersetzung vor dem Senden; klicken zum Abbrechen und Moduswechsel",
+  "deepseekProvider": "DeepSeek",
+  "deepseekThinking": "Denkmodus aktivieren",
+  "deepseekEffort": "Denkaufwand",
+  "effortLow": "Niedrig",
+  "effortHigh": "Hoch",
+  "effortMax": "Maximum",
+  "deepseekHelp": "Denken ist standardmäßig aus. Ausgabe-tokens umfassen Denken und Übersetzung. Denktext wird weder angezeigt noch gesendet. Verbindungstests nutzen die aktuellen Einstellungen, mit maximal 2048 tokens bei aktiviertem Denken.",
+  "deepseekModelHelp": "DeepSeek-Modell-ID eingeben, etwa deepseek-flash oder deepseek-v4-pro. Leer verwendet deepseek-flash.",
+  "deepseekEffortInvalid": "DeepSeek-Denkaufwand muss low, high oder max sein."
 }

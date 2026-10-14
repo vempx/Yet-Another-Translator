@@ -168,5 +168,14 @@
   "outgoingOriginalMode": "原文を送信。クリックで訳文のみへ",
   "outgoingTranslatedMode": "訳文のみを送信。クリックで原文と訳文へ",
   "outgoingBilingualMode": "原文と訳文を送信。クリックで原文のみへ",
-  "outgoingSwitchBusy": "送信前に翻訳中。クリックで中止して送信モードを切り替え"
+  "outgoingSwitchBusy": "送信前に翻訳中。クリックで中止して送信モードを切り替え",
+  "deepseekProvider": "DeepSeek",
+  "deepseekThinking": "思考モードを有効にする",
+  "deepseekEffort": "思考の強度",
+  "effortLow": "低",
+  "effortHigh": "高",
+  "effortMax": "最大",
+  "deepseekHelp": "思考は既定でオフです。出力 token は思考と訳文を含みます。思考内容は表示も送信もされません。接続テストは現在の設定を使い、思考がオンの場合は最大 2048 tokens です。",
+  "deepseekModelHelp": "DeepSeek モデル ID を入力します（deepseek-flash、deepseek-v4-pro など）。空欄は deepseek-flash を使用します。",
+  "deepseekEffortInvalid": "DeepSeek の思考強度は low、high、max のいずれかです。"
 }

@@ -168,5 +168,14 @@
   "outgoingOriginalMode": "Envoyer le texte original ; cliquer pour la traduction seule",
   "outgoingTranslatedMode": "Envoyer la traduction seule ; cliquer pour le texte original et la traduction",
   "outgoingBilingualMode": "Envoyer le texte original et la traduction ; cliquer pour le texte original seul",
-  "outgoingSwitchBusy": "Traduction avant envoi ; cliquer pour annuler et changer de mode"
+  "outgoingSwitchBusy": "Traduction avant envoi ; cliquer pour annuler et changer de mode",
+  "deepseekProvider": "DeepSeek",
+  "deepseekThinking": "Activer le mode réflexion",
+  "deepseekEffort": "Intensité de réflexion",
+  "effortLow": "Faible",
+  "effortHigh": "Élevée",
+  "effortMax": "Maximale",
+  "deepseekHelp": "La réflexion est désactivée par défaut. Les tokens de sortie incluent réflexion et traduction. La réflexion n’est ni affichée ni envoyée. Le test utilise les réglages actuels, avec un plafond de 2048 tokens si la réflexion est active.",
+  "deepseekModelHelp": "Saisir un ID de modèle DeepSeek, par exemple deepseek-flash ou deepseek-v4-pro. Vide utilise deepseek-flash.",
+  "deepseekEffortInvalid": "L’intensité DeepSeek doit être low, high ou max."
 }

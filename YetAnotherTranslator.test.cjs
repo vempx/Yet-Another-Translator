@@ -17,25 +17,26 @@ const {DEFAULTS, validateSettings, TranslationClient, AutoTranslator, areaTopicF
 
 test("native settings footer saves before closing, blocks invalid saves and cancels while testing without saving", async () => {
     let closes=0,saves=0,cancels=0,valid=false;
-    const parent={children:[],append(node){this.children.push(node);node.parentElement=this;}};
+    function group(){return {children:[],append(...nodes){for(const node of nodes){node.remove?.();this.children.push(node);node.parentElement=this;node.parentNode=this;}},insertBefore(node,anchor){node.remove?.();this.children.splice(this.children.indexOf(anchor),0,node);node.parentElement=this;node.parentNode=this;},remove(){if(this.parentElement)this.parentElement.children=this.parentElement.children.filter(node=>node!==this);}};}
+    const parent=group();
     function button(){return {type:"submit",textContent:"完成",disabled:false,style:{},isConnected:true,attributes:{},listeners:new Set(),
         setAttribute(key,value){this.attributes[key]=value;},getAttribute(key){return this.attributes[key];},removeAttribute(key){delete this.attributes[key];},
         addEventListener(type,handler){this.listeners.add(handler);},removeEventListener(type,handler){this.listeners.delete(handler);},cloneNode(){return button();},
-        remove(){parent.children=parent.children.filter(node=>node!==this);},click(){
+        remove(){if(this.parentElement)this.parentElement.children=this.parentElement.children.filter(node=>node!==this);},click(){
             if(this.disabled||this.clicking)return;this.clicking=true;let blocked=false;
             const event={preventDefault(){},stopPropagation(){},stopImmediatePropagation(){blocked=true;}};
             for(const listener of this.listeners)listener(event);
             if(!blocked){if(this.onclick)this.onclick(event);else closes++;}this.clicking=false;
         }};}
     const confirm=button();parent.append(confirm);
-    const modal={querySelectorAll:()=>[confirm]},panel={ownerDocument:{createElement:()=>button()},contains:()=>false,closest:()=>modal,setAttribute(){},removeAttribute(){}};
+    const modal={querySelectorAll:()=>[confirm]},panel={ownerDocument:{createElement:type=>type==="div"?group():button()},contains:()=>false,closest:()=>modal,setAttribute(){},removeAttribute(){}};
     const actions={current:{busy:false,save:()=>{saves++;return valid;},cancel:()=>cancels++}};
     let binding=Plugin.testing.bindSettingsFooter(panel,actions);
     assert.equal(confirm.textContent,"保存并关闭");confirm.click();await Promise.resolve();assert.equal(saves,1);assert.equal(closes,0);
     valid=true;confirm.click();confirm.click();assert.equal(saves,2);await Promise.resolve();assert.equal(closes,1);
     binding.cleanup();assert.equal(confirm.textContent,"完成");assert.equal(parent.children.length,1);
     binding=Plugin.testing.bindSettingsFooter(panel,actions);actions.current.busy=true;binding.refresh();
-    assert.equal(confirm.disabled,true);parent.children[1].click();assert.equal(cancels,1);assert.equal(saves,2);assert.equal(closes,2);
+    assert.equal(confirm.disabled,true);parent.children[0].children[0].click();assert.equal(cancels,1);assert.equal(saves,2);assert.equal(closes,2);
     binding.cleanup();assert.equal(confirm.listeners.size,0);
 });
 
@@ -631,6 +632,65 @@ test("root, /v1 and legacy completion URLs normalize to one API base", () => {
     }
     assert.equal(validateSettings(DEFAULTS).baseUrl, "http://127.0.0.1:8080/v1");
     assert.throws(() => validateSettings({...DEFAULTS, baseUrl: "ftp://localhost/v1"}));
+});
+
+test("DeepSeek validates effort, uses an explicit default model and permits its documented token limits", () => {
+    const settings=validateSettings({...DEFAULTS,providerMode:"deepseek",baseUrl:"https://api.deepseek.com/v1/chat/completions",maxTokens:32768,contextTokens:1048576});
+    assert.equal(settings.model,"deepseek-flash");assert.equal(settings.baseUrl,"https://api.deepseek.com/v1");assert.equal(settings.deepseekThinking,false);
+    for(const effort of ["none","medium","ultra",""]) assert.throws(()=>validateSettings({...settings,deepseekReasoningEffort:effort}));
+    assert.throws(()=>validateSettings({...settings,maxTokens:393217}));
+    assert.throws(()=>validateSettings({...settings,baseUrl:"http://api.deepseek.com"}));
+});
+
+test("DeepSeek request parameters and cache keys track thinking while other providers keep their existing body", async () => {
+    const bodies=[];const client=new TranslationClient(async(url,options)=>{
+        assert.equal(url,"https://api.deepseek.com/chat/completions");bodies.push(JSON.parse(options.body));
+        return {status:200,arrayBuffer:async()=>Buffer.from(JSON.stringify({choices:[{finish_reason:"stop",message:{content:"hello",reasoning_content:"private reasoning"}}]}))};
+    });
+    const input={...DEFAULTS,providerMode:"deepseek",baseUrl:"https://api.deepseek.com",model:"deepseek-flash"};
+    assert.equal(await client.translate("你好",input),"hello");
+    assert.equal(bodies[0].thinking.type,"disabled");assert.equal(bodies[0].reasoning_effort,"none");assert.equal(bodies[0].temperature,0.1);
+    await client.translate("你好",{...input,deepseekReasoningEffort:"max"});assert.equal(bodies.length,1);
+    for(const effort of ["low","high","max"]) {
+        assert.equal(await client.translate("你好",{...input,deepseekThinking:true,deepseekReasoningEffort:effort}),"hello");
+        assert.equal(bodies.at(-1).thinking.type,"enabled");assert.equal(bodies.at(-1).reasoning_effort,effort);
+        assert.equal("temperature" in bodies.at(-1),false);assert.equal("extra_body" in bodies.at(-1),false);
+    }
+    await client.translate("你好",{...input,providerMode:"online"});assert.equal(bodies.length,5);
+    assert.equal("thinking" in bodies.at(-1),false);assert.equal("reasoning_effort" in bodies.at(-1),false);
+    assert.ok(bodies.every(body=>!JSON.stringify(body.messages).includes("private reasoning")));
+});
+
+test("DeepSeek connection tests use draft thinking parameters, a bounded budget and no chat history", async () => {
+    const calls=[];const client=new TranslationClient(async(url,options)=>{calls.push(JSON.parse(options.body));return {status:200,arrayBuffer:async()=>Buffer.from(JSON.stringify({choices:[{finish_reason:"stop",message:{content:"OK",reasoning_content:"private"}}]}))};});
+    const settings={...DEFAULTS,providerMode:"deepseek",baseUrl:"https://api.deepseek.com",deepseekThinking:true,deepseekReasoningEffort:"max",maxTokens:4096};
+    await client.testConnection(settings);assert.equal(calls[0].reasoning_effort,"max");assert.equal(calls[0].max_tokens,2048);assert.equal(calls[0].messages.length,1);
+    await client.testConnection({...settings,deepseekThinking:false});assert.equal(calls[1].thinking.type,"disabled");assert.equal(calls[1].reasoning_effort,"none");assert.equal(calls[1].max_tokens,64);
+});
+
+test("DeepSeek rejects reasoning-only or truncated completions instead of showing or caching reasoning", async () => {
+    for(const choice of [{finish_reason:"stop",message:{content:"",reasoning_content:"private"}},{finish_reason:"length",message:{content:"partial",reasoning_content:"private"}}]) {
+        const client=new TranslationClient(async()=>({status:200,arrayBuffer:async()=>Buffer.from(JSON.stringify({choices:[choice]}))}));
+        const input={...DEFAULTS,providerMode:"deepseek",baseUrl:"https://api.deepseek.com",deepseekThinking:true};
+        await assert.rejects(client.translate("你好",input));assert.equal(client.cache.size,0);await assert.rejects(client.testConnection(input));
+    }
+});
+
+test("DeepSeek settings use a draft, fill untouched defaults and save or cancel thinking options together", () => {
+    const host=settingsHost(),panel=host.plugin.getSettingsPanel();let tree=host.render(panel);
+    find(tree,node=>node.props?.name==="providerMode").props.onChange({target:{value:"deepseek"}});tree=host.render(panel);
+    assert.equal(find(tree,node=>node.props?.name==="baseUrl").props.value,"https://api.deepseek.com");
+    assert.equal(find(tree,node=>node.props?.name==="deepseekReasoningEffort").props.disabled,true);
+    find(tree,node=>node.props?.name==="deepseekThinking").props.onChange({target:{checked:true}});tree=host.render(panel);
+    find(tree,node=>node.props?.name==="deepseekReasoningEffort").props.onChange({target:{value:"max"}});
+    assert.equal(host.writes.length,0);tree=host.render(panel);
+    find(tree,node=>node.type==="button"&&node.props.children[0]==="保存并关闭").props.onClick();
+    assert.equal(host.plugin.settings.deepseekThinking,true);assert.equal(host.plugin.settings.deepseekReasoningEffort,"max");
+    tree=host.render(panel);find(tree,node=>node.props?.name==="deepseekThinking").props.onChange({target:{checked:false}});tree=host.render(panel);
+    find(tree,node=>node.type==="button"&&node.props.children[0]==="取消").props.onClick();assert.equal(host.plugin.settings.deepseekThinking,true);
+    const other=settingsHost({baseUrl:"https://proxy.example.test/custom/v1",model:"custom/model"}),otherPanel=other.plugin.getSettingsPanel();
+    tree=other.render(otherPanel);find(tree,node=>node.props?.name==="providerMode").props.onChange({target:{value:"deepseek"}});tree=other.render(otherPanel);
+    assert.equal(find(tree,node=>node.props?.name==="baseUrl").props.value,"https://proxy.example.test/custom/v1");assert.equal(find(tree,node=>node.props?.name==="model").props.value,"custom/model");
 });
 
 test("online endpoints preserve provider paths and stay stable through repeated validation", () => {

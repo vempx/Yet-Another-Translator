@@ -168,5 +168,14 @@
   "outgoingOriginalMode": "Отправить оригинал; нажмите для отправки только перевода",
   "outgoingTranslatedMode": "Отправить только перевод; нажмите для оригинала и перевода",
   "outgoingBilingualMode": "Отправить оригинал и перевод; нажмите для отправки только оригинала",
-  "outgoingSwitchBusy": "Перевод перед отправкой; нажмите для отмены и смены режима"
+  "outgoingSwitchBusy": "Перевод перед отправкой; нажмите для отмены и смены режима",
+  "deepseekProvider": "DeepSeek",
+  "deepseekThinking": "Включить режим рассуждений",
+  "deepseekEffort": "Интенсивность рассуждений",
+  "effortLow": "Низкая",
+  "effortHigh": "Высокая",
+  "effortMax": "Максимальная",
+  "deepseekHelp": "Рассуждения по умолчанию выключены. Выходные tokens включают рассуждения и перевод; рассуждения не отображаются и не отправляются. Проверка использует текущие настройки и максимум 2048 tokens при включённых рассуждениях.",
+  "deepseekModelHelp": "Введите ID модели DeepSeek, например deepseek-flash или deepseek-v4-pro. Пустое поле означает deepseek-flash.",
+  "deepseekEffortInvalid": "Интенсивность DeepSeek должна быть low, high или max."
 }

@@ -168,5 +168,14 @@
   "outgoingOriginalMode": "Invia originale; clic per inviare solo la traduzione",
   "outgoingTranslatedMode": "Invia solo traduzione; clic per originale e traduzione",
   "outgoingBilingualMode": "Invia originale e traduzione; clic per inviare solo originale",
-  "outgoingSwitchBusy": "Traduzione prima dell’invio; clic per annullare e cambiare modalità"
+  "outgoingSwitchBusy": "Traduzione prima dell’invio; clic per annullare e cambiare modalità",
+  "deepseekProvider": "DeepSeek",
+  "deepseekThinking": "Attiva modalità ragionamento",
+  "deepseekEffort": "Intensità del ragionamento",
+  "effortLow": "Bassa",
+  "effortHigh": "Alta",
+  "effortMax": "Massima",
+  "deepseekHelp": "Il ragionamento è disattivato per impostazione predefinita. I tokens di output includono ragionamento e traduzione; il ragionamento non viene mostrato né inviato. Il test usa le impostazioni correnti, con un limite di 2048 tokens se attivo.",
+  "deepseekModelHelp": "Inserisci un ID modello DeepSeek, ad esempio deepseek-flash o deepseek-v4-pro. Vuoto usa deepseek-flash.",
+  "deepseekEffortInvalid": "L’intensità DeepSeek deve essere low, high o max."
 }

@@ -20,10 +20,12 @@
 
 1. 从[发布页面](https://github.com/vempx/Yet-Another-Translator/releases)下载插件压缩包，解压得到 `YetAnotherTranslator.plugin.js`。发布页提供 `SHA256SUMS.txt` 用于校验 ZIP；语言包已内置，无需单独安装。
 2. 在 BetterDiscord 设置中打开插件文件夹，放入文件并启用。升级时替换旧插件，只保留一份插件文件。
-3. 在“模型服务类型”中选择本地或在线，填写 API 基础地址、模型 ID 和所需的 API Key。本地支持服务根地址或 `/v1`；在线保留服务商给出的路径，如 `https://api.deepseek.com/v1` 或 `https://openrouter.ai/api/v1`，也可填写完整 `/chat/completions` 地址。在线接口须兼容 Chat Completions。
+3. 在“模型服务类型”中选择本地、在线或独立的 DeepSeek，填写 API 基础地址、模型 ID 和所需的 API Key。本地支持服务根地址或 `/v1`；在线保留服务商给出的路径，如 `https://openrouter.ai/api/v1`，也可填写完整 `/chat/completions` 地址。在线接口须兼容 Chat Completions。
 4. 可先点击“测试连接”，使用当前填写的配置测试而不保存。确认后点击弹窗底部“保存并关闭”；“取消”或直接关闭会丢弃本次编辑。多模型服务建议明确填写模型名称；上下文容量与最大输出长度按服务实际支持的范围设置。端口使用地址中填写的值，8080 只是默认值。
 
 在线模式指定模型时，测试连接会发送一条简短测试消息，可能产生服务商费用，不发送聊天记录。未填写模型时，通过 `/models` 获取列表；不提供该接口的服务需填写模型 ID。API 路径可参考 [DeepSeek 文档](https://api-docs.deepseek.com/guides/multi_round_chat/)或 [OpenRouter 文档](https://openrouter.ai/docs/api/api-reference/chat/send-chat-completion-request)。
+
+选择 DeepSeek 时，未修改的本地默认地址会预填为 `https://api.deepseek.com`，空模型预填 `deepseek-flash`；已有自定义地址和模型不会被覆盖。填写 DeepSeek API Key，可改用 `deepseek-v4-pro`。思考默认关闭；开启后选择低／高／最大强度。思考与最终译文共用输出 token 额度，插件只显示／发送最终译文。DeepSeek 测试连接使用当前思考参数，思考开启时输出上限为当前额度与 2048 中较小的值，可能产生费用；它不代表所有译文都会在该额度内完成。需要时调整超时和输出额度。参数依据[思考模式](https://api-docs.deepseek.com/zh-cn/guides/thinking_mode/)及[接口文档](https://api-docs.deepseek.com/zh-cn/api/create-chat-completion/)。
 
 ### 翻译消息
 
@@ -51,7 +53,7 @@
 
 ## 注意事项
 
-- 设置中的“模型服务类型”可选择本地或在线。本地保持原有回环地址限制；在线支持兼容 Chat Completions 的 HTTPS API，可直接连接服务商或兼容代理。
+- 设置中的“模型服务类型”可选择本地、在线或 DeepSeek。本地保持原有回环地址限制；在线及 DeepSeek 支持兼容 Chat Completions 的 HTTPS API，可连接服务商或兼容代理。DeepSeek 专用思考参数只在选择 DeepSeek 时发送。
 - 消息与选中的聊天上下文会发送到配置的 LLM 服务；代理可能继续转发到上游服务。API Key 保存在 BetterDiscord 配置中，未加密。
 - 收到消息的译文仅自己可见；发送翻译会把最终内容发给聊天对象，附带原文开启时也会发送原文。
 - 翻译期间修改草稿、回复、频道、目标语言或发送开关，会取消本次任务。失败或超长时保留草稿，不自动发送原文。纯附件直接发送，编辑已有消息不使用发送翻译。

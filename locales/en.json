@@ -168,5 +168,14 @@
   "outgoingOriginalMode": "Send original; click for translation only",
   "outgoingTranslatedMode": "Send translation only; click for original and translation",
   "outgoingBilingualMode": "Send original and translation; click for original only",
-  "outgoingSwitchBusy": "Translating before sending; click to cancel and switch send mode"
+  "outgoingSwitchBusy": "Translating before sending; click to cancel and switch send mode",
+  "deepseekProvider": "DeepSeek",
+  "deepseekThinking": "Enable thinking mode",
+  "deepseekEffort": "Thinking effort",
+  "effortLow": "Low",
+  "effortHigh": "High",
+  "effortMax": "Maximum",
+  "deepseekHelp": "Thinking is off by default. When enabled, output tokens include reasoning and translation; reasoning is never displayed or sent. Connection tests use the current thinking settings, capped at 2048 generated tokens when thinking is on.",
+  "deepseekModelHelp": "Enter a DeepSeek model ID, e.g. deepseek-flash or deepseek-v4-pro. A blank ID defaults to deepseek-flash.",
+  "deepseekEffortInvalid": "DeepSeek thinking effort must be low, high or max."
 }
