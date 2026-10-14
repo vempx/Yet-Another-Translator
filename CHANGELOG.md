@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Cycle the outgoing button through original, translation-only and bilingual modes. Bilingual mode uses a teal highlight and shares the include-original setting; switching modes cancels pending sends and preserves the draft. Added localized mode hints and regression coverage.
+
 ## 0.9.4 — 2026-10-14
 
 ### 中文

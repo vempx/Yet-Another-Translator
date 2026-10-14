@@ -36,10 +36,10 @@ Online connection tests with a specified model send one short synthetic message,
 
 ### Translate before sending
 
-1. Click the paper-plane icon with an A next to the message box. A highlighted icon means the feature is enabled.
+1. Click the paper-plane icon with an A next to the message box to cycle through three modes: unlit sends the original, blue-violet sends only the translation, and teal sends both. Hover for the current mode and next action.
 2. Select the outgoing target language beside it. This is independent of the default language for incoming messages.
 3. Type your message and press Enter or click Send. The plugin translates it before submission.
-4. For bilingual messages, enable the include-original option and save. It is off by default. The original and translation are separated by a blank line; ordinary translations have an inline AI label styled smaller and gray by this plugin. Code blocks, quotes and lists retain a separate label for safe formatting. Font size and color apply locally for plugin users.
+4. The teal bilingual mode is linked to the include-original setting. Button changes save immediately; settings edits apply with Save and close. Turning translation off sends the original. The original and translation are separated by a blank line; ordinary translations have an inline AI label styled smaller and gray by this plugin. Code blocks, quotes and lists retain a separate label for safe formatting. Font size and color apply locally for plugin users.
 
 ### Use a glossary
 

@@ -164,5 +164,9 @@
   "manualTranslator": "Tradutor",
   "onlineContextHelp": "Use a capacidade de contexto do modelo, incluindo entrada e saída reservada. A estimativa reduz referências sem truncar a mensagem.",
   "saveAndClose": "Salvar e fechar",
-  "settingsChangesHelp": "As alterações só são aplicadas com Salvar e fechar. Cancelar ou fechar a janela as descarta."
+  "settingsChangesHelp": "As alterações só são aplicadas com Salvar e fechar. Cancelar ou fechar a janela as descarta.",
+  "outgoingOriginalMode": "Enviar original; clique para enviar só a tradução",
+  "outgoingTranslatedMode": "Enviar só a tradução; clique para enviar original e tradução",
+  "outgoingBilingualMode": "Enviar original e tradução; clique para enviar só o original",
+  "outgoingSwitchBusy": "Traduzindo antes do envio; clique para cancelar e mudar o modo"
 }

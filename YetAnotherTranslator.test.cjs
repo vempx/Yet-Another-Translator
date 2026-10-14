@@ -489,6 +489,52 @@ test("changing inclusion of the original cancels an in-flight send and cannot su
     assert.equal((await pending).shouldClear, false); assert.equal(f.sent.length, 0);
 });
 
+test("outgoing button cycles original, translation and bilingual atomically without changing targets", () => {
+    const plugin=new Plugin(),writes=[];let cancels=0,scans=0;
+    plugin.settings={...DEFAULTS,outgoingTranslate:false,outgoingIncludeOriginal:true,outgoingLanguage:"日本語"};
+    plugin.api={Data:{save:(key,value)=>writes.push({...value})}};
+    plugin.outgoingTranslator={cancel(){cancels++;},scan(){scans++;}};
+    for(const [enabled,include] of [[true,false],[true,true],[false,false],[true,false]]) {
+        plugin.cycleOutgoingSendMode();assert.equal(plugin.settings.outgoingTranslate,enabled);assert.equal(plugin.settings.outgoingIncludeOriginal,include);
+        assert.equal(plugin.settings.outgoingLanguage,"日本語");assert.equal(plugin.settings.targetLanguage,DEFAULTS.targetLanguage);
+        assert.equal(writes.at(-1).outgoingIncludeOriginal,include);
+    }
+    assert.equal(writes.length,4);assert.equal(cancels,4);assert.equal(scans,4);
+});
+
+test("changing outgoing mode cancels an in-flight translation and retains its draft", async () => {
+    const f=outgoingFixture();let complete;
+    f.plugin.api.Data={save(){}};f.plugin.outgoingTranslator=f.outgoing;f.outgoing.scan=()=>{};
+    f.plugin.client.translate=()=>new Promise(resolve=>{complete=resolve;});
+    const pending=f.outgoing.submit("101",[f.payload],f.original,f.editor);await new Promise(setImmediate);
+    f.plugin.cycleOutgoingSendMode();assert.equal(f.plugin.settings.outgoingIncludeOriginal,true);
+    complete("translated");assert.equal((await pending).shouldClear,false);assert.equal(f.sent.length,0);
+});
+
+test("each outgoing mode submits its exact payload, preserving attachments and reply parameters", async () => {
+    const f=outgoingFixture();f.plugin.api.Data={save(){}};f.plugin.outgoingTranslator=f.outgoing;f.outgoing.scan=()=>{};
+    f.plugin.settings.outgoingTranslate=false;
+    await f.outgoing.submit("101",[f.payload,f.extra],f.original,f.editor);
+    assert.equal(f.sent[0][0],f.payload);assert.equal(f.requests.length,0);
+    f.plugin.cycleOutgoingSendMode();await f.outgoing.submit("101",[f.payload,f.extra],f.original,f.editor);
+    assert.equal(f.sent[1][0].value,"I want the signature weapon");
+    f.plugin.cycleOutgoingSendMode();await f.outgoing.submit("101",[f.payload,f.extra],f.original,f.editor);
+    assert.equal(f.sent[2][0].value,f.payload.value+"\n\nI want the signature weapon (AI translation)");
+    for(const args of f.sent){assert.equal(args[0].attachments,f.payload.attachments);assert.equal(args[1],f.extra);}
+});
+
+test("saved include-original setting refreshes send mode; cancelling the draft leaves it unchanged", () => {
+    const host=settingsHost({outgoingTranslate:true}),panel=host.plugin.getSettingsPanel();let tree=host.render(panel),refreshed=[];
+    host.plugin.outgoingTranslator={cancel(){},scan(){refreshed.push(host.plugin.settings.outgoingIncludeOriginal);}};
+    find(tree,node=>node.props?.name==="outgoingIncludeOriginal").props.onChange({target:{checked:true}});
+    assert.equal(refreshed.length,0);tree=host.render(panel);
+    find(tree,node=>node.type==="button"&&node.props.children[0]==="保存并关闭").props.onClick();
+    assert.deepEqual(refreshed,[true]);assert.equal(host.plugin.settings.outgoingTranslate,true);
+    tree=host.render(panel);find(tree,node=>node.props?.name==="outgoingIncludeOriginal").props.onChange({target:{checked:false}});
+    tree=host.render(panel);find(tree,node=>node.type==="button"&&node.props.children[0]==="取消").props.onClick();
+    assert.equal(host.plugin.settings.outgoingIncludeOriginal,true);assert.deepEqual(refreshed,[true]);
+});
+
 test("include-original settings remain a draft until save-and-close", () => {
     const host=settingsHost(),panel=host.plugin.getSettingsPanel();let tree=host.render(panel);
     find(tree,node=>node.props?.name==="outgoingIncludeOriginal").props.onChange({target:{checked:true}});

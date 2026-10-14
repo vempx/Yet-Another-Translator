@@ -164,5 +164,9 @@
   "manualTranslator": "翻訳ツール",
   "onlineContextHelp": "提供元のモデルのコンテキスト容量を入力してください。入力と出力の予約分を含みます。本文を切らずに参照を減らして保守的に見積もります。",
   "saveAndClose": "保存して閉じる",
-  "settingsChangesHelp": "このページの変更は「保存して閉じる」で適用されます。キャンセルやウィンドウを閉じる操作で破棄します。"
+  "settingsChangesHelp": "このページの変更は「保存して閉じる」で適用されます。キャンセルやウィンドウを閉じる操作で破棄します。",
+  "outgoingOriginalMode": "原文を送信。クリックで訳文のみへ",
+  "outgoingTranslatedMode": "訳文のみを送信。クリックで原文と訳文へ",
+  "outgoingBilingualMode": "原文と訳文を送信。クリックで原文のみへ",
+  "outgoingSwitchBusy": "送信前に翻訳中。クリックで中止して送信モードを切り替え"
 }

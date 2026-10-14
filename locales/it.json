@@ -164,5 +164,9 @@
   "manualTranslator": "Traduttore",
   "onlineContextHelp": "Usa la capacità del contesto del modello, inclusi input e output riservato. La stima riduce i riferimenti senza troncare il messaggio.",
   "saveAndClose": "Salva e chiudi",
-  "settingsChangesHelp": "Le modifiche si applicano con Salva e chiudi. Annulla o chiudere la finestra le scarta."
+  "settingsChangesHelp": "Le modifiche si applicano con Salva e chiudi. Annulla o chiudere la finestra le scarta.",
+  "outgoingOriginalMode": "Invia originale; clic per inviare solo la traduzione",
+  "outgoingTranslatedMode": "Invia solo traduzione; clic per originale e traduzione",
+  "outgoingBilingualMode": "Invia originale e traduzione; clic per inviare solo originale",
+  "outgoingSwitchBusy": "Traduzione prima dell’invio; clic per annullare e cambiare modalità"
 }

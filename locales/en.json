@@ -164,5 +164,9 @@
   "manualTranslator": "Translator",
   "onlineContextHelp": "Use the model context capacity documented by the provider, including input and reserved output. Conservative estimates reduce references when needed without truncating the message.",
   "saveAndClose": "Save and close",
-  "settingsChangesHelp": "Changes on this page apply only with Save and close. Cancel or closing the window discards them."
+  "settingsChangesHelp": "Changes on this page apply only with Save and close. Cancel or closing the window discards them.",
+  "outgoingOriginalMode": "Send original; click for translation only",
+  "outgoingTranslatedMode": "Send translation only; click for original and translation",
+  "outgoingBilingualMode": "Send original and translation; click for original only",
+  "outgoingSwitchBusy": "Translating before sending; click to cancel and switch send mode"
 }

@@ -164,5 +164,9 @@
   "manualTranslator": "Übersetzer",
   "onlineContextHelp": "Kontextkapazität des Anbietermodells einschließlich Eingabe und reservierter Ausgabe verwenden. Konservative Schätzungen reduzieren Referenzen, ohne den Text abzuschneiden.",
   "saveAndClose": "Speichern und schließen",
-  "settingsChangesHelp": "Änderungen werden erst mit Speichern und schließen angewendet. Abbrechen oder Schließen verwirft sie."
+  "settingsChangesHelp": "Änderungen werden erst mit Speichern und schließen angewendet. Abbrechen oder Schließen verwirft sie.",
+  "outgoingOriginalMode": "Original senden; klicken für nur Übersetzung",
+  "outgoingTranslatedMode": "Nur Übersetzung senden; klicken für Original und Übersetzung",
+  "outgoingBilingualMode": "Original und Übersetzung senden; klicken für nur Original",
+  "outgoingSwitchBusy": "Übersetzung vor dem Senden; klicken zum Abbrechen und Moduswechsel"
 }

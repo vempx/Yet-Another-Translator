@@ -27,6 +27,7 @@ jobs:
         run: |
           npm install --prefix .local/markdown-verify --ignore-scripts --no-audit --no-fund react@18.3.1 react-dom@18.3.1 jsdom@26.1.0 simple-markdown@0.7.3
           node scripts/verify_markdown.cjs
+          node scripts/verify_send_modes.cjs
       - name: Build and verify release ZIP
         shell: pwsh
         run: ./scripts/package_release.ps1
