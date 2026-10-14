@@ -727,11 +727,43 @@ function aiMarkerAtEnd(text) {
     return LANGUAGES.map(([language]) => outgoingAiMarker(language)).find(marker => end.endsWith(marker)) || null;
 }
 
+function compatibilityMarkdown(markdown, React, text) {
+    // Compatibility rules for Discord message syntax, not a substitute for its parser.
+    const blockMatch = regex => (source, state) => state.inline ? null : regex.exec(source);
+    const inline = (parse, text, state) => parse(text, {...state, inline: true});
+    const heading = {...markdown.defaultRules.heading,
+        match: blockMatch(/^ *(#{1,3})[ \t]+([^\n]*)(?:\n|$)/),
+        parse: (capture, parse, state) => ({level: capture[1].length, content: inline(parse, capture[2], state)})};
+    const subtext = {order: heading.order - 0.1,
+        match: blockMatch(/^-#[ \t]+([^\n]*)(?:\n|$)/),
+        parse: (capture, parse, state) => ({content: inline(parse, capture[1], state)}),
+        react: (node, output, state) => React.createElement("small", {key: state.key, className: "lt-markdown-subtext"}, output(node.content, state))};
+    const multilineQuote = {order: markdown.defaultRules.blockQuote.order - 0.1,
+        match: blockMatch(/^>>>[ \t]+([\s\S]*)/),
+        parse: (capture, parse, state) => ({content: parse(capture[1], {...state, inline: false})}),
+        react: (node, output, state) => React.createElement("blockquote", {key: state.key}, output(node.content, state))};
+    const paragraph = {...markdown.defaultRules.paragraph, match: (source, state) => {
+        const capture = markdown.defaultRules.paragraph.match(source, state);
+        if (!capture) return null;
+        // These Discord block markers start a new block even without a blank line.
+        const boundary = /\n(?=(?:#{1,3}|-#|>>>)[ \t])/.exec(capture[1]);
+        return boundary ? [capture[0].slice(0, boundary.index + 1), capture[1].slice(0, boundary.index)] : capture;
+    }};
+    const underline = {order: (markdown.defaultRules.strong?.order ?? markdown.defaultRules.em.order) - 0.5,
+        match: source => /^__([\s\S]+?)__(?!_)/.exec(source),
+        parse: (capture, parse, state) => ({content: parse(capture[1], state)}),
+        react: (node, output, state) => React.createElement("u", {key: state.key}, output(node.content, state))};
+    const rules = {...markdown.defaultRules, heading, subtext, multilineQuote, paragraph, underline};
+    return markdown.reactFor(markdown.ruleOutput(rules, "react"))(markdown.parserFor(rules)(text + "\n\n", {inline: false}));
+}
+
 function renderTranslatedMessage(container, text, source, document) {
     const cleanups = [];
     try {
         const markdown = typeof BdApi !== "undefined" ? BdApi.Webpack?.getByKeys?.("defaultReactOutput") : null;
-        const parser = typeof BdApi !== "undefined" ? BdApi.Webpack?.getByKeys?.("reactParserFor") : null;
+        // parseTopic identifies the Discord message parser; reactParserFor belongs
+        // to a generic Markdown wrapper and does not establish message rules.
+        const parser = typeof BdApi !== "undefined" ? BdApi.Webpack?.getByKeys?.("parse", "parseTopic") : null;
         const React = typeof BdApi !== "undefined" ? BdApi.React : null;
         const ReactDOM = typeof BdApi !== "undefined" ? BdApi.ReactDOM : null;
         if (!(markdown?.defaultBlockParse && markdown?.defaultReactOutput || parser?.parse) || !React?.cloneElement || !ReactDOM?.createRoot) throw new Error("Markdown renderer unavailable");
@@ -784,18 +816,23 @@ function renderTranslatedMessage(container, text, source, document) {
             if (value.props.dangerouslySetInnerHTML || typeof href === "string" && !/^https?:\/\//i.test(href)) return React.createElement("span", {key: value.key}, children);
             return React.cloneElement(value, {}, children);
         };
-        let parsed;
-        if (markdown?.parserFor && markdown?.reactFor && markdown?.ruleOutput && markdown.defaultRules) {
-            const underline = {order: (markdown.defaultRules.strong?.order ?? markdown.defaultRules.em.order) - 0.5,
-                match: text => /^__([\s\S]+?)__(?!_)/.exec(text),
-                parse: (capture, parse, state) => ({content: parse(capture[1], state)}),
-                react: (node, output, state) => React.createElement("u", {key: state.key}, output(node.content, state))};
-            const rules = {...markdown.defaultRules, underline};
-            parsed = markdown.reactFor(markdown.ruleOutput(rules, "react"))(markdown.parserFor(rules)(prepared + "\n\n", {inline: false}));
-        } else parsed = markdown?.defaultBlockParse && markdown?.defaultReactOutput ? markdown.defaultReactOutput(markdown.defaultBlockParse(prepared)) : parser.parse(prepared, true, {allowLinks: true});
+        let parsed, engine;
+        if (typeof parser?.parse === "function") {
+            try {parsed = parser.parse(prepared, true, {channelId: source.channelId,
+                messageId: source.id?.replace?.(/^message-content-/, ""), viewingChannelId: source.channelId,
+                allowLinks: true, allowHeading: true, allowList: true}); engine = "discord-message";}
+            catch {if (!markdown?.parserFor) throw new Error("Message parser unavailable");}
+        }
+        if (parsed == null) {
+            if (markdown?.parserFor && markdown?.reactFor && markdown?.ruleOutput && markdown.defaultRules) parsed = compatibilityMarkdown(markdown, React, prepared);
+            else parsed = markdown.defaultReactOutput(markdown.defaultBlockParse(prepared));
+            engine = markdown?.defaultRules ? "discord-compatibility" : "generic-basic";
+        }
         const output = replaceStrings(parsed);
+        container.setAttribute?.("data-lt-markdown-engine", engine);
         const root = ReactDOM.createRoot(container); cleanups.push(() => root.unmount()); root.render(output);
     } catch {
+        container.setAttribute?.("data-lt-markdown-engine", "plain-text");
         for (const cleanup of cleanups.splice(0).reverse()) cleanup();
         renderMessageEmoji(container, text, source, document);
         const cleanup = decorateAiLabel(container); if (cleanup) cleanups.push(cleanup);
@@ -1580,6 +1617,7 @@ const CSS = `
 .lt-panel label { display: block; margin: 12px 0; font-weight: 600; }
 .lt-panel[data-lt-native-footer="true"] .lt-settings-footer { display: none; }
 .lt-ai-label { font-size: 0.75em; color: var(--text-muted, #999); font-weight: normal; line-height: inherit; }
+.lt-markdown-subtext { display: block; color: var(--text-muted, #999); font-size: 0.85em; }
 .lt-panel input, .lt-panel textarea, .lt-panel select { display: block; width: 100%; margin-top: 6px; padding: 10px; border: 1px solid var(--background-modifier-accent, #555); border-radius: 6px; background: var(--input-background, #202225); color: var(--text-normal, #eee); font: inherit; }
 .lt-panel textarea { min-height: 120px; resize: vertical; }
 .lt-panel input:focus, .lt-panel textarea:focus, .lt-panel select:focus, .lt-panel button:focus-visible { outline: 2px solid #7983f5; outline-offset: 2px; }

@@ -62,6 +62,35 @@ test("Markdown renderer delegates formatting, protects emoji/mentions/spoilers a
     assert.equal(find(rendered,node=>node.props?.dangerouslySetInnerHTML),undefined);cleanup();cleanup();assert.equal(unmounts,1);
 });
 
+test("T8 Discord message parser wins over generic Markdown and generic wrappers", () => {
+    const h=(type,props,...children)=>({type,props:{...props,children}});
+    const React={createElement:h,cloneElement:(value,props,...children)=>h(value.type,{...value.props,...props},...children)};
+    let nativeCalls=0,genericCalls=0,wrapperCalls=0,rendered,argumentsSeen;
+    const markdown={defaultBlockParse(){genericCalls++;return [];},defaultReactOutput:()=>[]};
+    const parser={parseTopic(){},parse(...args){nativeCalls++;argumentsSeen=args;return h("h1",null,args[0]);}};
+    const Local=load({React,ReactDOM:{createRoot:()=>({render:value=>rendered=value,unmount(){}})},Webpack:{getByKeys:(...keys)=>
+        keys.includes("parseTopic")?parser:keys.includes("reactParserFor")?{parse(){wrapperCalls++;}}:keys.includes("defaultReactOutput")?markdown:null}});
+    for(const text of ["# Heading\nbody","-# subtext",">>> first\nsecond\n\nthird"]) {
+        const cleanup=Local.testing.renderTranslatedMessage({},text,{channelId:"123"},{});
+        assert.equal(argumentsSeen[0],text);assert.equal(argumentsSeen[1],true);assert.equal(argumentsSeen[2].channelId,"123");
+        assert.equal(argumentsSeen[2].allowHeading,true);assert.equal(argumentsSeen[2].allowList,true);
+        assert.ok(find(rendered,node=>node.type==="h1"));cleanup();
+    }
+    assert.equal(nativeCalls,3);assert.equal(genericCalls,0);assert.equal(wrapperCalls,0);
+});
+
+test("T8 a throwing Discord parser falls back without losing the translation", () => {
+    const h=(type,props,...children)=>({type,props:{...props,children}});
+    const React={createElement:h,cloneElement:(value,props,...children)=>h(value.type,{...value.props,...props},...children)};
+    let calls=0,rendered;
+    const markdown={parserFor:()=>text=>{calls++;return text;},reactFor:()=>text=>h("p",null,text),ruleOutput:()=>({}),
+        defaultBlockParse:()=>[],defaultReactOutput:()=>[],defaultRules:{heading:{order:1},blockQuote:{order:2},paragraph:{match:()=>null},strong:{order:3}}};
+    const Local=load({React,ReactDOM:{createRoot:()=>({render:value=>rendered=value,unmount(){}})},Webpack:{getByKeys:(...keys)=>
+        keys.includes("parseTopic")?{parse(){throw Error("host changed");},parseTopic(){}}:markdown}});
+    const cleanup=Local.testing.renderTranslatedMessage({},"translation",{},{});
+    assert.equal(calls,1);assert.ok(find(rendered,node=>node.type==="p"));cleanup();
+});
+
 test("settings cancellation discards every field and save-and-close commits the current batched draft", () => {
     const host=settingsHost({}, {deferUpdates:true}), panel=host.plugin.getSettingsPanel(); let tree=host.render(panel);
     const field=name=>find(tree,node=>node.props?.name===name);
