@@ -1,4 +1,12 @@
-# v0.9.4 review result / 审核结论
+# Review results / 审核记录
+
+## v0.9.5
+
+第十一轮复核（2026-10-14）关闭 T10-1 和 T10-2，未发现新的重要问题。基线为 `66d96a0b3aad23c321c44382baa52da31813a499`。复核覆盖连接测试预算提示、独立用量统计、三状态发送、DeepSeek 参数及设置按钮回归；137 项离线测试、实际库 DOM 渲染、真实 React 宿主模拟和语言包一致性校验均通过。发布准备只更新版本及文档，未修改已审核的实现。真实 Discord／实际在线模型尚未现场验收。
+
+The eleventh review on 2026-10-14 closed T10-1 and T10-2 with no new significant issues in scope. The reviewed commit is `66d96a0b3aad23c321c44382baa52da31813a499`. Validation covered test-budget feedback, separate usage accounting, three send modes, DeepSeek parameters and settings-footer regressions. All 137 offline tests, real-library DOM rendering, React host simulations and locale consistency checks passed. Release preparation changes only version metadata and documentation. Live Discord and actual online models remain untested.
+
+## v0.9.4
 
 ## 中文
 

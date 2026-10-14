@@ -1,11 +1,44 @@
 # Changelog
 
-## Unreleased
+## 0.9.5 — 2026-10-14
 
-- Fixed connection-test budget feedback and separately tracked test requests, failures, cancellations and server-reported token usage, including incomplete responses. Translation statistics remain independent; no automatic test retries.
-- Added a dedicated DeepSeek provider with explicit thinking on/off and low/high/max effort, shared translation/test request parameters, reasoning-safe output and cache isolation. Kept custom endpoints and models editable; extended DeepSeek token limits.
-- Spaced the native settings footer actions and matched their colors to the plugin's other buttons, preserving save/cancel behavior and cleanup.
-- Cycle the outgoing button through original, translation-only and bilingual modes. Bilingual mode uses a teal highlight and shares the include-original setting; switching modes cancels pending sends and preserves the draft. Added localized mode hints and regression coverage.
+## 中文
+
+本次更新改进发送模式切换，新增 DeepSeek 专用思考配置，并完善连接测试的反馈和用量统计。
+
+### 新增与改进
+
+- **三状态发送按钮**：点击纸飞机图标，依次切换“发送原文 → 仅发送译文 → 原文及译文”。紫蓝色表示仅译文，青绿色表示双语；切换模式会取消待发送的翻译任务并保留草稿。双语模式与设置中的“发送时附带原文”联动。
+- **DeepSeek 专用配置**：新增独立服务类型，支持思考开关及低／高／最大强度。思考默认关闭，专用参数仅用于 DeepSeek 模式；插件只显示和发送最终译文，不展示思考正文。
+- **设置按钮排版**：底部“取消”在左、“保存并关闭”在右，统一配色并增加间距，保留统一保存和取消编辑的行为。
+- **连接测试反馈修复**：思考测试未完成输出时，明确显示本次实际额度，并提示降低思考强度或关闭思考后手动重试，不再引导无效地提高翻译输出上限；不会自动重试。
+- **独立测试用量统计**：“查看请求用量”区分翻译与连接测试，单独记录模型列表检查、取消和失败；即使测试因额度耗尽而失败，服务已返回的 token 用量也会保留。
+
+### 注意事项与验证
+
+- 思考与译文共用输出额度。开启思考时，连接测试最多使用当前输出额度与 2048 tokens 中较小的值，可能产生服务商费用；取消但未收到用量的请求，其实际消耗仍未知。
+- 两项上轮审核问题均已通过复核；137 项离线测试、Markdown 渲染及发送按钮／设置界面模拟验证通过。真实 Discord 界面和实际在线服务尚未现场实测。
+- 升级时保留配置和术语表，替换旧插件文件，只保留一份 `YetAnotherTranslator.plugin.js`。
+
+---
+
+## English
+
+This release improves send-mode switching, adds dedicated DeepSeek thinking controls, and makes connection-test feedback and usage reporting clearer.
+
+### What's new
+
+- **Three send modes**: Click the paper-plane button to cycle through **Original → Translation only → Original and translation**. Purple-blue indicates translation only; teal indicates bilingual sending. Switching modes cancels pending translation and retains the draft. Bilingual mode is linked to the include-original setting.
+- **Dedicated DeepSeek configuration**: A separate provider option adds a thinking toggle and low/high/max effort. Thinking is off by default, and these parameters apply only in DeepSeek mode. Only the final translation is displayed or sent; reasoning text is not shown.
+- **Settings button layout**: Cancel sits on the left and Save and close on the right, with consistent colors and clearer spacing. Saving and discarding edits work as before.
+- **Clearer connection-test failures**: Incomplete thinking tests report the actual test budget and suggest lowering effort or disabling thinking before retrying manually. They no longer suggest an ineffective increase to the translation output limit. Tests do not retry automatically.
+- **Separate test usage**: Usage reporting distinguishes translations from connection tests and tracks model-list checks, cancellations, and failures separately. Server-reported token usage is retained even when a test fails after exhausting its budget.
+
+### Notes and validation
+
+- Thinking and the final translation share the output budget. With thinking enabled, connection tests use the lower of the configured output limit and 2048 tokens and may incur provider charges. Actual consumption remains unknown when a cancelled request returns no usage data.
+- Both findings from the previous review are resolved. All 137 offline tests, Markdown rendering checks, and send-button/settings UI simulations passed. Live Discord UI and actual online-service acceptance testing have not been performed.
+- When upgrading, retain your configuration and glossaries, replace the old plugin file, and keep only one copy of `YetAnotherTranslator.plugin.js`.
 
 ## 0.9.4 — 2026-10-14
 

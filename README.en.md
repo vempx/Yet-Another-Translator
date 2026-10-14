@@ -62,5 +62,5 @@ Use the supplied [glossaries](glossaries/README.md), or create your own using th
 - Bilingual length checks include the original, translation, separators, and label. Unclosed code, spoiler delimiters, or quotes spanning sections may be rejected; adjust the original and retry.
 - Translation quality depends on the model and loaded context. Missing historical replies are not downloaded automatically. Check important content against the original.
 - A successful connection test does not guarantee successful generation. Try a short translation to verify it. Context budgets are estimates; actual usage depends on data returned by the service.
-- v0.9.4 passed code review, 124 offline tests, real Markdown library and React DOM simulation checks, and Windows/Linux CI. Live Discord UI and online-provider acceptance testing have not been performed.
+- v0.9.5 passed code review, 137 offline tests, real Markdown library and React DOM simulation checks, and Windows/Linux CI. Live Discord UI and online-provider acceptance testing have not been performed.
 - Keep your configuration and glossaries when upgrading. Do not enable old and new copies of the plugin together.
