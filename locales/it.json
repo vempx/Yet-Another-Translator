@@ -146,5 +146,21 @@
   "includeOriginalHelp": "Salvato subito. Invia originale, nuova riga e traduzione con un’etichetta di traduzione IA nella lingua di destinazione. Se disattivato, invia solo la traduzione.",
   "outgoingTooLong": "Il messaggio completo supera il limite di Discord. Accorcia l’originale o disattiva la sua inclusione.",
   "unsupportedAiLabel": "Per includere l’originale, seleziona una lingua di invio supportata dal menu.",
-  "outgoingMarkdownBoundary": "L’originale o la traduzione contiene codice o spoiler non chiusi, oppure una citazione che attraversa le sezioni. Correggi il formato o disattiva l’originale. La bozza è conservata."
+  "outgoingMarkdownBoundary": "L’originale o la traduzione contiene codice o spoiler non chiusi, oppure una citazione che attraversa le sezioni. Correggi il formato o disattiva l’originale. La bozza è conservata.",
+  "providerMode": "Tipo di servizio",
+  "localProvider": "Modello locale",
+  "onlineProvider": "Modello online (compatibile con Chat Completions)",
+  "serviceAddress": "URL API del modello",
+  "serviceHelp": "Locale: URL radice o /v1. Online: base HTTPS o URL completa /chat/completions. Salva per applicare.",
+  "modelHelp": "Inserisci l’ID del modello o lascia vuoto per /models. Il test online con modello specificato invia un breve messaggio.",
+  "transmissionNotice": "Originale e contesto selezionato vengono inviati al servizio configurato. Possono esserci costi. Usa la API Key richiesta.",
+  "httpsRequired": "L’API remota deve usare HTTPS.",
+  "providerInvalid": "Tipo di servizio non valido.",
+  "invalidResponse": "Risposta JSON non valida. Verifica URL e compatibilità API.",
+  "serverHint": "Verifica stato, quota e compatibilità API.",
+  "connectionFailed": "Connessione al servizio non riuscita. Verifica indirizzo, porta e rete.",
+  "onlineConnectionSuccess": "Connesso: {model}. Breve test completato.",
+  "openTranslator": "Apri traduttore",
+  "manualTranslator": "Traduttore",
+  "onlineContextHelp": "Usa la capacità del contesto del modello, inclusi input e output riservato. La stima riduce i riferimenti senza troncare il messaggio."
 }

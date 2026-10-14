@@ -146,5 +146,21 @@
   "includeOriginalHelp": "すぐに保存されます。原文、改行、訳文の順に送信し、訳文に翻訳先の言語でAI翻訳の表示を付けます。オフの場合は訳文のみ送信します。",
   "outgoingTooLong": "送信内容が Discord の文字数制限を超えています。原文を短くするか、原文の添付をオフにしてください。",
   "unsupportedAiLabel": "原文を含めるには、送信先言語メニューから対応する言語を選択してください。",
-  "outgoingMarkdownBoundary": "原文または訳文に閉じられていないコード・ネタバレ記号、または段落をまたぐ引用があります。書式を修正するか、原文の添付をオフにしてください。下書きは保持されています。"
+  "outgoingMarkdownBoundary": "原文または訳文に閉じられていないコード・ネタバレ記号、または段落をまたぐ引用があります。書式を修正するか、原文の添付をオフにしてください。下書きは保持されています。",
+  "providerMode": "モデルサービスの種類",
+  "localProvider": "ローカルモデル",
+  "onlineProvider": "オンラインモデル（Chat Completions 互換）",
+  "serviceAddress": "モデル API URL",
+  "serviceHelp": "ローカルはルート URL または /v1、オンラインは HTTPS API 基底 URL または完全な /chat/completions URL。保存して適用します。",
+  "modelHelp": "モデル ID を入力します。空欄は /models を取得します。オンラインでモデルを指定した接続テストは短いテストメッセージを送ります。",
+  "transmissionNotice": "原文と選択した文脈を設定済みサービスに送ります。オンラインサービスには料金が発生する場合があります。必要な API Key を入力してください。",
+  "httpsRequired": "リモート API は HTTPS が必要です。",
+  "providerInvalid": "モデルサービスの種類が無効です。",
+  "invalidResponse": "無効な JSON 応答です。API URL と互換性を確認してください。",
+  "serverHint": "サービス状態、利用枠、API 互換性を確認してください。",
+  "connectionFailed": "モデルサービスに接続できません。アドレス、ポート、ネットワークを確認してください。",
+  "onlineConnectionSuccess": "接続成功：{model}。短いテストリクエストが完了しました。",
+  "openTranslator": "翻訳ツールを開く",
+  "manualTranslator": "翻訳ツール",
+  "onlineContextHelp": "提供元のモデルのコンテキスト容量を入力してください。入力と出力の予約分を含みます。本文を切らずに参照を減らして保守的に見積もります。"
 }

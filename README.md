@@ -20,8 +20,10 @@
 
 1. 从[发布页面](https://github.com/vempx/Yet-Another-Translator/releases)下载插件压缩包，解压后将插件文件命名为 `YetAnotherTranslator.plugin.js`。
 2. 在 BetterDiscord 设置中打开插件文件夹，放入文件并启用。升级时替换旧插件，只保留一份插件文件。
-3. 准备提供 OpenAI 兼容聊天补全接口的 LLM 服务，在插件设置中填写服务地址、模型名称和所需的 API Key。地址可填写服务根地址、`/v1` 或完整的 `/v1/chat/completions` 地址。
+3. 在“模型服务类型”中选择本地或在线，填写 API 基础地址、模型 ID 和所需的 API Key。本地支持服务根地址或 `/v1`；在线保留服务商给出的路径，如 `https://api.deepseek.com/v1` 或 `https://openrouter.ai/api/v1`，也可填写完整 `/chat/completions` 地址。在线接口须兼容 Chat Completions。
 4. 点击“保存设置”，再“测试连接”。多模型服务建议明确填写模型名称；上下文容量与最大输出长度按服务实际支持的范围设置。
+
+在线模式指定模型时，测试连接会发送一条简短测试消息，可能产生服务商费用，不发送聊天记录。未填写模型时，通过 `/models` 获取列表；不提供该接口的服务需填写模型 ID。API 路径可参考 [DeepSeek 文档](https://api-docs.deepseek.com/guides/multi_round_chat/)或 [OpenRouter 文档](https://openrouter.ai/docs/api/api-reference/chat/send-chat-completion-request)。
 
 ### 翻译消息
 
@@ -48,7 +50,7 @@
 
 ## 注意事项
 
-- 当前版本的地址校验只接受 `127.0.0.1`、`localhost` 或 `[::1]`。使用在线模型需通过这些地址上的兼容代理转发，暂不支持直接填写远程服务域名。
+- 设置中的“模型服务类型”可选择本地或在线。本地保持原有回环地址限制；在线支持兼容 Chat Completions 的 HTTPS API，可直接连接服务商或兼容代理。
 - 消息与选中的聊天上下文会发送到配置的 LLM 服务；代理可能继续转发到上游服务。API Key 保存在 BetterDiscord 配置中，未加密。
 - 收到消息的译文仅自己可见；发送翻译会把最终内容发给聊天对象，附带原文开启时也会发送原文。
 - 翻译期间修改草稿、回复、频道、目标语言或发送开关，会取消本次任务。失败或超长时保留草稿，不自动发送原文。纯附件直接发送，编辑已有消息不使用发送翻译。

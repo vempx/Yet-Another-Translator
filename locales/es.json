@@ -146,5 +146,21 @@
   "includeOriginalHelp": "Se guarda inmediatamente. Envía el original, un salto de línea y la traducción con una etiqueta de traducción por IA en el idioma de destino. Desactivado, solo envía la traducción.",
   "outgoingTooLong": "El mensaje completo supera el límite de Discord. Acorta el original o desactiva su inclusión.",
   "unsupportedAiLabel": "Para incluir el original, selecciona un idioma de envío compatible en el menú.",
-  "outgoingMarkdownBoundary": "El original o la traducción contiene código o spoilers sin cerrar, o una cita que abarca varias secciones. Corrige el formato o desactiva el original. Se conserva el borrador."
+  "outgoingMarkdownBoundary": "El original o la traducción contiene código o spoilers sin cerrar, o una cita que abarca varias secciones. Corrige el formato o desactiva el original. Se conserva el borrador.",
+  "providerMode": "Tipo de servicio",
+  "localProvider": "Modelo local",
+  "onlineProvider": "Modelo en línea (compatible con Chat Completions)",
+  "serviceAddress": "URL de API del modelo",
+  "serviceHelp": "Local: URL raíz o /v1. En línea: base HTTPS o URL completa /chat/completions. Guarda para aplicar.",
+  "modelHelp": "Introduce el ID del modelo o deja vacío para /models. La prueba en línea con modelo especificado envía un mensaje breve.",
+  "transmissionNotice": "El original y el contexto seleccionado se envían al servicio configurado. Puede haber cargos. Usa la API Key requerida.",
+  "httpsRequired": "La API remota debe usar HTTPS.",
+  "providerInvalid": "Tipo de servicio inválido.",
+  "invalidResponse": "Respuesta JSON inválida. Revisa URL y compatibilidad API.",
+  "serverHint": "Revisa estado del servicio, cuota y compatibilidad API.",
+  "connectionFailed": "No se puede conectar. Revisa dirección, puerto y red.",
+  "onlineConnectionSuccess": "Conectado: {model}. Prueba breve completada.",
+  "openTranslator": "Abrir traductor",
+  "manualTranslator": "Traductor",
+  "onlineContextHelp": "Usa la capacidad de contexto del modelo, incluida la entrada y la salida reservada. La estimación reduce referencias sin truncar el mensaje."
 }

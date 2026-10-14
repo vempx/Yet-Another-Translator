@@ -146,5 +146,21 @@
   "includeOriginalHelp": "Wird sofort gespeichert. Sendet Original, Zeilenumbruch und Übersetzung mit einem KI-Hinweis in der Zielsprache. Ausgeschaltet wird nur die Übersetzung gesendet.",
   "outgoingTooLong": "Die gesamte Nachricht überschreitet das Discord-Limit. Kürzen Sie das Original oder deaktivieren Sie dessen Aufnahme.",
   "unsupportedAiLabel": "Wählen Sie eine unterstützte ausgehende Sprache im Menü, um das Original hinzuzufügen.",
-  "outgoingMarkdownBoundary": "Original oder Übersetzung enthält nicht geschlossene Code-/Spoiler-Markierungen oder ein abschnittsübergreifendes Zitat. Korrigieren Sie die Formatierung oder deaktivieren Sie das Original. Der Entwurf bleibt erhalten."
+  "outgoingMarkdownBoundary": "Original oder Übersetzung enthält nicht geschlossene Code-/Spoiler-Markierungen oder ein abschnittsübergreifendes Zitat. Korrigieren Sie die Formatierung oder deaktivieren Sie das Original. Der Entwurf bleibt erhalten.",
+  "providerMode": "Modelldiensttyp",
+  "localProvider": "Lokales Modell",
+  "onlineProvider": "Online-Modell (Chat Completions kompatibel)",
+  "serviceAddress": "Modell-API-URL",
+  "serviceHelp": "Lokal: Root-URL oder /v1. Online: HTTPS-API-Basis oder vollständige /chat/completions-URL. Zum Anwenden speichern.",
+  "modelHelp": "Modell-ID eingeben oder über /models auflisten. Online-Verbindungstests mit angegebenem Modell senden eine kurze Testnachricht.",
+  "transmissionNotice": "Original und ausgewählter Kontext werden an den konfigurierten Dienst gesendet. Online-Dienste können Kosten verursachen. Erforderlichen API Key verwenden.",
+  "httpsRequired": "Remote-APIs müssen HTTPS verwenden.",
+  "providerInvalid": "Ungültiger Modelldiensttyp.",
+  "invalidResponse": "Ungültige JSON-Antwort. API-URL und Kompatibilität prüfen.",
+  "serverHint": "Dienststatus, Kontingent und API-Kompatibilität prüfen.",
+  "connectionFailed": "Keine Verbindung zum Modelldienst. Adresse, Port und Netzwerk prüfen.",
+  "onlineConnectionSuccess": "Verbunden: {model}. Kurze Testanfrage abgeschlossen.",
+  "openTranslator": "Übersetzer öffnen",
+  "manualTranslator": "Übersetzer",
+  "onlineContextHelp": "Kontextkapazität des Anbietermodells einschließlich Eingabe und reservierter Ausgabe verwenden. Konservative Schätzungen reduzieren Referenzen, ohne den Text abzuschneiden."
 }

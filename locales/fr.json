@@ -146,5 +146,21 @@
   "includeOriginalHelp": "Enregistré immédiatement. Envoie l’original, un saut de ligne et la traduction, avec une mention de traduction par IA dans la langue cible. Sinon, envoie uniquement la traduction.",
   "outgoingTooLong": "Le message complet dépasse la limite Discord. Raccourcissez l’original ou désactivez son inclusion.",
   "unsupportedAiLabel": "Pour inclure l’original, sélectionnez une langue d’envoi prise en charge dans le menu.",
-  "outgoingMarkdownBoundary": "L’original ou la traduction contient du code ou un spoiler non fermé, ou une citation couvrant plusieurs sections. Corrigez le format ou désactivez l’original. Le brouillon est conservé."
+  "outgoingMarkdownBoundary": "L’original ou la traduction contient du code ou un spoiler non fermé, ou une citation couvrant plusieurs sections. Corrigez le format ou désactivez l’original. Le brouillon est conservé.",
+  "providerMode": "Type de service",
+  "localProvider": "Modèle local",
+  "onlineProvider": "Modèle en ligne (compatible Chat Completions)",
+  "serviceAddress": "URL API du modèle",
+  "serviceHelp": "Local : URL racine ou /v1. En ligne : base API HTTPS ou URL complète /chat/completions. Enregistrer pour appliquer.",
+  "modelHelp": "Saisissez l’ID du modèle, ou laissez vide pour /models. Le test en ligne avec un modèle spécifié envoie un court message.",
+  "transmissionNotice": "L’original et le contexte choisi sont envoyés au service configuré. Des frais peuvent s’appliquer. Utilisez la clé API Key requise.",
+  "httpsRequired": "L’API distante doit utiliser HTTPS.",
+  "providerInvalid": "Type de service invalide.",
+  "invalidResponse": "Réponse JSON invalide. Vérifiez l’URL API et la compatibilité.",
+  "serverHint": "Vérifiez l’état du service, le quota et la compatibilité API.",
+  "connectionFailed": "Connexion impossible au service. Vérifiez adresse, port et réseau.",
+  "onlineConnectionSuccess": "Connecté : {model}. Courte requête de test terminée.",
+  "openTranslator": "Ouvrir le traducteur",
+  "manualTranslator": "Traducteur",
+  "onlineContextHelp": "Utilisez la capacité de contexte du modèle, entrée et sortie réservée comprises. L’estimation réduit les références sans tronquer le message."
 }

@@ -530,6 +530,91 @@ test("root, /v1 and legacy completion URLs normalize to one API base", () => {
     assert.throws(() => validateSettings({...DEFAULTS, baseUrl: "ftp://localhost/v1"}));
 });
 
+test("online endpoints preserve provider paths and stay stable through repeated validation", () => {
+    for (const [input, expected] of [["https://api.example.test", "https://api.example.test"],
+        ["https://api.example.test/chat/completions", "https://api.example.test"],
+        ["https://api.example.test/v1/", "https://api.example.test/v1"],
+        ["https://api.example.test/api/v1/chat/completions/", "https://api.example.test/api/v1"],
+        ["https://api.example.test/gateway/team", "https://api.example.test/gateway/team"]]) {
+        const settings = validateSettings({...DEFAULTS, providerMode: "online", baseUrl: input});
+        assert.equal(settings.baseUrl, expected); assert.equal(validateSettings(settings).baseUrl, expected);
+    }
+    assert.equal(validateSettings({...DEFAULTS, providerMode: "online", baseUrl: "http://localhost:9000/v1"}).baseUrl, "http://localhost:9000/v1");
+});
+
+test("local remains default and online rejects unsafe remote addresses", () => {
+    assert.equal(validateSettings({}).providerMode, "local");
+    assert.throws(() => validateSettings({...DEFAULTS, baseUrl: "https://api.example.test/v1"}));
+    for (const baseUrl of ["http://api.example.test/v1", "ftp://api.example.test/v1", "https://user:password@api.example.test/v1", "https://api.example.test/v1?api_key=test", "https://api.example.test/v1#part"]) {
+        assert.throws(() => validateSettings({...DEFAULTS, providerMode: "online", baseUrl}));
+    }
+    assert.throws(() => validateSettings({...DEFAULTS, providerMode: "unknown"}));
+});
+
+test("online translation uses exactly the configured HTTPS endpoint, model and Bearer key with original context", async () => {
+    const calls = [], client = new TranslationClient(async (url, options) => {
+        calls.push({url, options, body: JSON.parse(options.body)});
+        return {status: 200, arrayBuffer: async () => Buffer.from(JSON.stringify({choices: [{message: {content: "translated"}}]}))};
+    });
+    const settings = {...DEFAULTS, providerMode: "online", baseUrl: "https://api.example.test/api/v1/chat/completions", model: "provider/model-id", apiKey: "test-key"};
+    await client.translate("你好", settings, undefined, {areaTopic: {threadTitle: "Wuthering Waves"}, reply: {text: "original quoted text"}});
+    assert.equal(calls.length, 1); assert.equal(calls[0].url, "https://api.example.test/api/v1/chat/completions");
+    assert.equal(calls[0].body.model, "provider/model-id"); assert.equal(calls[0].options.headers.Authorization, "Bearer test-key");
+    assert.equal(calls[0].options.redirect, "manual"); assert.equal(calls[0].options.maxRedirects, 0);
+    assert.ok(calls[0].body.messages.some(message => message.content.includes("original quoted text")));
+    assert.ok(calls[0].body.messages.some(message => message.content.includes("Wuthering Waves")));
+    await client.translate("你好", settings, undefined, {areaTopic: {threadTitle: "Wuthering Waves"}, reply: {text: "original quoted text"}});
+    assert.equal(calls.length, 1);
+});
+
+test("online connection tests with a model do not require the models route or send chat history", async () => {
+    const calls = [], client = new TranslationClient(async (url, options) => {
+        calls.push({url, options, body: JSON.parse(options.body)});
+        return {status: 200, arrayBuffer: async () => Buffer.from(JSON.stringify({choices: [{message: {content: "OK"}}]}))};
+    });
+    const result = await client.testConnection({...DEFAULTS, providerMode: "online", baseUrl: "https://api.example.test/v1", model: "test-model", apiKey: "test-key"});
+    assert.equal(result.generated, true); assert.equal(result.models[0], "test-model");
+    assert.equal(calls.length, 1); assert.equal(calls[0].url, "https://api.example.test/v1/chat/completions");
+    assert.equal(calls[0].body.messages.length, 1); assert.equal(calls[0].body.messages[0].content, "Reply with OK.");
+    assert.equal(client.cache.size, 0);
+});
+
+test("local connection tests still list models without generation; online auth failures do not retry", async () => {
+    let calls = 0;
+    const local = new TranslationClient(async (url, options) => {
+        calls++; assert.ok(url.endsWith("/models")); assert.equal(options.method, "GET");
+        return {status: 200, arrayBuffer: async () => Buffer.from(JSON.stringify({data: [{id: "local-model"}]}))};
+    });
+    assert.equal((await local.testConnection(DEFAULTS)).generated, false); assert.equal(calls, 1);
+    const denied = new TranslationClient(async () => {calls++; return {status: 401};});
+    await assert.rejects(denied.testConnection({...DEFAULTS, providerMode: "online", baseUrl: "https://api.example.test/v1", model: "model"}), /401/);
+    assert.equal(calls, 2);
+});
+
+test("settings configure and persist online mode without changing receive or send target languages", () => {
+    const host = settingsHost(), panel = host.plugin.getSettingsPanel(); let tree = host.render(panel);
+    for (const [name, value] of [["providerMode", "online"], ["baseUrl", "https://api.example.test/api/v1"], ["model", "provider/model"], ["apiKey", "test-key"]]) {
+        find(tree, node => node.props?.name === name).props.onChange({target: {value}}); tree = host.render(panel);
+    }
+    find(tree, node => node.type === "button" && node.props.children[0] === "保存设置").props.onClick();
+    const value = host.writes.at(-1).value;
+    assert.equal(value.providerMode, "online"); assert.equal(value.baseUrl, "https://api.example.test/api/v1");
+    assert.equal(value.model, "provider/model"); assert.equal(value.apiKey, "test-key");
+    assert.equal(value.targetLanguage, DEFAULTS.targetLanguage); assert.equal(value.outgoingLanguage, DEFAULTS.outgoingLanguage);
+});
+
+test("online connection tests reject incompatible responses and redirects without fallback requests", async () => {
+    for (const result of [{status: 200, body: {}}, {status: 200, body: {choices: [null]}}, {status: 307}, {status: 429}]) {
+        let calls = 0;
+        const client = new TranslationClient(async (url, options) => {
+            calls++; assert.equal(options.redirect, "manual"); assert.equal(options.maxRedirects, 0);
+            return {status: result.status, arrayBuffer: async () => Buffer.from(JSON.stringify(result.body))};
+        });
+        await assert.rejects(client.testConnection({...DEFAULTS, providerMode: "online", baseUrl: "https://api.example.test/v1", model: "test-model"}));
+        assert.equal(calls, 1);
+    }
+});
+
 test("requests use the updated port without doubling /chat/completions", async () => {
     const urls = [];
     const client = new TranslationClient(async url => {

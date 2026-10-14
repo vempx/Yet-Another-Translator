@@ -146,5 +146,21 @@
   "includeOriginalHelp": "Salvo imediatamente. Envia o original, uma quebra de linha e a tradução com uma indicação de tradução por IA no idioma de destino. Desativado, envia apenas a tradução.",
   "outgoingTooLong": "A mensagem completa excede o limite do Discord. Reduza o original ou desative sua inclusão.",
   "unsupportedAiLabel": "Para incluir o original, selecione um idioma de envio compatível no menu.",
-  "outgoingMarkdownBoundary": "O original ou a tradução contém código ou spoiler não fechado, ou uma citação que abrange seções. Corrija o formato ou desative o original. O rascunho foi mantido."
+  "outgoingMarkdownBoundary": "O original ou a tradução contém código ou spoiler não fechado, ou uma citação que abrange seções. Corrija o formato ou desative o original. O rascunho foi mantido.",
+  "providerMode": "Tipo de serviço",
+  "localProvider": "Modelo local",
+  "onlineProvider": "Modelo online (compatível com Chat Completions)",
+  "serviceAddress": "URL da API do modelo",
+  "serviceHelp": "Local: URL raiz ou /v1. Online: base HTTPS ou URL completa /chat/completions. Salve para aplicar.",
+  "modelHelp": "Informe o ID do modelo ou deixe vazio para /models. O teste online com modelo informado envia uma mensagem curta.",
+  "transmissionNotice": "O original e o contexto selecionado são enviados ao serviço configurado. Pode haver custos. Use a API Key necessária.",
+  "httpsRequired": "A API remota deve usar HTTPS.",
+  "providerInvalid": "Tipo de serviço inválido.",
+  "invalidResponse": "Resposta JSON inválida. Verifique URL e compatibilidade da API.",
+  "serverHint": "Verifique status, cota e compatibilidade da API.",
+  "connectionFailed": "Não foi possível conectar. Verifique endereço, porta e rede.",
+  "onlineConnectionSuccess": "Conectado: {model}. Teste curto concluído.",
+  "openTranslator": "Abrir tradutor",
+  "manualTranslator": "Tradutor",
+  "onlineContextHelp": "Use a capacidade de contexto do modelo, incluindo entrada e saída reservada. A estimativa reduz referências sem truncar a mensagem."
 }

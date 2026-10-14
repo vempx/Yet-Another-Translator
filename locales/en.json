@@ -146,5 +146,21 @@
   "includeOriginalHelp": "Saved immediately. Send the original, a newline and the translation with an AI translation label in the target language. When off, send only the translation.",
   "outgoingTooLong": "The complete message exceeds the Discord limit. Shorten the original or turn off inclusion of the original.",
   "unsupportedAiLabel": "To include the original, select a supported outgoing language from the menu.",
-  "outgoingMarkdownBoundary": "The original or translation contains unclosed code/spoiler markers or a quote spanning sections. Fix the formatting or turn off inclusion of the original. Your draft was kept."
+  "outgoingMarkdownBoundary": "The original or translation contains unclosed code/spoiler markers or a quote spanning sections. Fix the formatting or turn off inclusion of the original. Your draft was kept.",
+  "providerMode": "Model service type",
+  "localProvider": "Local model",
+  "onlineProvider": "Online model (Chat Completions compatible)",
+  "serviceAddress": "Model API URL",
+  "serviceHelp": "Local: root URL or /v1. Online: HTTPS API base URL or full /chat/completions URL. Save to apply.",
+  "modelHelp": "Enter the provider model ID, or leave blank to list /models. Online connection tests send a short test message when a model is specified.",
+  "transmissionNotice": "Original text and selected context are sent to the configured service. Online services may charge fees. Use the required API Key.",
+  "httpsRequired": "Remote online API URLs must use HTTPS.",
+  "providerInvalid": "Invalid model service type.",
+  "invalidResponse": "Invalid JSON response. Check API URL and compatibility.",
+  "serverHint": "Check service status, quota and API compatibility.",
+  "connectionFailed": "Cannot connect to the model service. Check address, port and network.",
+  "onlineConnectionSuccess": "Connected: {model}. The short test request completed.",
+  "openTranslator": "Open translator",
+  "manualTranslator": "Translator",
+  "onlineContextHelp": "Use the model context capacity documented by the provider, including input and reserved output. Conservative estimates reduce references when needed without truncating the message."
 }

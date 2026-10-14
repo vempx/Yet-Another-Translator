@@ -146,5 +146,21 @@
   "includeOriginalHelp": "開關立即儲存。開啟後傳送原文、換行和譯文，並在譯文末尾以目標語言標註「AI翻譯」；關閉時只傳送譯文。",
   "outgoingTooLong": "傳送內容超過 Discord 訊息長度限制，請縮短原文或關閉附帶原文後重試。",
   "unsupportedAiLabel": "附帶原文時，請從傳送目標語言選單選擇支援的語言。",
-  "outgoingMarkdownBoundary": "原文或譯文含未閉合的程式碼／劇透標記或跨段引用，請調整格式或關閉附帶原文後重試。草稿已保留。"
+  "outgoingMarkdownBoundary": "原文或譯文含未閉合的程式碼／劇透標記或跨段引用，請調整格式或關閉附帶原文後重試。草稿已保留。",
+  "providerMode": "模型服務類型",
+  "localProvider": "本地模型",
+  "onlineProvider": "線上模型（相容 Chat Completions）",
+  "serviceAddress": "模型服務 API 位址",
+  "serviceHelp": "本地支援根位址或 /v1；線上填寫 HTTPS API 基礎位址或完整 /chat/completions 位址，儲存後生效。",
+  "modelHelp": "填寫模型 ID；留空透過 /models 取得模型。線上模式指定模型時，測試連線會傳送簡短測試訊息。",
+  "transmissionNotice": "原文與選定上下文會傳送至配置的服務；線上服務可能收費，請填寫所需 API Key。",
+  "httpsRequired": "遠端線上 API 位址必須使用 HTTPS。",
+  "providerInvalid": "模型服務類型無效。",
+  "invalidResponse": "無效的 JSON 回應，請檢查 API 位址與相容性。",
+  "serverHint": "請檢查服務狀態、額度與 API 相容性。",
+  "connectionFailed": "無法連線至模型服務，請檢查位址、連接埠與網路。",
+  "onlineConnectionSuccess": "連線成功：{model}。簡短測試請求已完成。",
+  "openTranslator": "開啟翻譯器",
+  "manualTranslator": "翻譯器",
+  "onlineContextHelp": "按服務商模型的實際上下文容量填寫，包含輸入與預留輸出。保守估算會減少參考內容，不截斷正文。"
 }

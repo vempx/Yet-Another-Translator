@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Added local/online model service selection with HTTPS Chat Completions-compatible endpoints, provider-specific base paths, model IDs and Bearer API keys. Online connection tests with a specified model use a short synthetic message without requiring a models endpoint.
 - Renamed the plugin file to `YetAnotherTranslator.plugin.js` and the default glossary folder to `YetAnotherTranslator-glossaries`. Updated installation instructions, build scripts and tests.
 
 ## 0.9.3 — 2026-10-14
