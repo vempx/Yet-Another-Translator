@@ -340,6 +340,83 @@ test("T5 a translation losing original spoiler delimiters cannot expose hidden c
     assert.equal(inference, 1); assert.equal(f.sent.length, 0); assert.equal(f.editor.textContent, "||秘密||");
 });
 
+test("T6 rejected model outputs regenerate on explicit retry, send once and retain unrelated valid caches", async () => {
+    for (const [source, invalid, valid] of [["||秘密||", "secret", "||secret||"], ["||秘密||", "||secret", "||secret||"],
+        ["你好", "```js\nunfinished", "hello"], ["hello source", "x".repeat(2100), "short"]]) {
+        const f = outgoingFixture({source}), r = recordingClient(["unrelated translation", invalid, valid]);
+        f.plugin.client = r.client; f.plugin.settings.model = "test-model"; f.plugin.settings.outgoingIncludeOriginal = true;
+        await r.client.translate("unrelated source", r.settings);
+        const unrelated = [...r.client.cache.entries()][0];
+        const send = () => f.outgoing.submit("101", [f.payload, f.extra], f.original, f.editor);
+        assert.equal((await send()).shouldClear, false); assert.equal(f.sent.length, 0); assert.equal(r.requests.length, 2);
+        assert.equal(f.editor.textContent, source); assert.equal(r.client.cache.get(unrelated[0]), unrelated[1]);
+        assert.equal((await send()).shouldClear, true); assert.equal(r.requests.length, 3); assert.equal(f.sent.length, 1);
+        assert.equal(f.sent[0][0].value, Plugin.testing.outgoingMessageText(source, valid, "English", true));
+        assert.equal(f.sent[0][0].attachments, f.payload.attachments); assert.equal(f.sent[0][1], f.extra);
+        await send(); assert.equal(r.requests.length, 3); assert.equal(r.client.stats.cacheHits, 1);
+        await r.client.translate("unrelated source", r.settings); assert.equal(r.requests.length, 3);
+    }
+});
+
+test("T6 repeated invalid generations preserve the draft without automatic retries", async () => {
+    const f = outgoingFixture({source: "||秘密||"}), r = recordingClient(["secret", "||secret"]);
+    f.plugin.client = r.client; f.plugin.settings.model = "test-model"; f.plugin.settings.outgoingIncludeOriginal = true;
+    for (let attempt = 1; attempt <= 2; attempt++) {
+        assert.equal((await f.outgoing.submit("101", [f.payload], f.original, f.editor)).shouldClear, false);
+        assert.equal(r.requests.length, attempt); assert.equal(f.sent.length, 0); assert.equal(r.client.cache.size, 0);
+    }
+});
+
+test("T6 cancellation after a valid result is cached does not delete that result", async () => {
+    const f = outgoingFixture(), r = recordingClient(["valid translation"]);
+    f.plugin.settings.model = "test-model"; f.plugin.settings.outgoingIncludeOriginal = true;
+    let cancelOnce = true;
+    f.plugin.client = {translate: async (...args) => {
+        const result = await r.client.translate(...args);
+        if (cancelOnce) {cancelOnce = false; f.outgoing.cancel();}
+        return result;
+    }};
+    assert.equal((await f.outgoing.submit("101", [f.payload], f.original, f.editor)).shouldClear, false);
+    assert.equal(f.sent.length, 0); assert.equal(r.client.cache.size, 1);
+    assert.equal((await f.outgoing.submit("101", [f.payload], f.original, f.editor)).shouldClear, true);
+    assert.equal(r.requests.length, 1); assert.equal(r.client.stats.cacheHits, 1);
+});
+
+test("T6 an old cache entry rejected by the current sending policy is evicted precisely", async () => {
+    const source = "你好", f = outgoingFixture({source}), r = recordingClient(["```js\nunfinished", "unrelated", "hello"]);
+    f.plugin.client = r.client; f.plugin.settings.model = "test-model";
+    // Translation-only sending previously accepted this text, creating a cache entry.
+    await f.outgoing.submit("101", [f.payload], f.original, f.editor);
+    await r.client.translate("another source", r.settings);
+    const otherEntry = [...r.client.cache.entries()].find(([, entry]) => entry.text === "unrelated");
+    f.plugin.settings.outgoingIncludeOriginal = true;
+    assert.equal((await f.outgoing.submit("101", [f.payload], f.original, f.editor)).shouldClear, false);
+    assert.equal(r.requests.length, 2); assert.equal(r.client.cache.size, 1);
+    assert.equal(r.client.cache.get(otherEntry[0]), otherEntry[1]);
+    assert.equal((await f.outgoing.submit("101", [f.payload, f.extra], f.original, f.editor)).shouldClear, true);
+    assert.equal(r.requests.length, 3); assert.equal(f.sent.length, 2);
+    assert.equal(f.sent[1][0].value, Plugin.testing.outgoingMessageText(source, "hello", "English", true));
+});
+
+test("T6 cancellation during real-client generation preserves unrelated caches and permits a manual retry", async () => {
+    const f = outgoingFixture(); let requests = 0, release, started;
+    const gate = new Promise(resolve => {release = resolve;}), waiting = new Promise(resolve => {started = resolve;});
+    const client = new TranslationClient(async () => {
+        requests++;
+        if (requests === 2) {started(); await gate;}
+        return {status: 200, arrayBuffer: async () => Buffer.from(JSON.stringify({choices: [{message: {content: "valid translation"}}]}))};
+    });
+    f.plugin.client = client; f.plugin.settings.model = "test-model"; f.plugin.settings.outgoingIncludeOriginal = true;
+    await client.translate("unrelated source", {...DEFAULTS, model: "test-model"});
+    const entry = [...client.cache.entries()][0];
+    const pending = f.outgoing.submit("101", [f.payload], f.original, f.editor);
+    await waiting; f.outgoing.cancel(); release();
+    assert.equal((await pending).shouldClear, false); assert.equal(f.sent.length, 0);
+    assert.equal(client.cache.size, 1); assert.equal(client.cache.get(entry[0]), entry[1]);
+    assert.equal((await f.outgoing.submit("101", [f.payload], f.original, f.editor)).shouldClear, true);
+    assert.equal(requests, 3); assert.equal(f.sent.length, 1);
+});
+
 test("changing inclusion of the original cancels an in-flight send and cannot submit the old format", async () => {
     const f = outgoingFixture(); let complete;
     f.plugin.api.Data = {save() {}}; f.plugin.outgoingTranslator = f.outgoing;

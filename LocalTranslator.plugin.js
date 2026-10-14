@@ -409,7 +409,7 @@ class TranslationClient {
             t("usageEstimate", {estimated: s.lastEstimatedInput});
     }
 
-    async translate(text, input, signal, supplied = null) {
+    async translate(text, input, signal, supplied = null, validateOutput = null) {
         const settings = validateSettings(input);
         if (typeof text !== "string" || !text.trim()) throw uiError("没有可翻译的文字。");
         if (text.length > 12000) throw uiError("单次最多翻译 12000 个字符，请分段翻译。");
@@ -425,7 +425,16 @@ class TranslationClient {
             targetLanguage: settings.targetLanguage, maxTokens: settings.maxTokens, contextTokens: settings.contextTokens},
             text, semanticContext, areaTopic, selected.glossary, detectLanguage === true]);
         const cached = this.cache.get(key);
-        if (!refresh && cached && Date.now() - cached.time < 5 * 60 * 1000) {this.stats.cacheHits++; this.rememberLanguage(text, cached.sourceLanguage); return cached.text;}
+        if (!refresh && cached && Date.now() - cached.time < 5 * 60 * 1000) {
+            try {validateOutput?.(cached.text);}
+            catch (error) {
+                // A caller may reject a result accepted by an earlier request without its policy.
+                // Evict only this entry; cancellation must not discard otherwise valid results.
+                if (!signal?.aborted && error.name !== "AbortError" && this.cache.get(key) === cached) this.cache.delete(key);
+                throw error;
+            }
+            this.stats.cacheHits++; this.rememberLanguage(text, cached.sourceLanguage); return cached.text;
+        }
         let translated;
         let sourceLanguage = detectSourceLanguage(text);
         try {
@@ -468,6 +477,8 @@ class TranslationClient {
             throw error;
         }
         if (signal?.aborted) throw abortError();
+        // Caller-specific synchronous validation runs before any successful result is cached.
+        validateOutput?.(translated);
         if (this.cache.size >= 100) this.cache.delete(this.cache.keys().next().value);
         this.rememberLanguage(text, sourceLanguage);
         this.cache.set(key, {text: translated, time: Date.now(), sourceLanguage});
@@ -1642,11 +1653,16 @@ class OutgoingTranslator {
             job.replySignature = JSON.stringify(context.reply || null);
             const glossary = await this.plugin.getGlossary(channelId, source, context);
             if (!this.taskValid(job)) {controller.abort(); return keepDraft;}
+            const validateTranslation = translated => {
+                if (job.includeOriginal && spoilerCount(translated) < spoilerCount(source)) throw uiError("译文未保留隐藏内容标记，已保留原消息，请重试。");
+                const text = outgoingMessageText(source, translated, settings.targetLanguage, job.includeOriginal);
+                if (text.length > outgoingMessageLimit()) throw uiError("outgoingTooLong");
+                return text;
+            };
             const translated = await this.plugin.client.translate(source, settings, controller.signal,
-                {...context, areaTopic: this.plugin.getAreaTopic(channelId), glossary});
-            if (job.includeOriginal && spoilerCount(translated) < spoilerCount(source)) throw uiError("译文未保留隐藏内容标记，已保留原消息，请重试。");
-            const outgoingText = outgoingMessageText(source, translated, settings.targetLanguage, job.includeOriginal);
-            if (outgoingText.length > outgoingMessageLimit()) throw uiError("outgoingTooLong");
+                {...context, areaTopic: this.plugin.getAreaTopic(channelId), glossary}, validateTranslation);
+            // Keep the final check for skipped inference and transport adapters, and current limits.
+            const outgoingText = validateTranslation(translated);
             // Same synchronous identity/draft/reply check as proactive cancellation.
             // Nothing asynchronous may run between this check and original().
             if (!this.taskValid(job)) {
