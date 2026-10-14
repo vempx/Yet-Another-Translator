@@ -18,7 +18,7 @@
 - `wuthering-waves.json`：鸣潮角色、技能、资源、武器、专有名词及少量聊天简称。
 - `arknights-endfield.json`：明日方舟与终末地的角色、技能、资源、专有名词及少量聊天简称；使用 `game` 区分两款游戏。
 
-部署到 BetterDiscord 时，将两个 JSON 文件放到插件目录中的 `LocalTranslator-glossaries` 文件夹。已识别的游戏版区会预填该文件夹中的对应路径。也可以保留工作区文件的位置，并在设置中填写其完整路径。
+部署到 BetterDiscord 时，将两个 JSON 文件放到插件目录中的 `YetAnotherTranslator-glossaries` 文件夹。已识别的游戏版区会预填该文件夹中的对应路径。也可以保留工作区文件的位置，并在设置中填写其完整路径。
 
 文件为 **UTF-8 JSON**，记事本、VS Code 等文本编辑器均可修改。一个最小术语表：
 

@@ -1,7 +1,7 @@
 param()
 $ErrorActionPreference = 'Stop'
 $projectRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
-$pluginPath = Join-Path $projectRoot 'LocalTranslator.plugin.js'
+$pluginPath = Join-Path $projectRoot 'YetAnotherTranslator.plugin.js'
 $pluginText = Get-Content -LiteralPath $pluginPath -Raw -Encoding utf8
 $versionMatch = [regex]::Match($pluginText, '@version\s+(\d+\.\d+\.\d+)')
 if (-not $versionMatch.Success) { throw 'Plugin version metadata is missing.' }
@@ -13,7 +13,7 @@ Compress-Archive -LiteralPath $pluginPath -DestinationPath $archivePath -Compres
 Add-Type -AssemblyName System.IO.Compression.FileSystem
 $archive = [IO.Compression.ZipFile]::OpenRead($archivePath)
 try {
-    if ($archive.Entries.Count -ne 1 -or $archive.Entries[0].FullName -ne 'LocalTranslator.plugin.js') { throw 'Unexpected ZIP contents.' }
+    if ($archive.Entries.Count -ne 1 -or $archive.Entries[0].FullName -ne 'YetAnotherTranslator.plugin.js') { throw 'Unexpected ZIP contents.' }
     $entryStream = $archive.Entries[0].Open()
     try {
         $sha = [Security.Cryptography.SHA256]::Create()

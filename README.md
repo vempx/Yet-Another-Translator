@@ -6,14 +6,12 @@ Translate Discord messages with a local LLM: automatic, per-message, and before-
 
 ## 安装与升级
 
-1. 从 [Releases](https://github.com/vempx/Yet-Another-Translator/releases) 下载最新的插件 ZIP，解压得到 **LocalTranslator.plugin.js**。
-2. 在 BetterDiscord 设置中点击“打开插件文件夹”，将 JS 放入该文件夹并启用插件。升级时覆盖同名 JS，保留现有配置文件和自定义术语表。
+1. 从 [Releases](https://github.com/vempx/Yet-Another-Translator/releases) 下载最新的插件 ZIP，解压后将插件文件命名为 **YetAnotherTranslator.plugin.js**。
+2. 在 BetterDiscord 设置中点击“打开插件文件夹”，将 JS 放入该文件夹并启用插件。升级时替换旧的插件 JS，只保留一个版本，保留现有配置文件和自定义术语表。
 3. 启动本机 llama.cpp 的 llama-server，加载支持聊天模板的模型。插件通过 OpenAI 兼容的 chat/completions 接口连接，仅接受 127.0.0.1、localhost 或 [::1]。
 4. 打开插件设置，填写服务地址、可选模型别名和 API Key，点击“保存设置”，然后“测试连接”。默认地址为 `http://127.0.0.1:8080/v1`；也接受服务根地址或完整的 `/v1/chat/completions` 地址。
 
-ZIP 内只包含插件 JS，语言包已内置。术语表是可选的独立 JSON 文件：从本仓库 glossaries 下载，放在任意固定位置，在版区设置中填写绝对路径。也可放入 BetterDiscord 插件目录下的 LocalTranslator-glossaries 文件夹，供已识别的游戏版区预填路径。
-
-插件显示名为 **Yet Another Translator**；注册 ID、文件名和配置命名空间继续使用 **LocalTranslator**，升级无需迁移已有配置。
+ZIP 内只包含插件 JS，语言包已内置。术语表是可选的独立 JSON 文件：从本仓库 glossaries 下载，放在任意固定位置，在版区设置中填写绝对路径。也可放入 BetterDiscord 插件目录下的 YetAnotherTranslator-glossaries 文件夹，供已识别的游戏版区预填路径。
 
 ## 消息翻译
 
@@ -59,8 +57,8 @@ API Key 保存在 BetterDiscord 的本地配置中，未加密。消息和上下
 
 ~~~powershell
 node scripts/bundle_locales.cjs
-node --check LocalTranslator.plugin.js
-node --test LocalTranslator.test.cjs
+node --check YetAnotherTranslator.plugin.js
+node --test YetAnotherTranslator.test.cjs
 pwsh -File scripts/package_release.ps1
 ~~~
 

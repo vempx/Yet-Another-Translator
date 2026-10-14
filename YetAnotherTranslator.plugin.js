@@ -3,7 +3,7 @@
  * @author vempx
  * @authorLink https://github.com/vempx/Yet-Another-Translator
  * @website https://github.com/vempx/Yet-Another-Translator
- * @source https://github.com/vempx/Yet-Another-Translator/blob/main/LocalTranslator.plugin.js
+ * @source https://github.com/vempx/Yet-Another-Translator/blob/main/YetAnotherTranslator.plugin.js
  * @version 0.9.3
  * @description LLM-powered Discord translation with automatic, per-message, and pre-send translation.
  */
@@ -705,7 +705,7 @@ class GlossaryStore {
 
     defaultPath(name) {
         const folder = typeof BdApi !== "undefined" && BdApi.Plugins?.folder;
-        return this.path.join(folder || __dirname, folder ? "LocalTranslator-glossaries" : "glossaries", name);
+        return this.path.join(folder || __dirname, folder ? "YetAnotherTranslator-glossaries" : "glossaries", name);
     }
 
     clear() {this.cache.clear();}

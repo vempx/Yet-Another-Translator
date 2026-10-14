@@ -19,7 +19,7 @@ for (const [locale, messages] of Object.entries(catalogs)) {
         if (key === "glossaryEntryError" && ["en", "zh", "aliases"].some(field => !messages[key].includes(field))) throw Error(`${locale}: changed glossary field identifiers`);
     }
 }
-const filename = path.join(root, "LocalTranslator.plugin.js");
+const filename = path.join(root, "YetAnotherTranslator.plugin.js");
 const source = fs.readFileSync(filename, "utf8");
 fs.writeFileSync(filename, source.replace(/^const UI_MESSAGES = .*; \/\/ LOCAL_TRANSLATOR_LOCALES$/m,
     () => `const UI_MESSAGES = ${JSON.stringify(catalogs)}; // LOCAL_TRANSLATOR_LOCALES`), "utf8");

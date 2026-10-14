@@ -17,12 +17,12 @@ jobs:
           node-version: '24'
       - name: Syntax and regression tests
         run: |
-          node --check LocalTranslator.plugin.js
-          node --test LocalTranslator.test.cjs
+          node --check YetAnotherTranslator.plugin.js
+          node --test YetAnotherTranslator.test.cjs
       - name: Check bundled locale catalogs
         run: |
           node scripts/bundle_locales.cjs
-          git diff --exit-code -- LocalTranslator.plugin.js
+          git diff --exit-code -- YetAnotherTranslator.plugin.js
       - name: Build and verify release ZIP
         shell: pwsh
         run: ./scripts/package_release.ps1

@@ -8,7 +8,7 @@ const path = require("node:path");
 
 function load(BdApi, environment = {}) {
     const sandbox = {module: {exports: {}}, require, __dirname, URL, AbortController, TextDecoder, setTimeout, clearTimeout, BdApi, ...environment};
-    vm.runInNewContext(fs.readFileSync(`${__dirname}/LocalTranslator.plugin.js`, "utf8") +
+    vm.runInNewContext(fs.readFileSync(`${__dirname}/YetAnotherTranslator.plugin.js`, "utf8") +
         "\nmodule.exports.testing = {DEFAULTS, validateSettings, TranslationClient, AutoTranslator, areaTopicFor, GlossaryStore, OutgoingTranslator, referenceContext, orderedReferences, renderMessageEmoji, I18n, t, languageLabel, UI_MESSAGES, uiError, errorForUi, uiText, outgoingMessageText, LANGUAGES};", sandbox);
     return sandbox.module.exports;
 }
@@ -727,7 +727,7 @@ test("UI locale detection prioritizes Discord, handles variants and falls back s
     assert.equal(moduleFallback.testing.t("保存设置"), "Save settings");
 });
 
-test("display branding preserves the old plugin ID, settings namespace and glossary location", () => {
+test("display branding uses branded filenames and glossary location while preserving existing settings", () => {
     const namespaces = [];
     class Api {
         constructor(namespace) {namespaces.push(namespace);}
@@ -740,8 +740,8 @@ test("display branding preserves the old plugin ID, settings namespace and gloss
     assert.equal(plugin.getName(), "Yet Another Translator");
     assert.deepEqual(namespaces, ["LocalTranslator"]);
     assert.equal(plugin.settings.model, "existing-model"); assert.equal(plugin.settings.targetLanguage, "日本語");
-    assert.ok(plugin.glossaryStore.defaultPath("wuthering-waves.json").includes("LocalTranslator-glossaries"));
-    assert.match(fs.readFileSync(path.join(__dirname, "LocalTranslator.plugin.js"), "utf8"), /@name LocalTranslator\b/);
+    assert.ok(plugin.glossaryStore.defaultPath("wuthering-waves.json").includes("YetAnotherTranslator-glossaries"));
+    assert.match(fs.readFileSync(path.join(__dirname, "YetAnotherTranslator.plugin.js"), "utf8"), /@name LocalTranslator\b/);
 });
 
 test("cached addon description follows locale and supports BetterDiscord card search and string conversion", () => {
@@ -758,11 +758,11 @@ test("cached addon description follows locale and supports BetterDiscord card se
 
 test("modern BetterDiscord addon metadata localizes its description while retaining registration identity", () => {
     let locale = "zh-CN";
-    const addon = {id: "LocalTranslator", name: "LocalTranslator", description: "old", filename: "LocalTranslator.plugin.js"};
+    const addon = {id: "LocalTranslator", name: "LocalTranslator", description: "old", filename: "YetAnotherTranslator.plugin.js"};
     const Local = load({Plugins: {get: id => id === addon.id ? addon : null}, Webpack: {getStore: () => ({getLocale: () => locale})}});
     new Local({id: "LocalTranslator"});
     assert.equal(addon.name, "Yet Another Translator"); assert.equal(addon.id, "LocalTranslator");
-    assert.equal(addon.filename, "LocalTranslator.plugin.js"); assert.match(addon.description, /发送前翻译/);
+    assert.equal(addon.filename, "YetAnotherTranslator.plugin.js"); assert.match(addon.description, /发送前翻译/);
     locale = "en-US"; assert.equal(addon.description, "LLM-powered Discord translation with automatic, per-message, and pre-send translation.");
     assert.ok(addon.description.toLocaleLowerCase().includes("pre-send"));
     // Legacy loader assignments must remain harmless on the same record.

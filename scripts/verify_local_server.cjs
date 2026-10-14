@@ -5,7 +5,7 @@ const path = require("node:path");
 const vm = require("node:vm");
 const root = path.resolve(__dirname, "..");
 const sandbox = {module: {exports: {}}, require, __dirname: root, URL, AbortController, TextDecoder, setTimeout, clearTimeout};
-const source = fs.readFileSync(path.join(root, "LocalTranslator.plugin.js"), "utf8");
+const source = fs.readFileSync(path.join(root, "YetAnotherTranslator.plugin.js"), "utf8");
 const version = /@version\s+(\S+)/.exec(source)?.[1] || "unknown";
 vm.runInNewContext(source +
     "\nmodule.exports.verification = {TranslationClient, DEFAULTS, validateSettings};", sandbox);

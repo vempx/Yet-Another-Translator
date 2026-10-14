@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Renamed the plugin file to `YetAnotherTranslator.plugin.js` and the default glossary folder to `YetAnotherTranslator-glossaries`. Updated installation instructions, build scripts and tests.
+
 ## 0.9.3 — 2026-10-14
 
 - Validate outgoing translations before caching them. Rejected spoiler, Markdown and length results regenerate on the next manual retry; existing invalid entries are evicted individually. Valid caches survive cancellation, with no automatic retries.
@@ -34,4 +38,4 @@ Validation: syntax checks, complete offline regression suite, language catalog v
 
 ## Earlier development
 
-The plugin already supported contextual automatic translation, per-message target selection, a global permanent target switch, translation before sending, editable channel glossaries, source-language badges, spoilers, custom emoji and UI localization. The original `LocalTranslator` registration ID and filename are retained to preserve existing BetterDiscord settings.
+The plugin already supported contextual automatic translation, per-message target selection, a global permanent target switch, translation before sending, editable channel glossaries, source-language badges, spoilers, custom emoji and UI localization.
