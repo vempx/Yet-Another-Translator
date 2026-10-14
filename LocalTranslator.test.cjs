@@ -9,7 +9,7 @@ const path = require("node:path");
 function load(BdApi, environment = {}) {
     const sandbox = {module: {exports: {}}, require, __dirname, URL, AbortController, TextDecoder, setTimeout, clearTimeout, BdApi, ...environment};
     vm.runInNewContext(fs.readFileSync(`${__dirname}/LocalTranslator.plugin.js`, "utf8") +
-        "\nmodule.exports.testing = {DEFAULTS, validateSettings, TranslationClient, AutoTranslator, areaTopicFor, GlossaryStore, OutgoingTranslator, referenceContext, orderedReferences, renderMessageEmoji, I18n, t, languageLabel, UI_MESSAGES, uiError, errorForUi, uiText};", sandbox);
+        "\nmodule.exports.testing = {DEFAULTS, validateSettings, TranslationClient, AutoTranslator, areaTopicFor, GlossaryStore, OutgoingTranslator, referenceContext, orderedReferences, renderMessageEmoji, I18n, t, languageLabel, UI_MESSAGES, uiError, errorForUi, uiText, outgoingMessageText, LANGUAGES};", sandbox);
     return sandbox.module.exports;
 }
 const Plugin = load();
@@ -237,6 +237,68 @@ test("outgoing failures retain draft and never fall back to sending original", a
         assert.equal((await f.outgoing.submit("101", [f.payload], f.original, f.editor)).shouldClear, false);
         assert.equal(f.sent.length, 0); assert.equal(f.errors.length, 1);
     }
+});
+
+test("bilingual sending preserves raw original, payload and reply, using the target language for the AI marker", async () => {
+    for (const [language, translation, marker] of [["English", "hello", "(AI translation)"], ["日本語", "こんにちは", "（AI翻訳）"],
+        ["简体中文", "你好", "（AI翻译）"], ["Deutsch", "Hallo", "(KI-Übersetzung)"]]) {
+        const source = "**原文** <@101>\n第二行 <:smile:1409648830307369061>";
+        const f = outgoingFixture({source});
+        f.plugin.settings.outgoingIncludeOriginal = true; f.plugin.settings.outgoingLanguage = language;
+        let requests = 0;
+        f.plugin.client.translate = async (text, settings, signal, context) => {
+            requests++; assert.equal(text, source); assert.equal(settings.targetLanguage, language);
+            assert.equal(context.reply.text, "original quoted text");
+            assert.equal(context.glossary.entries[0].zh, "专武"); return translation;
+        };
+        await f.outgoing.submit("101", [f.payload, f.extra], f.original, f.editor);
+        assert.equal(f.sent[0][0].value, source + "\n" + translation + " " + marker);
+        assert.equal(f.sent[0][0].attachments, f.payload.attachments); assert.equal(f.sent[0][1], f.extra);
+        assert.equal(f.payload.value, source); assert.equal(requests, 1);
+    }
+});
+
+test("AI translation markers cover all preset targets and follow target language rather than UI locale", () => {
+    const Local = load({Webpack: {getStore: () => ({getLocale: () => "en-US"})}});
+    for (const [language] of Local.testing.LANGUAGES) {
+        const text = Local.testing.outgoingMessageText("source", "translated", language, true);
+        assert.ok(text.startsWith("source\ntranslated ")); assert.match(text, /[）)]$/);
+    }
+    assert.equal(Local.testing.outgoingMessageText("source", "translated", "日本語", true), "source\ntranslated （AI翻訳）");
+    assert.equal(Local.testing.outgoingMessageText("source", "translated", "日本語", false), "translated");
+    assert.throws(() => Local.testing.outgoingMessageText("source", "translated", "custom unknown language", true), /supported/);
+});
+
+test("bilingual send checks complete length and keeps the draft when original plus translation exceeds the limit", async () => {
+    const f = outgoingFixture({source: "原".repeat(1800)});
+    f.plugin.settings.outgoingIncludeOriginal = true;
+    f.plugin.client.translate = async () => "x".repeat(300);
+    const result = await f.outgoing.submit("101", [f.payload], f.original, f.editor);
+    assert.equal(result.shouldClear, false); assert.equal(f.sent.length, 0); assert.equal(f.errors.length, 1);
+    assert.equal(f.editor.textContent, "原".repeat(1800));
+});
+
+test("changing inclusion of the original cancels an in-flight send and cannot submit the old format", async () => {
+    const f = outgoingFixture(); let complete;
+    f.plugin.api.Data = {save() {}}; f.plugin.outgoingTranslator = f.outgoing;
+    f.plugin.client.translate = () => new Promise(resolve => {complete = resolve;});
+    const pending = f.outgoing.submit("101", [f.payload], f.original, f.editor);
+    await new Promise(setImmediate);
+    f.plugin.setOutgoingIncludeOriginal(true); complete("translated");
+    assert.equal((await pending).shouldClear, false); assert.equal(f.sent.length, 0);
+});
+
+test("include-original setting saves immediately without saving other drafts, survives reopening and defaults off", () => {
+    const host = settingsHost(), panel = host.plugin.getSettingsPanel(); let tree = host.render(panel);
+    const control = () => find(tree, node => node.props?.name === "outgoingIncludeOriginal");
+    assert.equal(control().props.checked, false);
+    find(tree, node => node.props?.name === "model").props.onInput({target: {value: "unsaved"}});
+    tree = host.render(panel); control().props.onChange({target: {checked: true}});
+    assert.equal(host.writes[0].value.outgoingIncludeOriginal, true); assert.equal(host.writes[0].value.model, "");
+    tree = host.render(panel); assert.equal(control().props.checked, true);
+    assert.equal(find(tree, node => node.props?.name === "model").props.value, "unsaved");
+    const reopened = settingsHost(host.writes[0].value), newPanel = reopened.plugin.getSettingsPanel();
+    assert.equal(find(reopened.render(newPanel), node => node.props?.name === "outgoingIncludeOriginal").props.checked, true);
 });
 
 test("outgoing duplicate submissions, edited drafts, changed replies, navigation and cancellation cannot send", async () => {

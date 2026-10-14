@@ -141,5 +141,9 @@
   "applyDefaultLanguage": "Standardsprache anwenden und Nachrichtensprachen zurücksetzen",
   "unknownUser": "Unbekannter Benutzer",
   "unknownRole": "Unbekannte Rolle",
-  "unknownChannel": "Unbekannter Kanal"
+  "unknownChannel": "Unbekannter Kanal",
+  "includeOriginal": "Original beim Senden hinzufügen",
+  "includeOriginalHelp": "Wird sofort gespeichert. Sendet Original, Zeilenumbruch und Übersetzung mit einem KI-Hinweis in der Zielsprache. Ausgeschaltet wird nur die Übersetzung gesendet.",
+  "outgoingTooLong": "Die gesamte Nachricht überschreitet das Discord-Limit. Kürzen Sie das Original oder deaktivieren Sie dessen Aufnahme.",
+  "unsupportedAiLabel": "Wählen Sie eine unterstützte ausgehende Sprache im Menü, um das Original hinzuzufügen."
 }

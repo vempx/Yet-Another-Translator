@@ -141,5 +141,9 @@
   "applyDefaultLanguage": "Appliquer la langue par défaut et réinitialiser les choix par message",
   "unknownUser": "Utilisateur inconnu",
   "unknownRole": "Rôle inconnu",
-  "unknownChannel": "Salon inconnu"
+  "unknownChannel": "Salon inconnu",
+  "includeOriginal": "Inclure le texte original à l’envoi",
+  "includeOriginalHelp": "Enregistré immédiatement. Envoie l’original, un saut de ligne et la traduction, avec une mention de traduction par IA dans la langue cible. Sinon, envoie uniquement la traduction.",
+  "outgoingTooLong": "Le message complet dépasse la limite Discord. Raccourcissez l’original ou désactivez son inclusion.",
+  "unsupportedAiLabel": "Pour inclure l’original, sélectionnez une langue d’envoi prise en charge dans le menu."
 }

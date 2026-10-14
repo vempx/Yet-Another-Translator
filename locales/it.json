@@ -141,5 +141,9 @@
   "applyDefaultLanguage": "Applica lingua predefinita e reimposta le lingue dei messaggi",
   "unknownUser": "Utente sconosciuto",
   "unknownRole": "Ruolo sconosciuto",
-  "unknownChannel": "Canale sconosciuto"
+  "unknownChannel": "Canale sconosciuto",
+  "includeOriginal": "Includi originale all’invio",
+  "includeOriginalHelp": "Salvato subito. Invia originale, nuova riga e traduzione con un’etichetta di traduzione IA nella lingua di destinazione. Se disattivato, invia solo la traduzione.",
+  "outgoingTooLong": "Il messaggio completo supera il limite di Discord. Accorcia l’originale o disattiva la sua inclusione.",
+  "unsupportedAiLabel": "Per includere l’originale, seleziona una lingua di invio supportata dal menu."
 }

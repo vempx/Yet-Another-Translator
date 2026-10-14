@@ -141,5 +141,9 @@
   "applyDefaultLanguage": "Aplicar idioma padrão e redefinir idiomas por mensagem",
   "unknownUser": "Usuário desconhecido",
   "unknownRole": "Cargo desconhecido",
-  "unknownChannel": "Canal desconhecido"
+  "unknownChannel": "Canal desconhecido",
+  "includeOriginal": "Incluir original ao enviar",
+  "includeOriginalHelp": "Salvo imediatamente. Envia o original, uma quebra de linha e a tradução com uma indicação de tradução por IA no idioma de destino. Desativado, envia apenas a tradução.",
+  "outgoingTooLong": "A mensagem completa excede o limite do Discord. Reduza o original ou desative sua inclusão.",
+  "unsupportedAiLabel": "Para incluir o original, selecione um idioma de envio compatível no menu."
 }

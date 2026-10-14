@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.9.2 — 2026-10-14
+
+- Added an immediately saved, default-off setting to include the original when translating before sending. A single message contains the original, a newline, the translation and an AI translation label in the selected target language.
+- Labels cover all preset target languages and are independent of the UI locale, without additional model requests.
+- The complete outgoing text is checked against Discord's length limit. Changing the format cancels pending sends; failures retain the draft.
+
 ## 0.9.1 — 2026-10-14
 
 - The default target language now saves and applies immediately when selected. Closing BetterDiscord's settings modal no longer discards the choice.
