@@ -2,7 +2,7 @@
 
 Translate Discord messages with a local LLM: automatic, per-message, and before-send translation, with conversation context, replies and editable glossaries.
 
-使用本地大语言模型翻译 Discord 消息，支持自动翻译、逐条翻译和发送前翻译。作者：[vempx](https://github.com/vempx/Yet-Another-Translator)。
+使用本地大语言模型翻译 Discord 消息，支持自动翻译、逐条翻译和发送前翻译。
 
 ## 安装与升级
 
