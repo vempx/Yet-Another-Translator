@@ -1,0 +1,69 @@
+# Yet Another Translator
+
+Translate Discord messages with a local LLM: automatic, per-message, and before-send translation, with conversation context, replies and editable glossaries.
+
+使用本地大语言模型翻译 Discord 消息，支持自动翻译、逐条翻译和发送前翻译。作者：[vempx](https://github.com/vempx/Yet-Another-Translator)。
+
+## 安装与升级
+
+1. 从 [Releases](https://github.com/vempx/Yet-Another-Translator/releases) 下载最新的插件 ZIP，解压得到 **LocalTranslator.plugin.js**。
+2. 在 BetterDiscord 设置中点击“打开插件文件夹”，将 JS 放入该文件夹并启用插件。升级时覆盖同名 JS，保留现有配置文件和自定义术语表。
+3. 启动本机 llama.cpp 的 llama-server，加载支持聊天模板的模型。插件通过 OpenAI 兼容的 chat/completions 接口连接，仅接受 127.0.0.1、localhost 或 [::1]。
+4. 打开插件设置，填写服务地址、可选模型别名和 API Key，点击“保存设置”，然后“测试连接”。默认地址为 http://127.0.0.1:8080/v1；也接受服务根地址或完整 /v1/chat/completions 地址。
+
+ZIP 内只包含插件 JS，语言包已内置。术语表是可选的独立 JSON 文件：从本仓库 glossaries 下载，放在任意固定位置，在版区设置中填写绝对路径。也可放入 BetterDiscord 插件目录下的 LocalTranslator-glossaries 文件夹，供已识别的游戏版区预填路径。
+
+插件显示名为 **Yet Another Translator**；注册 ID、文件名和配置命名空间继续使用 **LocalTranslator**，升级无需迁移已有配置。
+
+## 消息翻译
+
+- **自动翻译**：在设置或消息右键菜单中开启，逐条处理当前可见消息。只显示译文；右键“查看原文”可查看原始内容。新消息只翻译新增内容，切换频道后恢复已缓存的译文。
+- **逐条翻译**：消息右上工具栏的“译”按钮可显示或隐藏单条译文；右键可重新翻译。自动翻译关闭时，手动翻译保留原文。
+- **语言标签**：译文旁的 ENG、JPN 等表示原文语言。点击后选择完整语言名，只重新翻译这一条；右侧环形箭头会永久修改全局自动翻译目标，开启自动翻译并清除原有单条覆盖。当前可见消息先处理，滚动后继续处理其余消息。
+- **默认语言设置**：默认简体中文。修改选择后保存，或点击“应用默认语言并清除单条覆盖”，会统一使用该目标重新翻译。普通保存不会开启自动翻译；未修改的语言字段不会覆盖消息菜单刚选定的新默认。
+- **手动翻译器**：从右键菜单打开，输入文字并选择目标语言，默认英文，可复制结果。
+
+翻译参考消息所属频道或论坛帖子名称、附近消息原文、回复引用原文及匹配的术语。论坛帖子可继承父论坛的术语配置。未加载的引用会标记缺失，不会远程拉取聊天记录。
+
+自定义表情保留图片，提及显示用户昵称、身份组或频道名。纯提及与链接消息保留 Discord 原生显示，跳过模型推理；混合消息中的原生提及可识别时保留点击行为。代码与转义中的标记保持文字，剧透默认隐藏；模型丢失隐藏标记时保留原消息并提示重试。
+
+## 发送前翻译
+
+聊天输入框右侧的纸飞机 A 图标控制发送翻译，亮起为开启；旁边的 ENG、CHS、CHT、JPN 等选择发送目标，默认 ENG。也可在插件设置中调整该语言，独立于收到消息的默认目标。
+
+开启后按 Enter 或点击发送，先根据当前聊天上下文、回复原文和术语表翻译文字，再沿用 Discord 的发送流程提交译文。频道、论坛帖子和好友私聊都走同一流程；附件和回复参数保留，纯附件消息直接发送，编辑已有消息不使用此功能。
+
+翻译中再次发送不会重复提交。更改草稿、回复、频道、输入框、开关或目标语言会取消本次任务。失败或译文超长时保留草稿，不自动发送原文。
+
+## 术语表与界面语言
+
+- [术语表使用、JSON 格式和来源](glossaries/README.md)：鸣潮以及明日方舟＋终末地的初始词表，可明文编辑并按版区绑定路径。
+- [让其他模型生成兼容术语表的提示词](GLOSSARY_GENERATION_PROMPT.md)。
+- [界面语言包维护](locales/README.md)：显示语言跟随 Discord，内置简体中文、繁体中文、英语、日语、韩语、法语、德语、西班牙语、葡萄牙语、俄语和意大利语，不支持的语言回退英文。
+
+## 配置、缓存与数据
+
+模型上下文容量按 llama-server 每个槽位的实际容量设置，默认 8192。统一预算覆盖正文、提示词、引用、附近消息和术语，预留输出容量；过长时减少参考，不截断正文。估算值不是实际 tokenizer 结果。
+
+请求缓存最多 100 条、有效期 5 分钟；自动翻译历史最多保留 20 个频道，每频道 500 条消息。缓存仅在内存中，停用插件后清空。查看请求用量可查看生成、缓存及服务返回的 token 计数。
+
+API Key 保存在 BetterDiscord 的本地配置中，未加密。消息和上下文仅发送到配置的本机服务；收到消息的译文仅自己可见，开启发送翻译后提交的译文会正常发给聊天对象。运行时不搜索网络，也不上传完整术语表。界面语言变化只重新显示文案，不重新请求模型。
+
+## 开发与打包
+
+需要 Node.js 24；插件运行本身不需要 Node 安装或额外依赖。
+
+~~~powershell
+node scripts/bundle_locales.cjs
+node --check LocalTranslator.plugin.js
+node --test LocalTranslator.test.cjs
+pwsh -File scripts/package_release.ps1
+~~~
+
+打包脚本生成 dist/Yet-Another-Translator-v<版本>.zip 和 SHA256SUMS.txt，并验证 ZIP 仅包含与源码一致的 JS。CI 在 Windows 与 Linux 上执行回归测试、语言包一致性检查和打包。
+
+scripts/build_glossaries.py 使用 Python 标准库刷新游戏词表，生成到 glossaries/generated，不覆盖用户编辑的词表。scripts/build_locales.cjs 可通过本机模型生成语言包初稿，生成后仍需人工校对。
+
+scripts/verify_local_server.cjs 使用合成文字检查本机服务，不调用 Discord 发送接口；验证报告保留在本地。历史备份、个人配置、修复诊断记录和生成缓存均不纳入 GitHub。
+
+版本修改见 [CHANGELOG](CHANGELOG.md)。自动化测试覆盖翻译、缓存、发送状态校验、设置保存、语言菜单、术语表、表情、提及和剧透。真实 Discord 设置交互和提及弹窗仍需在对应客户端版本中验证。

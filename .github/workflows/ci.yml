@@ -1,0 +1,28 @@
+name: Validate plugin
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  validate:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Syntax and regression tests
+        run: |
+          node --check LocalTranslator.plugin.js
+          node --test LocalTranslator.test.cjs
+      - name: Check bundled locale catalogs
+        run: |
+          node scripts/bundle_locales.cjs
+          git diff --exit-code -- LocalTranslator.plugin.js
+      - name: Build and verify release ZIP
+        shell: pwsh
+        run: ./scripts/package_release.ps1
