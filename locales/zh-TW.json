@@ -145,5 +145,6 @@
   "includeOriginal": "傳送時附帶原文",
   "includeOriginalHelp": "開關立即儲存。開啟後傳送原文、換行和譯文，並在譯文末尾以目標語言標註「AI翻譯」；關閉時只傳送譯文。",
   "outgoingTooLong": "傳送內容超過 Discord 訊息長度限制，請縮短原文或關閉附帶原文後重試。",
-  "unsupportedAiLabel": "附帶原文時，請從傳送目標語言選單選擇支援的語言。"
+  "unsupportedAiLabel": "附帶原文時，請從傳送目標語言選單選擇支援的語言。",
+  "outgoingMarkdownBoundary": "原文或譯文含未閉合的程式碼／劇透標記或跨段引用，請調整格式或關閉附帶原文後重試。草稿已保留。"
 }

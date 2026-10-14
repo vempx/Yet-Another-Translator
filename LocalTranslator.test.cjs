@@ -188,9 +188,9 @@ test("T4 settings dropdown reaches persisted config, rebuilt queue and next requ
     chat.auto.stop();
 });
 
-function outgoingFixture({getDraft, source = "我要专武", display = source} = {}) {
+function outgoingFixture({getDraft, source = "我要专武", display = source, premiumType = null} = {}) {
     const errors = [], sent = [], requests = [];
-    const LocalPlugin = load({Webpack: {getStore: name => name === "DraftStore" && getDraft ? {getDraft} : undefined}});
+    const LocalPlugin = load({Webpack: {getStore: name => name === "DraftStore" && getDraft ? {getDraft} : name === "UserStore" ? {getCurrentUser: () => ({premiumType})} : undefined}});
     const plugin = new LocalPlugin();
     plugin.active = true;
     plugin.settings = {...DEFAULTS, outgoingTranslate: true, outgoingLanguage: "English"};
@@ -252,7 +252,7 @@ test("bilingual sending preserves raw original, payload and reply, using the tar
             assert.equal(context.glossary.entries[0].zh, "专武"); return translation;
         };
         await f.outgoing.submit("101", [f.payload, f.extra], f.original, f.editor);
-        assert.equal(f.sent[0][0].value, source + "\n" + translation + " " + marker);
+        assert.equal(f.sent[0][0].value, source + "\n\n" + translation + "\n\n" + marker);
         assert.equal(f.sent[0][0].attachments, f.payload.attachments); assert.equal(f.sent[0][1], f.extra);
         assert.equal(f.payload.value, source); assert.equal(requests, 1);
     }
@@ -262,9 +262,9 @@ test("AI translation markers cover all preset targets and follow target language
     const Local = load({Webpack: {getStore: () => ({getLocale: () => "en-US"})}});
     for (const [language] of Local.testing.LANGUAGES) {
         const text = Local.testing.outgoingMessageText("source", "translated", language, true);
-        assert.ok(text.startsWith("source\ntranslated ")); assert.match(text, /[）)]$/);
+        assert.ok(text.startsWith("source\n\ntranslated\n\n")); assert.match(text, /[）)]$/);
     }
-    assert.equal(Local.testing.outgoingMessageText("source", "translated", "日本語", true), "source\ntranslated （AI翻訳）");
+    assert.equal(Local.testing.outgoingMessageText("source", "translated", "日本語", true), "source\n\ntranslated\n\n（AI翻訳）");
     assert.equal(Local.testing.outgoingMessageText("source", "translated", "日本語", false), "translated");
     assert.throws(() => Local.testing.outgoingMessageText("source", "translated", "custom unknown language", true), /supported/);
 });
@@ -276,6 +276,68 @@ test("bilingual send checks complete length and keeps the draft when original pl
     const result = await f.outgoing.submit("101", [f.payload], f.original, f.editor);
     assert.equal(result.shouldClear, false); assert.equal(f.sent.length, 0); assert.equal(f.errors.length, 1);
     assert.equal(f.editor.textContent, "原".repeat(1800));
+});
+
+test("T5 Markdown sections and the AI marker remain separate from closed code, quotes, lists and spoilers", () => {
+    const format = Plugin.testing.outgoingMessageText;
+    for (const text of ["plain", "```js\nconsole.log('hello')\n```", "> quoted", "- first\n- second", "||secret||", "`code`", "\\`literal", "```\n>>> literal ||\n```", "````js\n```\n````"]) {
+        assert.equal(format(text, text, "English", true), `${text}\n\n${text}\n\n(AI translation)`);
+        assert.equal(format(text, text, "English", false), text);
+    }
+});
+
+test("T5 unsafe Markdown sections are rejected without rewriting them; translation-only output is unchanged", () => {
+    const format = Plugin.testing.outgoingMessageText;
+    for (const text of ["```js\ncode", "hello ||secret", ">>> multiline quote", "`unclosed", "````js\ncode\n```", "`line\nnext`", "> >>> nested quote"]) {
+        assert.throws(() => format(text, "translated", "English", true));
+        assert.throws(() => format("source", text, "English", true));
+        assert.equal(format("source", text, "English", false), text);
+    }
+});
+
+test("T5 impossible bilingual length and unsupported language reject before glossary lookup and inference", async () => {
+    for (const options of [{source: "x".repeat(1990)}, {source: "x".repeat(3990), premiumType: 2}, {source: "short", language: "unsupported custom"}, {source: "```js\ncode"}]) {
+        const f = outgoingFixture(options); let glossary = 0, inference = 0;
+        f.plugin.settings.outgoingIncludeOriginal = true;
+        if (options.language) f.plugin.settings.outgoingLanguage = options.language;
+        f.plugin.getGlossary = async () => {glossary++; return null;};
+        f.plugin.client.translate = async () => {inference++; return "x";};
+        assert.equal((await f.outgoing.submit("101", [f.payload], f.original, f.editor)).shouldClear, false);
+        assert.equal(glossary, 0); assert.equal(inference, 0); assert.equal(f.sent.length, 0);
+        assert.equal(f.editor.textContent, options.source); assert.equal(f.payload.value, options.source);
+    }
+});
+
+test("T5 minimum-length calculation matches final format for every preset and both account limits", async () => {
+    for (const [language] of Plugin.testing.LANGUAGES) for (const premiumType of [null, 2]) {
+        const limit = premiumType === 2 ? 4000 : 2000;
+        const overhead = Plugin.testing.outgoingMessageText("", "x", language, true).length;
+        for (const excess of [0, 1]) {
+            const source = "x".repeat(limit - overhead + excess), f = outgoingFixture({source, premiumType});
+            f.plugin.settings.outgoingIncludeOriginal = true; f.plugin.settings.outgoingLanguage = language;
+            let inference = 0; f.plugin.client.translate = async () => {inference++; return "x";};
+            const result = await f.outgoing.submit("101", [f.payload], f.original, f.editor);
+            assert.equal(inference, excess ? 0 : 1); assert.equal(f.sent.length, excess ? 0 : 1);
+            assert.equal(result.shouldClear, !excess);
+            if (!excess) assert.equal(f.sent[0][0].value.length, limit);
+        }
+    }
+});
+
+test("T5 unsafe translated Markdown keeps the draft after one inference; no fallback sends the original", async () => {
+    const f = outgoingFixture(); let inference = 0;
+    f.plugin.settings.outgoingIncludeOriginal = true;
+    f.plugin.client.translate = async () => {inference++; return "||unclosed secret";};
+    assert.equal((await f.outgoing.submit("101", [f.payload], f.original, f.editor)).shouldClear, false);
+    assert.equal(inference, 1); assert.equal(f.sent.length, 0); assert.equal(f.editor.textContent, f.payload.value);
+});
+
+test("T5 a translation losing original spoiler delimiters cannot expose hidden content", async () => {
+    const f = outgoingFixture({source: "||秘密||"}); let inference = 0;
+    f.plugin.settings.outgoingIncludeOriginal = true;
+    f.plugin.client.translate = async () => {inference++; return "secret";};
+    assert.equal((await f.outgoing.submit("101", [f.payload], f.original, f.editor)).shouldClear, false);
+    assert.equal(inference, 1); assert.equal(f.sent.length, 0); assert.equal(f.editor.textContent, "||秘密||");
 });
 
 test("changing inclusion of the original cancels an in-flight send and cannot submit the old format", async () => {

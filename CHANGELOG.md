@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+- Separated original text, translation and the AI label into independent paragraphs to preserve closing code fences and ordinary quote/list boundaries.
+- Reject unclosed code/spoiler markers and Discord quotes that extend across sections, retaining the draft instead of silently changing its formatting. Translations that lose original spoiler markers are also rejected.
+- Check minimum possible bilingual message length and target-language label support before glossary lookup or model inference. The final complete-length check remains in place.
+- Added regression coverage for Markdown boundaries, zero-inference rejection and every preset target at both account length limits.
+
 ## 0.9.2 — 2026-10-14
 
 - Added an immediately saved, default-off setting to include the original when translating before sending. A single message contains the original, a newline, the translation and an AI translation label in the selected target language.

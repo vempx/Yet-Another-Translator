@@ -145,5 +145,6 @@
   "includeOriginal": "Include original when sending",
   "includeOriginalHelp": "Saved immediately. Send the original, a newline and the translation with an AI translation label in the target language. When off, send only the translation.",
   "outgoingTooLong": "The complete message exceeds the Discord limit. Shorten the original or turn off inclusion of the original.",
-  "unsupportedAiLabel": "To include the original, select a supported outgoing language from the menu."
+  "unsupportedAiLabel": "To include the original, select a supported outgoing language from the menu.",
+  "outgoingMarkdownBoundary": "The original or translation contains unclosed code/spoiler markers or a quote spanning sections. Fix the formatting or turn off inclusion of the original. Your draft was kept."
 }

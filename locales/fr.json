@@ -145,5 +145,6 @@
   "includeOriginal": "Inclure le texte original à l’envoi",
   "includeOriginalHelp": "Enregistré immédiatement. Envoie l’original, un saut de ligne et la traduction, avec une mention de traduction par IA dans la langue cible. Sinon, envoie uniquement la traduction.",
   "outgoingTooLong": "Le message complet dépasse la limite Discord. Raccourcissez l’original ou désactivez son inclusion.",
-  "unsupportedAiLabel": "Pour inclure l’original, sélectionnez une langue d’envoi prise en charge dans le menu."
+  "unsupportedAiLabel": "Pour inclure l’original, sélectionnez une langue d’envoi prise en charge dans le menu.",
+  "outgoingMarkdownBoundary": "L’original ou la traduction contient du code ou un spoiler non fermé, ou une citation couvrant plusieurs sections. Corrigez le format ou désactivez l’original. Le brouillon est conservé."
 }

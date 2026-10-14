@@ -145,5 +145,6 @@
   "includeOriginal": "Incluir el original al enviar",
   "includeOriginalHelp": "Se guarda inmediatamente. Envía el original, un salto de línea y la traducción con una etiqueta de traducción por IA en el idioma de destino. Desactivado, solo envía la traducción.",
   "outgoingTooLong": "El mensaje completo supera el límite de Discord. Acorta el original o desactiva su inclusión.",
-  "unsupportedAiLabel": "Para incluir el original, selecciona un idioma de envío compatible en el menú."
+  "unsupportedAiLabel": "Para incluir el original, selecciona un idioma de envío compatible en el menú.",
+  "outgoingMarkdownBoundary": "El original o la traducción contiene código o spoilers sin cerrar, o una cita que abarca varias secciones. Corrige el formato o desactiva el original. Se conserva el borrador."
 }

@@ -145,5 +145,6 @@
   "includeOriginal": "전송 시 원문 포함",
   "includeOriginalHelp": "즉시 저장됩니다. 원문, 줄바꿈, 번역문 순으로 전송하며 번역문에 대상 언어로 AI 번역 표시를 붙입니다. 끄면 번역문만 전송합니다.",
   "outgoingTooLong": "전체 메시지가 Discord 길이 제한을 초과합니다. 원문을 줄이거나 원문 포함을 꺼 주세요.",
-  "unsupportedAiLabel": "원문을 포함하려면 전송 언어 메뉴에서 지원되는 언어를 선택하세요."
+  "unsupportedAiLabel": "원문을 포함하려면 전송 언어 메뉴에서 지원되는 언어를 선택하세요.",
+  "outgoingMarkdownBoundary": "원문이나 번역문에 닫히지 않은 코드·스포일러 표시 또는 구간을 넘는 인용이 있습니다. 형식을 수정하거나 원문 포함을 꺼 주세요. 초안은 유지됩니다."
 }

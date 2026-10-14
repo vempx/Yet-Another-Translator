@@ -145,5 +145,6 @@
   "includeOriginal": "Original beim Senden hinzufügen",
   "includeOriginalHelp": "Wird sofort gespeichert. Sendet Original, Zeilenumbruch und Übersetzung mit einem KI-Hinweis in der Zielsprache. Ausgeschaltet wird nur die Übersetzung gesendet.",
   "outgoingTooLong": "Die gesamte Nachricht überschreitet das Discord-Limit. Kürzen Sie das Original oder deaktivieren Sie dessen Aufnahme.",
-  "unsupportedAiLabel": "Wählen Sie eine unterstützte ausgehende Sprache im Menü, um das Original hinzuzufügen."
+  "unsupportedAiLabel": "Wählen Sie eine unterstützte ausgehende Sprache im Menü, um das Original hinzuzufügen.",
+  "outgoingMarkdownBoundary": "Original oder Übersetzung enthält nicht geschlossene Code-/Spoiler-Markierungen oder ein abschnittsübergreifendes Zitat. Korrigieren Sie die Formatierung oder deaktivieren Sie das Original. Der Entwurf bleibt erhalten."
 }
