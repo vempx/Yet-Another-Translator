@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Settings now use a draft with Save and close and Cancel in the native modal footer. All edits apply together when saved; cancellation and dismissal discard them. Connection tests use the draft without persisting it. Custom API ports are retained.
+- Render translated Markdown through Discord's Markdown engine while preserving special emoji, mentions and hidden spoilers. Unsafe links, HTML and external image embeds are filtered.
+- Show ordinary AI translation labels inline with smaller muted text locally; retain safe separators for code blocks, quotes and lists.
 - Added local/online model service selection with HTTPS Chat Completions-compatible endpoints, provider-specific base paths, model IDs and Bearer API keys. Online connection tests with a specified model use a short synthetic message without requiring a models endpoint.
 - Renamed the plugin file to `YetAnotherTranslator.plugin.js` and the default glossary folder to `YetAnotherTranslator-glossaries`. Updated installation instructions, build scripts and tests.
 

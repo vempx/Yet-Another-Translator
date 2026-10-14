@@ -162,5 +162,7 @@
   "onlineConnectionSuccess": "연결됨: {model}. 짧은 테스트 요청이 완료되었습니다.",
   "openTranslator": "번역기 열기",
   "manualTranslator": "번역기",
-  "onlineContextHelp": "제공업체 모델의 문맥 용량을 입력하세요. 입력과 예약 출력을 포함합니다. 보수적으로 추정하며 본문을 자르지 않고 참고 내용을 줄입니다."
+  "onlineContextHelp": "제공업체 모델의 문맥 용량을 입력하세요. 입력과 예약 출력을 포함합니다. 보수적으로 추정하며 본문을 자르지 않고 참고 내용을 줄입니다.",
+  "saveAndClose": "저장 후 닫기",
+  "settingsChangesHelp": "이 페이지의 변경은 저장 후 닫기를 눌러야 적용됩니다. 취소하거나 창을 닫으면 버립니다."
 }

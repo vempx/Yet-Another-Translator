@@ -9,36 +9,78 @@ const path = require("node:path");
 function load(BdApi, environment = {}) {
     const sandbox = {module: {exports: {}}, require, __dirname, URL, AbortController, TextDecoder, setTimeout, clearTimeout, BdApi, ...environment};
     vm.runInNewContext(fs.readFileSync(`${__dirname}/YetAnotherTranslator.plugin.js`, "utf8") +
-        "\nmodule.exports.testing = {DEFAULTS, validateSettings, TranslationClient, AutoTranslator, areaTopicFor, GlossaryStore, OutgoingTranslator, referenceContext, orderedReferences, renderMessageEmoji, I18n, t, languageLabel, UI_MESSAGES, uiError, errorForUi, uiText, outgoingMessageText, LANGUAGES};", sandbox);
+        "\nmodule.exports.testing = {DEFAULTS, validateSettings, TranslationClient, AutoTranslator, areaTopicFor, GlossaryStore, OutgoingTranslator, referenceContext, orderedReferences, renderMessageEmoji, I18n, t, languageLabel, UI_MESSAGES, uiError, errorForUi, uiText, outgoingMessageText, LANGUAGES, bindSettingsFooter, renderTranslatedMessage};", sandbox);
     return sandbox.module.exports;
 }
 const Plugin = load();
 const {DEFAULTS, validateSettings, TranslationClient, AutoTranslator, areaTopicFor, GlossaryStore} = Plugin.testing;
 
-test("default language persists immediately without Save, deduplicates native events and preserves other drafts", () => {
-    const host = settingsHost({autoTranslate: false}, {deferUpdates: true});
-    const panel = host.plugin.getSettingsPanel();
-    let tree = host.render(panel), restarts = 0;
-    host.plugin.restartAutoTranslation = () => restarts++;
-    find(tree, node => node.props?.name === "model").props.onInput({target: {value: "unsaved model"}});
-    find(tree, node => node.props?.name === "baseUrl").props.onInput({target: {value: "unfinished URL"}});
-    tree = host.render(panel);
-    const select = find(tree, node => node.props?.name === "targetLanguage");
-    select.props.onInput({target: {value: "日本語"}});
-    select.props.onChange({target: {value: "日本語"}});
-    assert.equal(host.writes.length, 1);
-    assert.equal(host.writes[0].value.targetLanguage, "日本語");
-    assert.equal(host.plugin.settings.targetLanguage, "日本語");
-    assert.equal(host.writes[0].value.model, DEFAULTS.model);
-    assert.equal(host.writes[0].value.baseUrl, DEFAULTS.baseUrl);
-    assert.equal(host.writes[0].value.autoTranslate, false);
-    assert.equal(host.writes[0].value.outgoingLanguage, "English");
-    assert.equal(restarts, 1);
-    tree = host.render(panel);
-    assert.equal(find(tree, node => node.props?.name === "model").props.value, "unsaved model");
-    assert.equal(find(tree, node => node.props?.name === "baseUrl").props.value, "unfinished URL");
-    const reopened = settingsHost(host.writes[0].value), reopenedPanel = reopened.plugin.getSettingsPanel();
-    assert.equal(find(reopened.render(reopenedPanel), node => node.props?.name === "targetLanguage").props.value, "日本語");
+test("native settings footer saves before closing, blocks invalid saves and cancels while testing without saving", async () => {
+    let closes=0,saves=0,cancels=0,valid=false;
+    const parent={children:[],append(node){this.children.push(node);node.parentElement=this;}};
+    function button(){return {type:"submit",textContent:"完成",disabled:false,style:{},isConnected:true,attributes:{},listeners:new Set(),
+        setAttribute(key,value){this.attributes[key]=value;},getAttribute(key){return this.attributes[key];},removeAttribute(key){delete this.attributes[key];},
+        addEventListener(type,handler){this.listeners.add(handler);},removeEventListener(type,handler){this.listeners.delete(handler);},cloneNode(){return button();},
+        remove(){parent.children=parent.children.filter(node=>node!==this);},click(){
+            if(this.disabled||this.clicking)return;this.clicking=true;let blocked=false;
+            const event={preventDefault(){},stopPropagation(){},stopImmediatePropagation(){blocked=true;}};
+            for(const listener of this.listeners)listener(event);
+            if(!blocked){if(this.onclick)this.onclick(event);else closes++;}this.clicking=false;
+        }};}
+    const confirm=button();parent.append(confirm);
+    const modal={querySelectorAll:()=>[confirm]},panel={ownerDocument:{createElement:()=>button()},contains:()=>false,closest:()=>modal,setAttribute(){},removeAttribute(){}};
+    const actions={current:{busy:false,save:()=>{saves++;return valid;},cancel:()=>cancels++}};
+    let binding=Plugin.testing.bindSettingsFooter(panel,actions);
+    assert.equal(confirm.textContent,"保存并关闭");confirm.click();await Promise.resolve();assert.equal(saves,1);assert.equal(closes,0);
+    valid=true;confirm.click();confirm.click();assert.equal(saves,2);await Promise.resolve();assert.equal(closes,1);
+    binding.cleanup();assert.equal(confirm.textContent,"完成");assert.equal(parent.children.length,1);
+    binding=Plugin.testing.bindSettingsFooter(panel,actions);actions.current.busy=true;binding.refresh();
+    assert.equal(confirm.disabled,true);parent.children[1].click();assert.equal(cancels,1);assert.equal(saves,2);assert.equal(closes,2);
+    binding.cleanup();assert.equal(confirm.listeners.size,0);
+});
+
+test("connection testing uses edited configuration without persisting it and cancellation discards it", async () => {
+    const host=settingsHost({}, {runEffects:true}),panel=host.plugin.getSettingsPanel();let tree=host.render(panel),tested;
+    find(tree,node=>node.props?.name==="baseUrl").props.onInput({target:{value:"http://localhost:12345/v1"}});
+    host.plugin.client.testConnection=async settings=>{tested=settings;return {models:["test-model"],generated:false};};
+    tree=host.render(panel);await find(tree,node=>node.type==="button"&&node.props.children[0]==="测试连接").props.onClick();
+    assert.equal(tested.baseUrl,"http://localhost:12345/v1");assert.equal(host.writes.length,0);assert.equal(host.plugin.settings.baseUrl,DEFAULTS.baseUrl);
+    tree=host.render(panel);find(tree,node=>node.type==="button"&&node.props.children[0]==="取消").props.onClick();
+    assert.equal(host.writes.length,0);host.cleanup();
+});
+
+test("Markdown renderer delegates formatting, protects emoji/mentions/spoilers and filters unsafe links and HTML", () => {
+    const h=(type,props,...children)=>({type,props:{...props,children}});let rendered,prepared,unmounts=0;
+    const markdown={defaultBlockParse(text){prepared=text;return text;},defaultReactOutput(text){return h("div",null,h("strong",null,text),h("a",{href:"javascript:alert(1)"},"bad"),h("img",{src:"https://example.com/pixel",alt:"image"}),h("div",{dangerouslySetInnerHTML:{__html:"bad"}},"safe"));}};
+    const React={createElement:h,cloneElement:(value,props,...children)=>h(value.type,{...value.props,...props},...children)};
+    const Local=load({React,ReactDOM:{createRoot:()=>({render:value=>rendered=value,unmount:()=>unmounts++})},Webpack:{getByKeys:key=>key==="defaultReactOutput"?markdown:null}});
+    const text="**bold** <:smile:1409648830307369061> <@101> ||**secret**|| (AI translation)";
+    const cleanup=Local.testing.renderTranslatedMessage({},text,{text},{});
+    assert.ok(prepared.includes("**bold**"));assert.ok(!prepared.includes("<@101>"));assert.ok(!prepared.includes("||**secret**||"));
+    assert.ok(find(rendered,node=>node.type==="strong"));assert.ok(find(rendered,node=>node.props?.className==="lt-ai-label"));
+    assert.equal(find(rendered,node=>node.type==="img"),undefined);assert.equal(find(rendered,node=>node.props?.href?.startsWith("javascript:")),undefined);
+    assert.equal(find(rendered,node=>node.props?.dangerouslySetInnerHTML),undefined);cleanup();cleanup();assert.equal(unmounts,1);
+});
+
+test("settings cancellation discards every field and save-and-close commits the current batched draft", () => {
+    const host=settingsHost({}, {deferUpdates:true}), panel=host.plugin.getSettingsPanel(); let tree=host.render(panel);
+    const field=name=>find(tree,node=>node.props?.name===name);
+    field("baseUrl").props.onInput({target:{value:"unfinished URL"}});
+    field("model").props.onInput({target:{value:"unsaved"}});
+    field("targetLanguage").props.onChange({target:{value:"日本語"}});
+    field("outgoingIncludeOriginal").props.onChange({target:{checked:true}});
+    assert.equal(host.writes.length,0); assert.equal(host.plugin.settings.targetLanguage,"简体中文");
+    find(tree,node=>node.type==="button"&&node.props.children[0]==="取消").props.onClick();
+    tree=host.render(panel); assert.equal(field("baseUrl").props.value,DEFAULTS.baseUrl);
+    assert.equal(field("targetLanguage").props.value,"简体中文"); assert.equal(host.writes.length,0);
+    field("baseUrl").props.onInput({target:{value:"http://localhost:12345"}});
+    field("model").props.onInput({target:{value:"saved-model"}});
+    field("targetLanguage").props.onChange({target:{value:"日本語"}});
+    field("outgoingIncludeOriginal").props.onChange({target:{checked:true}});
+    find(tree,node=>node.type==="button"&&node.props.children[0]==="保存并关闭").props.onClick();
+    assert.equal(host.writes.length,1);const saved=host.writes[0].value;
+    assert.equal(saved.baseUrl,"http://localhost:12345/v1");assert.equal(saved.model,"saved-model");
+    assert.equal(saved.targetLanguage,"日本語");assert.equal(saved.outgoingIncludeOriginal,true);
 });
 
 test("T4 settings preserve a newer external default until the user explicitly edits the default", () => {
@@ -48,33 +90,23 @@ test("T4 settings preserve a newer external default until the user explicitly ed
     host.plugin.settings.targetLanguage = "日本語";
     find(tree, node => node.props?.name === "model").props.onInput({target: {value: "changed model"}});
     tree = host.render(panel);
-    find(tree, node => node.type === "button" && node.props.children[0] === "保存设置").props.onClick();
+    find(tree, node => node.type === "button" && node.props.children[0] === "保存并关闭").props.onClick();
     assert.equal(host.writes.at(-1).value.targetLanguage, "日本語");
     tree = host.render(panel);
     find(tree, node => node.props?.name === "targetLanguage").props.onInput({target: {value: "English"}});
     tree = host.render(panel);
-    find(tree, node => node.type === "button" && node.props.children[0] === "保存设置").props.onClick();
+    find(tree, node => node.type === "button" && node.props.children[0] === "保存并关闭").props.onClick();
     assert.equal(host.writes.at(-1).value.targetLanguage, "English");
     assert.equal(host.plugin.settings.targetLanguage, "English");
 });
 
-test("T4 explicit apply resets same-language overrides while ordinary save preserves them and auto off", () => {
-    const host = settingsHost({autoTranslate: false});
-    const panel = host.plugin.getSettingsPanel();
-    let tree = host.render(panel), restarts = 0;
-    host.plugin.restartAutoTranslation = () => restarts++;
-    find(tree, node => node.type === "button" && node.props.children[0] === "保存设置").props.onClick({type: "click"});
-    assert.equal(restarts, 0);
-    tree = host.render(panel);
-    find(tree, node => node.type === "button" && node.props.children[0] === "应用默认语言并清除单条覆盖").props.onClick();
-    assert.equal(restarts, 1);
-    assert.equal(host.writes.at(-1).value.autoTranslate, false);
-    assert.equal(host.writes.at(-1).value.outgoingLanguage, "English");
-    tree = host.render(panel);
-    find(tree, node => node.props?.name === "targetLanguage").props.onChange({target: {value: DEFAULTS.targetLanguage}});
-    tree = host.render(panel);
-    find(tree, node => node.type === "button" && node.props.children[0] === "保存设置").props.onClick();
-    assert.equal(restarts, 1);
+test("explicit default-language reset is deferred until save-and-close and keeps auto off", () => {
+    const host=settingsHost({autoTranslate:false}),panel=host.plugin.getSettingsPanel();let tree=host.render(panel), restarts=0;
+    host.plugin.restartAutoTranslation=()=>restarts++;
+    find(tree,node=>node.type==="button"&&node.props.children[0]==="应用默认语言并清除单条覆盖").props.onClick();
+    assert.equal(restarts,0);assert.equal(host.writes.length,0);
+    find(tree,node=>node.type==="button"&&node.props.children[0]==="保存并关闭").props.onClick();
+    assert.equal(restarts,1);assert.equal(host.writes[0].value.autoTranslate,false);
 });
 
 test("T4 known errors and nested parameters follow locale; external errors remain untouched", () => {
@@ -100,7 +132,7 @@ test("T4 settings validation already on screen updates without retry or inferenc
     let tree = host.render(panel);
     find(tree, node => node.props?.name === "timeoutSeconds").props.onInput({target: {value: "1"}});
     tree = host.render(panel);
-    find(tree, node => node.type === "button" && node.props.children[0] === "保存设置").props.onClick();
+    find(tree, node => node.type === "button" && node.props.children[0] === "保存并关闭").props.onClick();
     tree = host.render(panel);
     assert.match(find(tree, node => node.props?.role === "alert").props.children[0], /超时秒数/);
     host.setLocale("en-US"); tree = host.render(panel);
@@ -172,7 +204,7 @@ test("T4 settings dropdown reaches persisted config, rebuilt queue and next requ
     let tree = host.render(panel);
     find(tree, node => node.props?.name === "targetLanguage").props.onChange({target: {value: "日本語"}});
     tree = host.render(panel);
-    find(tree, node => node.type === "button" && node.props.children[0] === "保存设置").props.onClick();
+    find(tree, node => node.type === "button" && node.props.children[0] === "保存并关闭").props.onClick();
     assert.equal(host.writes.at(-1).value.targetLanguage, "日本語");
     assert.equal(host.plugin.settings.targetLanguage, "日本語");
     assert.equal(chat.auto.settings.targetLanguage, "日本語");
@@ -252,7 +284,7 @@ test("bilingual sending preserves raw original, payload and reply, using the tar
             assert.equal(context.glossary.entries[0].zh, "专武"); return translation;
         };
         await f.outgoing.submit("101", [f.payload, f.extra], f.original, f.editor);
-        assert.equal(f.sent[0][0].value, source + "\n\n" + translation + "\n\n" + marker);
+        assert.equal(f.sent[0][0].value, source + "\n\n" + translation + " " + marker);
         assert.equal(f.sent[0][0].attachments, f.payload.attachments); assert.equal(f.sent[0][1], f.extra);
         assert.equal(f.payload.value, source); assert.equal(requests, 1);
     }
@@ -262,9 +294,9 @@ test("AI translation markers cover all preset targets and follow target language
     const Local = load({Webpack: {getStore: () => ({getLocale: () => "en-US"})}});
     for (const [language] of Local.testing.LANGUAGES) {
         const text = Local.testing.outgoingMessageText("source", "translated", language, true);
-        assert.ok(text.startsWith("source\n\ntranslated\n\n")); assert.match(text, /[）)]$/);
+        assert.ok(text.startsWith("source\n\ntranslated ")); assert.match(text, /[）)]$/);
     }
-    assert.equal(Local.testing.outgoingMessageText("source", "translated", "日本語", true), "source\n\ntranslated\n\n（AI翻訳）");
+    assert.equal(Local.testing.outgoingMessageText("source", "translated", "日本語", true), "source\n\ntranslated （AI翻訳）");
     assert.equal(Local.testing.outgoingMessageText("source", "translated", "日本語", false), "translated");
     assert.throws(() => Local.testing.outgoingMessageText("source", "translated", "custom unknown language", true), /supported/);
 });
@@ -281,7 +313,8 @@ test("bilingual send checks complete length and keeps the draft when original pl
 test("T5 Markdown sections and the AI marker remain separate from closed code, quotes, lists and spoilers", () => {
     const format = Plugin.testing.outgoingMessageText;
     for (const text of ["plain", "```js\nconsole.log('hello')\n```", "> quoted", "- first\n- second", "||secret||", "`code`", "\\`literal", "```\n>>> literal ||\n```", "````js\n```\n````"]) {
-        assert.equal(format(text, text, "English", true), `${text}\n\n${text}\n\n(AI translation)`);
+        const separator = /`{3,}|^[ \t]*(?:>|[-*+]\s|\d+[.)]\s)/m.test(text) ? "\n\n" : " ";
+        assert.equal(format(text, text, "English", true), `${text}\n\n${text}${separator}(AI translation)`);
         assert.equal(format(text, text, "English", false), text);
     }
 });
@@ -427,17 +460,12 @@ test("changing inclusion of the original cancels an in-flight send and cannot su
     assert.equal((await pending).shouldClear, false); assert.equal(f.sent.length, 0);
 });
 
-test("include-original setting saves immediately without saving other drafts, survives reopening and defaults off", () => {
-    const host = settingsHost(), panel = host.plugin.getSettingsPanel(); let tree = host.render(panel);
-    const control = () => find(tree, node => node.props?.name === "outgoingIncludeOriginal");
-    assert.equal(control().props.checked, false);
-    find(tree, node => node.props?.name === "model").props.onInput({target: {value: "unsaved"}});
-    tree = host.render(panel); control().props.onChange({target: {checked: true}});
-    assert.equal(host.writes[0].value.outgoingIncludeOriginal, true); assert.equal(host.writes[0].value.model, "");
-    tree = host.render(panel); assert.equal(control().props.checked, true);
-    assert.equal(find(tree, node => node.props?.name === "model").props.value, "unsaved");
-    const reopened = settingsHost(host.writes[0].value), newPanel = reopened.plugin.getSettingsPanel();
-    assert.equal(find(reopened.render(newPanel), node => node.props?.name === "outgoingIncludeOriginal").props.checked, true);
+test("include-original settings remain a draft until save-and-close", () => {
+    const host=settingsHost(),panel=host.plugin.getSettingsPanel();let tree=host.render(panel);
+    find(tree,node=>node.props?.name==="outgoingIncludeOriginal").props.onChange({target:{checked:true}});
+    assert.equal(host.writes.length,0);assert.equal(host.plugin.settings.outgoingIncludeOriginal,false);
+    tree=host.render(panel);find(tree,node=>node.type==="button"&&node.props.children[0]==="保存并关闭").props.onClick();
+    assert.equal(host.writes[0].value.outgoingIncludeOriginal,true);
 });
 
 test("outgoing duplicate submissions, edited drafts, changed replies, navigation and cancellation cannot send", async () => {
@@ -596,7 +624,7 @@ test("settings configure and persist online mode without changing receive or sen
     for (const [name, value] of [["providerMode", "online"], ["baseUrl", "https://api.example.test/api/v1"], ["model", "provider/model"], ["apiKey", "test-key"]]) {
         find(tree, node => node.props?.name === name).props.onChange({target: {value}}); tree = host.render(panel);
     }
-    find(tree, node => node.type === "button" && node.props.children[0] === "保存设置").props.onClick();
+    find(tree, node => node.type === "button" && node.props.children[0] === "保存并关闭").props.onClick();
     const value = host.writes.at(-1).value;
     assert.equal(value.providerMode, "online"); assert.equal(value.baseUrl, "https://api.example.test/api/v1");
     assert.equal(value.model, "provider/model"); assert.equal(value.apiKey, "test-key");
@@ -625,6 +653,25 @@ test("requests use the updated port without doubling /chat/completions", async (
     });
     await client.translate("你好", {...DEFAULTS, baseUrl: "http://localhost:9090/v1/chat/completions", targetLanguage: "English"});
     assert.deepEqual(urls, ["http://localhost:9090/v1/models", "http://localhost:9090/v1/chat/completions"]);
+});
+
+test("settings save sends subsequent local and online requests to the edited port, including cache bypass", async () => {
+    for (const [providerMode, baseUrl] of [["local", "http://127.0.0.1:9031/v1"], ["local", "http://localhost:12345/v1"], ["online", "https://api.example.test:9443/api/v1"]]) {
+        const host = settingsHost({model: "test-model"}), panel = host.plugin.getSettingsPanel(), calls = [];
+        host.plugin.client = new TranslationClient(async (url, options) => {
+            calls.push(url);
+            return {status: 200, arrayBuffer: async () => Buffer.from(JSON.stringify({choices: [{message: {content: "translated"}}]}))};
+        });
+        await host.plugin.client.translate("你好", host.plugin.settings);
+        let tree = host.render(panel);
+        find(tree, node => node.props?.name === "providerMode").props.onChange({target: {value: providerMode}});
+        find(tree, node => node.props?.name === "baseUrl").props.onInput({target: {value: baseUrl}});
+        tree = host.render(panel);
+        find(tree, node => node.type === "button" && node.props.children[0] === "保存并关闭").props.onClick();
+        assert.equal(host.writes.at(-1).value.baseUrl, baseUrl); assert.equal(host.plugin.settings.baseUrl, baseUrl);
+        await host.plugin.client.translate("你好", host.plugin.settings);
+        assert.equal(calls.length, 2); assert.equal(calls[1], baseUrl + "/chat/completions");
+    }
 });
 
 test("discussion topic resolves text channels, forum posts and threads by their own IDs", () => {
@@ -784,15 +831,15 @@ test("Discord UI locale changes update settings labels without remounting or alt
     const panel = host.plugin.getSettingsPanel();
     let tree = host.render(panel);
     assert.equal(find(tree, node => node.type === "h2").props.children[0], "LLM message translation");
-    assert.ok(find(tree, node => node.type === "button" && node.props.children[0] === "Save settings"));
+    assert.ok(find(tree, node => node.type === "button" && node.props.children[0] === "Save and close"));
     find(tree, node => node.props.name === "baseUrl").props.onInput({currentTarget: {value: "http://localhost:9000"}});
     host.setLocale("ja"); tree = host.render(panel);
     assert.equal(find(tree, node => node.props.name === "baseUrl").props.value, "http://localhost:9000");
     assert.equal(find(tree, node => node.props.name === "targetLanguage").props.value, "简体中文");
-    assert.ok(find(tree, node => node.type === "button" && node.props.children[0] === "設定を保存"));
+    assert.ok(find(tree, node => node.type === "button" && node.props.children[0] === "保存して閉じる"));
     assert.equal(host.plugin.getSettingsPanel().type, panel.type);
     host.setLocale("zh-TW"); tree = host.render(panel);
-    assert.ok(find(tree, node => node.type === "button" && node.props.children[0] === "儲存設定"));
+    assert.ok(find(tree, node => node.type === "button" && node.props.children[0] === "儲存並關閉"));
     assert.equal(host.writes.length, 0);
     host.cleanup(); assert.equal(host.localeListeners.size, 0);
 });
@@ -916,7 +963,7 @@ test("disabled settings panel edits and saves the API address and repairs invali
     assert.equal(input.props.disabled, false);
     input.props.onChange({target: {value: "http://localhost:9090/v1/chat/completions"}});
     tree = host.render(panel);
-    const save = find(tree, node => node.type === "button" && node.props.children[0] === "保存设置");
+    const save = find(tree, node => node.type === "button" && node.props.children[0] === "保存并关闭");
     assert.equal(save.props.disabled, false);
     save.props.onClick();
     assert.equal(host.writes.length, 1);
@@ -947,8 +994,8 @@ test("all six settings accept edits through input events with deferred React upd
         tree = host.render(panel);
         assert.equal(find(tree, node => node.props?.name === key).props.value, value);
     }
-    find(tree, node => node.type === "button" && node.props.children[0] === "保存设置").props.onClick();
-    assert.equal(host.writes.length, 2);
+    find(tree, node => node.type === "button" && node.props.children[0] === "保存并关闭").props.onClick();
+    assert.equal(host.writes.length, 1);
     assert.equal(host.writes.at(-1).value.baseUrl, "http://localhost:9090/v1");
     for (const key of ["model", "apiKey", "targetLanguage"]) assert.equal(host.writes.at(-1).value[key], changes[key]);
     assert.equal(host.writes.at(-1).value.timeoutSeconds, 240);
@@ -970,7 +1017,7 @@ test("numeric settings can be cleared and retyped without resetting other unsave
         tree = host.render(panel);
         assert.equal(input("timeoutSeconds").props.value, value);
     }
-    find(tree, node => node.type === "button" && node.props.children[0] === "保存设置").props.onClick();
+    find(tree, node => node.type === "button" && node.props.children[0] === "保存并关闭").props.onClick();
     assert.equal(host.writes[0].value.timeoutSeconds, 300);
     assert.equal(host.writes[0].value.model, "unsaved model");
 });
@@ -1328,7 +1375,7 @@ test("area context menu registers a channel and settings show its editable gloss
     const value = path.join(__dirname, "my-custom-terms.json");
     input.props.onInput({currentTarget: {value}});
     const updated = host.render(host.plugin.getSettingsPanel());
-    find(updated, node => node.type === "button" && node.props.children[0] === "保存设置").props.onClick();
+    find(updated, node => node.type === "button" && node.props.children[0] === "保存并关闭").props.onClick();
     assert.equal(host.plugin.settings.customAreas[channel.id].glossaryPath, value);
 });
 

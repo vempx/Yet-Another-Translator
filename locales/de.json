@@ -162,5 +162,7 @@
   "onlineConnectionSuccess": "Verbunden: {model}. Kurze Testanfrage abgeschlossen.",
   "openTranslator": "Übersetzer öffnen",
   "manualTranslator": "Übersetzer",
-  "onlineContextHelp": "Kontextkapazität des Anbietermodells einschließlich Eingabe und reservierter Ausgabe verwenden. Konservative Schätzungen reduzieren Referenzen, ohne den Text abzuschneiden."
+  "onlineContextHelp": "Kontextkapazität des Anbietermodells einschließlich Eingabe und reservierter Ausgabe verwenden. Konservative Schätzungen reduzieren Referenzen, ohne den Text abzuschneiden.",
+  "saveAndClose": "Speichern und schließen",
+  "settingsChangesHelp": "Änderungen werden erst mit Speichern und schließen angewendet. Abbrechen oder Schließen verwirft sie."
 }

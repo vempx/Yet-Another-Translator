@@ -162,5 +162,7 @@
   "onlineConnectionSuccess": "Connected: {model}. The short test request completed.",
   "openTranslator": "Open translator",
   "manualTranslator": "Translator",
-  "onlineContextHelp": "Use the model context capacity documented by the provider, including input and reserved output. Conservative estimates reduce references when needed without truncating the message."
+  "onlineContextHelp": "Use the model context capacity documented by the provider, including input and reserved output. Conservative estimates reduce references when needed without truncating the message.",
+  "saveAndClose": "Save and close",
+  "settingsChangesHelp": "Changes on this page apply only with Save and close. Cancel or closing the window discards them."
 }

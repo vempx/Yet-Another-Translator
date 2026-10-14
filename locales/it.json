@@ -162,5 +162,7 @@
   "onlineConnectionSuccess": "Connesso: {model}. Breve test completato.",
   "openTranslator": "Apri traduttore",
   "manualTranslator": "Traduttore",
-  "onlineContextHelp": "Usa la capacità del contesto del modello, inclusi input e output riservato. La stima riduce i riferimenti senza troncare il messaggio."
+  "onlineContextHelp": "Usa la capacità del contesto del modello, inclusi input e output riservato. La stima riduce i riferimenti senza troncare il messaggio.",
+  "saveAndClose": "Salva e chiudi",
+  "settingsChangesHelp": "Le modifiche si applicano con Salva e chiudi. Annulla o chiudere la finestra le scarta."
 }

@@ -10,7 +10,7 @@ An LLM-powered BetterDiscord plugin for automatic message translation, individua
 - **Per-message language selection:** Click a source-language badge to change that message's target or permanently switch the global default.
 - **Translate before sending:** Translates drafts while retaining replies and attachments. Optionally includes the original and an AI translation label in the target language.
 - **Context and terminology:** Uses channel topics, nearby messages, quoted originals, and custom glossaries.
-- **Message display:** Supports custom emoji, mentions, and spoilers hidden until revealed. View originals or request fresh translations.
+- **Message display:** Preserves Markdown formatting, custom emoji, mentions, and spoilers hidden until revealed. View originals or request fresh translations.
 - **Manual translator:** Enter text, select a target language, and copy the result.
 - **Localized interface:** Follows Discord's language. Supports Simplified Chinese, Traditional Chinese, English, Japanese, Korean, French, German, Spanish, Portuguese, Russian, and Italian, with English as the fallback.
 
@@ -21,7 +21,7 @@ An LLM-powered BetterDiscord plugin for automatic message translation, individua
 1. Download the plugin ZIP from [Releases](https://github.com/vempx/Yet-Another-Translator/releases), extract it, and name the plugin file `YetAnotherTranslator.plugin.js`.
 2. Open the plugins folder from BetterDiscord settings, place the file there, and enable it. When upgrading, replace the old plugin and keep only one copy.
 3. Select Local or Online under Model service type, then enter the API base URL, model ID and required API key. Local supports the service root or `/v1`. Online preserves provider paths such as `https://api.deepseek.com/v1` or `https://openrouter.ai/api/v1`; full `/chat/completions` URLs are also accepted. Online endpoints must support Chat Completions.
-4. Save settings, then test the connection. Specify a model name when multiple models are available. Set the context capacity and maximum output length to values supported by the service.
+4. Test the connection using the current form without saving. Then choose Save and close in the modal footer to apply changes. Cancel or dismissing the window discards edits. Specify a model name when multiple models are available, and use supported context/output limits. The port entered in the URL is used; 8080 is only the default.
 
 Online connection tests with a specified model send one short synthetic message, potentially incurring provider charges, without sending chat history. Without a model ID, `/models` is used for discovery. Providers without that endpoint require a model ID. See the [DeepSeek](https://api-docs.deepseek.com/guides/multi_round_chat/) and [OpenRouter](https://openrouter.ai/docs/api/api-reference/chat/send-chat-completion-request) API documentation for endpoint details.
 
@@ -29,7 +29,7 @@ Online connection tests with a specified model send one short synthetic message,
 
 - Enable automatic translation in settings or the message context menu. Successful translations replace the displayed originals; use the context menu to view the original. Disabling automatic translation restores the originals.
 - Use the message context menu to translate an individual message or translate it again. Manual translations retain the original when automatic translation is off.
-- Selecting a default target language in settings saves and applies it immediately. Use the explicit apply-and-clear-overrides action to remove per-message overrides.
+- The settings target language applies with Save and close. To remove per-message overrides, select the explicit apply-and-clear-overrides action before saving.
 - Click a source-language badge, then a language name to retranslate just that message. The circular arrows permanently change the global default and enable automatic translation, including for other channels and future plugin sessions.
 - Open the manual translator from the context menu to translate text you enter yourself.
 
@@ -38,7 +38,7 @@ Online connection tests with a specified model send one short synthetic message,
 1. Click the paper-plane icon with an A next to the message box. A highlighted icon means the feature is enabled.
 2. Select the outgoing target language beside it. This is independent of the default language for incoming messages.
 3. Type your message and press Enter or click Send. The plugin translates it before submission.
-4. For bilingual messages, enable the include-original option in settings. It saves immediately and is off by default. The original, translation, and AI label are separated by blank lines.
+4. For bilingual messages, enable the include-original option and save. It is off by default. The original and translation are separated by a blank line; ordinary translations have an inline AI label styled smaller and gray by this plugin. Code blocks, quotes and lists retain a separate label for safe formatting. Font size and color apply locally for plugin users.
 
 ### Use a glossary
 

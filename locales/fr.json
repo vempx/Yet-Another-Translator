@@ -162,5 +162,7 @@
   "onlineConnectionSuccess": "Connecté : {model}. Courte requête de test terminée.",
   "openTranslator": "Ouvrir le traducteur",
   "manualTranslator": "Traducteur",
-  "onlineContextHelp": "Utilisez la capacité de contexte du modèle, entrée et sortie réservée comprises. L’estimation réduit les références sans tronquer le message."
+  "onlineContextHelp": "Utilisez la capacité de contexte du modèle, entrée et sortie réservée comprises. L’estimation réduit les références sans tronquer le message.",
+  "saveAndClose": "Enregistrer et fermer",
+  "settingsChangesHelp": "Les changements sont appliqués avec Enregistrer et fermer. Annuler ou fermer la fenêtre les abandonne."
 }

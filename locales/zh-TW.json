@@ -162,5 +162,7 @@
   "onlineConnectionSuccess": "連線成功：{model}。簡短測試請求已完成。",
   "openTranslator": "開啟翻譯器",
   "manualTranslator": "翻譯器",
-  "onlineContextHelp": "按服務商模型的實際上下文容量填寫，包含輸入與預留輸出。保守估算會減少參考內容，不截斷正文。"
+  "onlineContextHelp": "按服務商模型的實際上下文容量填寫，包含輸入與預留輸出。保守估算會減少參考內容，不截斷正文。",
+  "saveAndClose": "儲存並關閉",
+  "settingsChangesHelp": "本頁修改在點擊「儲存並關閉」後生效；取消或直接關閉視窗會捨棄修改。"
 }
