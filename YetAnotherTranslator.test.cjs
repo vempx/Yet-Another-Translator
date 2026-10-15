@@ -2717,3 +2717,26 @@ test("T15 image payload retention is bounded and clearing cancels all retained w
     const before=downloads;await translator.translate(current,"日本語");assert.equal(downloads,before);assert.equal(translator.imageCache.size,100);
     translator.clear();assert.equal(translator.entries.size,0);assert.equal(translator.imageCache.size,0);assert.equal(translator.imageCacheSize,0);
 });
+
+
+test("image captions such as yup remain reference data, never the final user translation target",async()=>{
+    const requests=[],client=new TranslationClient(async(url,options)=>{
+        const body=JSON.parse(options.body);requests.push({url,body});
+        const data=url.endsWith("/input_tokens")?{input_tokens:512}:{choices:[{message:{content:JSON.stringify({translation:"游戏启动错误",summary:"需要通过官方启动器打开游戏。",sourceLanguage:"ENG",hasText:true})}}]};
+        return {status:200,arrayBuffer:async()=>Buffer.from(JSON.stringify(data))};
+    });
+    const context={target:{id:"202",channelId:"101",text:"yup",speaker:"sender"},before:[{id:"201",text:"nearby reference",speaker:"other"}],reply:{id:"200",text:"reply reference"},areaTopic:{threadTitle:"game",imageCaption:"yup"}};
+    await client.translateImage(imageFixture(),{...DEFAULTS,model:"vision"},null,context);
+    assert.equal(requests.length,2);
+    for(const {body} of requests){
+        const user=body.messages.at(-1);assert.equal(user.role,"user");assert.equal(user.content[0].type,"text");
+        assert.ok(!user.content[0].text.includes("yup"));assert.match(user.content[0].text,/ONLY text physically visible inside/);
+        assert.match(body.messages[0].content,/Never include or translate the accompanying Discord message/);
+        const reference=body.messages.find(item=>item.content.startsWith?.("REFERENCE DATA"));
+        const data=JSON.parse(reference.content.slice(reference.content.indexOf("\n")+1));
+        assert.equal(data.target.text,undefined);assert.equal(data.target.contentScope,"image_attachment_only");
+        assert.ok(body.messages.some(item=>typeof item.content==="string"&&item.content.includes('"imageCaption":"yup"')));
+        assert.ok(JSON.stringify(body.messages).includes("reply reference"));assert.ok(JSON.stringify(body.messages).includes("nearby reference"));
+    }
+    assert.equal(client.stats.generations,1);
+});

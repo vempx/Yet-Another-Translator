@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Fixed accompanying Discord captions being translated with image text. Keep captions in reference metadata and use an image-only user instruction for vision requests.
+
 - Replaced the two-stage image flow with one local vision generation, with native input-token preflight where supported. Enforce byte and decoded-dimension limits for PNG, JPEG, GIF and WebP before model requests.
 - Fixed image retranslation returning stale terms and context: the image menu now refreshes results, while cached language selection and remounting remain request-free. Retain bounded image payloads for reuse.
 

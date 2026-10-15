@@ -7,13 +7,14 @@ Right-click a message image and choose Translate and summarize image text. This 
 ## 行为 / Behavior
 
 - 一次视觉生成直接识别、翻译并概括图片内文字，不调用额外 OCR，也不先生成识别正文。请求通过 Chat Completions 的 user content 数组携带文字和 image_url（Base64 data URL）。
+- 只翻译并概括图片内可见文字。附带的 Discord 消息正文（如 yup）、附近消息及回复仅用于理解上下文，不并入输出；最后一条用户输入使用图片专属指令，消息附言只放在参考元数据。
 - 附带预算筛选后的版面主题、图片消息正文、附近原文、回复和事先匹配的术语。术语按图片说明、版面名称及上下文筛选；仅出现在图片内的词条无法提前命中，不会因此额外调用识别或塞入整份词表。
 - 在所选图片后插入小号灰色纯文本，保留原图，不执行模型返回的 HTML。多图分别绑定。标签显示原文语言，点击仅改变本图目标语言，不修改自动翻译默认值。
 - 初始目标使用版面自动翻译采用的共享默认值。再次右键选择图片翻译会强制读取当前说明、回复、附近消息及最新术语，重新生成；清除此图其他语言的旧结果。
 - 切换至未缓存语言需要一次新视觉生成，尽量复用图片数据；切回已缓存语言、滚动或重新显示消息不生成。保留最多 100 图及每图四种语言结果；图片载荷另限 100 项和 32 Mi 字符（UTF-16 约 64 MiB），超限淘汰后可能重新下载。
 - 同目标进行中的重复点击去重。切换目标、离开消息、停用或更改翻译配置会取消相关任务；旧结果不能覆盖新结果。没有文字时提示，格式错误或截断时报错，无自动重试。
 
-One vision generation reads, translates and summarizes the image; no separate OCR step or service is used. Typed user content carries text and an image_url data URL. Budgeted references include area names, captions, nearby original messages, replies and terms matched before the request. Terms appearing only inside the image cannot be matched in advance.
+One vision generation reads, translates and summarizes only text visible inside the image; no separate OCR step or service is used. Discord captions (such as yup), nearby messages and replies are context only and must not appear in the output. The user turn contains an image-only task instruction; captions stay in reference metadata. Typed user content carries text and an image_url data URL. Budgeted references include area names, captions, nearby original messages, replies and terms matched before the request. Terms appearing only inside the image cannot be matched in advance.
 
 Smaller muted plain-text results appear below the selected image, with a source-language badge for changing only that image's target. Choosing the image action again refreshes context and glossary terms and clears stale language results. Switching to an uncached language generates once; cached language choices and remounts generate nothing. Up to 100 image records and four language results per image are kept. A separate image payload cache is capped at 100 items and 32 Mi characters (roughly 64 MiB in UTF-16); eviction can require downloading again. Repeated pending actions are deduplicated and stale results cannot overwrite newer work. Empty, malformed and cancelled results are handled without automatic retries.
 
