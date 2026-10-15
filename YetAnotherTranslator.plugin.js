@@ -212,6 +212,7 @@ const module = {exports: {}};
 
 const DEFAULTS = Object.freeze({
     providerMode: "local",
+    providerProfiles: Object.freeze({}),
     deepseekThinking: false,
     deepseekReasoningEffort: "high",
     glossaryEconomy: false,
@@ -936,6 +937,27 @@ module.exports = {DEFAULTS, validateSettings, TranslationClient, DebugLogger, re
 
 return module.exports;
 })();
+const PROVIDER_FIELDS = Object.freeze(["baseUrl", "model", "apiKey", "timeoutSeconds", "maxTokens", "contextTokens", "deepseekThinking", "deepseekReasoningEffort"]);
+function providerProfile(input) {
+    return Object.fromEntries(PROVIDER_FIELDS.filter(key => Object.hasOwn(input || {}, key) && ["string", "number", "boolean"].includes(typeof input[key])).map(key => [key, input[key]]));
+}
+function rememberProviderSettings(input) {
+    const profiles = {};
+    for (const mode of ["local", "online", "deepseek"]) {
+        const profile = input.providerProfiles?.[mode];
+        if (profile && typeof profile === "object" && !Array.isArray(profile)) profiles[mode] = providerProfile(profile);
+    }
+    if (["local", "online", "deepseek"].includes(input.providerMode)) profiles[input.providerMode] = providerProfile(input);
+    return {...input, providerProfiles: profiles};
+}
+function switchProviderSettings(input, mode) {
+    if (!["local", "online", "deepseek"].includes(mode)) throw uiError("providerInvalid");
+    const remembered = rememberProviderSettings(input);
+    const defaults = {...providerProfile(DEFAULTS), baseUrl: mode === "deepseek" ? "https://api.deepseek.com" : mode === "online" ? "" : DEFAULTS.baseUrl,
+        model: mode === "deepseek" ? "deepseek-flash" : ""};
+    return {...remembered, ...defaults, ...remembered.providerProfiles[mode], providerMode: mode};
+}
+
 const IMAGE_MAX_BYTES = 8 * 1024 * 1024;
 function discordImageUrl(value) {
     let url; try {url = new URL(value);} catch {throw uiError("imageInvalid");}
@@ -2786,7 +2808,7 @@ module.exports = class LocalTranslator {
 
     loadSettings() {
         const stored = this.api.Data.load("settings") || {};
-        this.settings = {...DEFAULTS, ...stored};
+        this.settings = rememberProviderSettings({...DEFAULTS, ...stored});
         // Migrate the old global toggle once, to the currently selected area only.
         if (stored.autoTranslateAreas === undefined) {
             const id = this.currentChannelId();
@@ -3016,11 +3038,11 @@ module.exports = class LocalTranslator {
     }
 
     saveSettings(input, {resetTargets = false} = {}) {
-        const value = validateSettings(input);
+        const value = rememberProviderSettings(validateSettings(input));
         let current;
         try {current = validateSettings(this.settings);}
         catch {current = this.settings;} // Allow repairing an invalid saved configuration.
-        const changed = Object.keys(value).some(key => !["debugEnabled", "debugLogPath", "autoTranslate", "autoTranslateAreas", "customAreas", "outgoingTranslate", "outgoingLanguage", "outgoingIncludeOriginal"].includes(key) && value[key] !== current[key]);
+        const changed = Object.keys(value).some(key => !["providerProfiles", "debugEnabled", "debugLogPath", "autoTranslate", "autoTranslateAreas", "customAreas", "outgoingTranslate", "outgoingLanguage", "outgoingIncludeOriginal"].includes(key) && value[key] !== current[key]);
         const areaIds = new Set([...Object.keys(current.customAreas || {}), ...Object.keys(value.customAreas)]);
         const changedAreas = [...areaIds].filter(id => JSON.stringify(current.customAreas?.[id]) !== JSON.stringify(value.customAreas[id]));
         this.commitTranslationSettings(value, {restartTranslations: changed || resetTargets, cancelRequests: changed});
@@ -3244,12 +3266,10 @@ module.exports = class LocalTranslator {
             };
             const updateField = key => event => edit(key, event.currentTarget?.value ?? event.target.value);
             const changeProvider = event => {
-                const value = event.currentTarget?.value ?? event.target.value;
-                edit("providerMode", value);
-                if (value === "deepseek") {
-                    if (!draftRef.current.baseUrl || draftRef.current.baseUrl === DEFAULTS.baseUrl) edit("baseUrl", "https://api.deepseek.com");
-                    if (!draftRef.current.model) edit("model", "deepseek-flash");
-                }
+                const mode = event.currentTarget?.value ?? event.target.value;
+                const next = switchProviderSettings(draftRef.current, mode);
+                for (const key of ["providerMode", "providerProfiles", ...PROVIDER_FIELDS]) dirtyFields.current.add(key);
+                draftRef.current = next; setDraft(next); setError(""); setStatus("");
             };
             const changeDefaultLanguage = updateField("targetLanguage");
             const field = (key, label, note, type = "text", extra = {}) => {

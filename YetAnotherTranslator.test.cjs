@@ -9,7 +9,7 @@ const path = require("node:path");
 function load(BdApi, environment = {}) {
     const sandbox = {module: {exports: {}}, require, __dirname, URL, AbortController, TextDecoder, setTimeout, clearTimeout, BdApi, ...environment};
     vm.runInNewContext(fs.readFileSync(`${__dirname}/YetAnotherTranslator.plugin.js`, "utf8") +
-        "\nmodule.exports.testing = {DEFAULTS, validateSettings, TranslationClient, AutoTranslator, areaTopicFor, GlossaryStore, DebugLogger, ImageTranslator, discordImageUrl, imageIdentity, imageMime, inspectImage, imageDimensions, IMAGE_MAX_BYTES, OutgoingTranslator, referenceContext, orderedReferences, renderMessageEmoji, I18n, t, languageLabel, UI_MESSAGES, uiError, errorForUi, uiText, outgoingMessageText, LANGUAGES, bindSettingsFooter, renderTranslatedMessage};", sandbox);
+        "\nmodule.exports.testing = {DEFAULTS, validateSettings, TranslationClient, AutoTranslator, areaTopicFor, GlossaryStore, DebugLogger, ImageTranslator, rememberProviderSettings, switchProviderSettings, discordImageUrl, imageIdentity, imageMime, inspectImage, imageDimensions, IMAGE_MAX_BYTES, OutgoingTranslator, referenceContext, orderedReferences, renderMessageEmoji, I18n, t, languageLabel, UI_MESSAGES, uiError, errorForUi, uiText, outgoingMessageText, LANGUAGES, bindSettingsFooter, renderTranslatedMessage};", sandbox);
     return sandbox.module.exports;
 }
 const Plugin = load();
@@ -845,6 +845,8 @@ test("DeepSeek settings use a draft, fill untouched defaults and save or cancel 
     find(tree,node=>node.type==="button"&&node.props.children[0]==="取消").props.onClick();assert.equal(host.plugin.settings.deepseekThinking,true);
     const other=settingsHost({baseUrl:"https://proxy.example.test/custom/v1",model:"custom/model"}),otherPanel=other.plugin.getSettingsPanel();
     tree=other.render(otherPanel);find(tree,node=>node.props?.name==="providerMode").props.onChange({target:{value:"deepseek"}});tree=other.render(otherPanel);
+    assert.equal(find(tree,node=>node.props?.name==="baseUrl").props.value,"https://api.deepseek.com");assert.equal(find(tree,node=>node.props?.name==="model").props.value,"deepseek-flash");
+    find(tree,node=>node.props?.name==="providerMode").props.onChange({target:{value:"local"}});tree=other.render(otherPanel);
     assert.equal(find(tree,node=>node.props?.name==="baseUrl").props.value,"https://proxy.example.test/custom/v1");assert.equal(find(tree,node=>node.props?.name==="model").props.value,"custom/model");
 });
 
@@ -956,6 +958,7 @@ test("settings save sends subsequent local and online requests to the edited por
         let tree = host.render(panel);
         find(tree, node => node.props?.name === "providerMode").props.onChange({target: {value: providerMode}});
         find(tree, node => node.props?.name === "baseUrl").props.onInput({target: {value: baseUrl}});
+        find(tree, node => node.props?.name === "model").props.onInput({target: {value: "test-model"}});
         tree = host.render(panel);
         find(tree, node => node.type === "button" && node.props.children[0] === "保存并关闭").props.onClick();
         assert.equal(host.writes.at(-1).value.baseUrl, baseUrl); assert.equal(host.plugin.settings.baseUrl, baseUrl);
@@ -2739,4 +2742,71 @@ test("image captions such as yup remain reference data, never the final user tra
         assert.ok(JSON.stringify(body.messages).includes("reply reference"));assert.ok(JSON.stringify(body.messages).includes("nearby reference"));
     }
     assert.equal(client.stats.generations,1);
+});
+
+
+test("provider drafts independently remember credentials, models, limits and thinking across batched switches and reload",()=>{
+    const host=settingsHost({baseUrl:"http://localhost:9012/v1",model:"local-vision",apiKey:"LOCAL_SECRET",timeoutSeconds:75,maxTokens:1024,contextTokens:4096},{deferUpdates:true});
+    const panel=host.plugin.getSettingsPanel();let tree=host.render(panel);
+    const set=(name,value)=>{find(tree,node=>node.props?.name===name).props.onInput({target:{value}});};
+    const switchTo=mode=>{find(tree,node=>node.props?.name==="providerMode").props.onChange({target:{value:mode}});};
+    const value=name=>find(tree,node=>node.props?.name===name).props.value;
+    switchTo("deepseek");set("baseUrl","https://deepseek.example.test/v1");set("model","deepseek-custom");set("apiKey","DEEPSEEK_SECRET");set("maxTokens","32768");set("contextTokens","131072");tree=host.render(panel);
+    find(tree,node=>node.props?.name==="deepseekThinking").props.onChange({target:{checked:true}});tree=host.render(panel);
+    find(tree,node=>node.props?.name==="deepseekReasoningEffort").props.onChange({target:{value:"max"}});
+    switchTo("online");tree=host.render(panel);assert.equal(value("apiKey"),"");assert.equal(value("baseUrl"),"");assert.equal(value("model"),"");
+    set("baseUrl","https://online.example.test/custom/v1");set("model","online-custom");set("apiKey","ONLINE_SECRET");
+    switchTo("local");tree=host.render(panel);
+    for(const [name,expected] of Object.entries({baseUrl:"http://localhost:9012/v1",model:"local-vision",apiKey:"LOCAL_SECRET",timeoutSeconds:75,maxTokens:1024,contextTokens:4096}))assert.equal(value(name),expected);
+    assert.equal(host.writes.length,0);assert.equal(host.plugin.settings.providerProfiles.deepseek,undefined);
+    find(tree,node=>node.type==="button"&&node.props.children[0]==="保存并关闭").props.onClick();
+    const saved=JSON.parse(JSON.stringify(host.writes.at(-1).value));assert.equal(saved.providerMode,"local");assert.equal(saved.providerProfiles.deepseek.apiKey,"DEEPSEEK_SECRET");assert.equal(saved.providerProfiles.online.apiKey,"ONLINE_SECRET");
+    const reopened=settingsHost(saved),nextPanel=reopened.plugin.getSettingsPanel();let next=reopened.render(nextPanel);
+    find(next,node=>node.props?.name==="providerMode").props.onChange({target:{value:"deepseek"}});next=reopened.render(nextPanel);
+    assert.equal(find(next,node=>node.props?.name==="apiKey").props.value,"DEEPSEEK_SECRET");assert.equal(find(next,node=>node.props?.name==="maxTokens").props.value,"32768");assert.equal(find(next,node=>node.props?.name==="deepseekThinking").props.checked,true);
+    assert.equal(find(next,node=>node.props?.name==="deepseekReasoningEffort").props.value,"max");
+    find(next,node=>node.type==="button"&&node.props.children[0]==="保存并关闭").props.onClick();assert.equal(reopened.plugin.settings.maxTokens,32768);
+});
+
+test("cancel discards all provider draft edits; old DeepSeek configurations migrate only into their own profile",()=>{
+    const legacy={providerMode:"deepseek",baseUrl:"https://api.deepseek.com",model:"saved-deepseek",apiKey:"OLD_SECRET",maxTokens:32768,contextTokens:131072};
+    const host=settingsHost(legacy),panel=host.plugin.getSettingsPanel();let tree=host.render(panel);
+    find(tree,node=>node.props?.name==="providerMode").props.onChange({target:{value:"local"}});tree=host.render(panel);
+    assert.equal(find(tree,node=>node.props?.name==="baseUrl").props.value,DEFAULTS.baseUrl);assert.equal(find(tree,node=>node.props?.name==="apiKey").props.value,"");assert.equal(find(tree,node=>node.props?.name==="maxTokens").props.value,DEFAULTS.maxTokens);
+    find(tree,node=>node.props?.name==="baseUrl").props.onInput({target:{value:"http://localhost:9876/v1"}});
+    find(tree,node=>node.props?.name==="providerMode").props.onChange({target:{value:"deepseek"}});tree=host.render(panel);
+    find(tree,node=>node.props?.name==="apiKey").props.onInput({target:{value:"UNSAVED_SECRET"}});
+    find(tree,node=>node.type==="button"&&node.props.children[0]==="取消").props.onClick();tree=host.render(panel);
+    assert.equal(host.writes.length,0);assert.equal(host.plugin.settings.apiKey,"OLD_SECRET");assert.equal(host.plugin.settings.providerProfiles.local,undefined);
+    assert.equal(find(tree,node=>node.props?.name==="apiKey").props.value,"OLD_SECRET");
+    find(tree,node=>node.props?.name==="providerMode").props.onChange({target:{value:"local"}});tree=host.render(panel);assert.equal(find(tree,node=>node.props?.name==="baseUrl").props.value,DEFAULTS.baseUrl);
+});
+
+test("inactive provider drafts do not invalidate current translations and active fields override stale profile snapshots",()=>{
+    const {rememberProviderSettings,switchProviderSettings}=Plugin.testing;
+    const legacy={...DEFAULTS,providerMode:"online",baseUrl:"https://active.example.test/v1",apiKey:"CURRENT_KEY",model:"current",providerProfiles:{online:{apiKey:"STALE_KEY",model:"stale"},deepseek:{apiKey:"DS_KEY",model:"ds",unknown:"drop",nested:{apiKey:"DROP"}},local:[]}};
+    const remembered=rememberProviderSettings(legacy);assert.equal(remembered.providerProfiles.online.apiKey,"CURRENT_KEY");assert.equal(remembered.providerProfiles.deepseek.unknown,undefined);assert.equal(remembered.providerProfiles.local,undefined);
+    const local=switchProviderSettings(remembered,"local");assert.equal(local.apiKey,"");assert.equal(switchProviderSettings(local,"online").model,"current");
+    assert.equal(legacy.providerProfiles.online.apiKey,"STALE_KEY");assert.throws(()=>switchProviderSettings(local,"unknown"));
+    const host=settingsHost(),panel=host.plugin.getSettingsPanel();let tree=host.render(panel),cancels=0;
+    host.plugin.client.cancelAll=()=>cancels++;host.plugin.restartAutoTranslation=()=>cancels++;
+    find(tree,node=>node.props?.name==="providerMode").props.onChange({target:{value:"deepseek"}});tree=host.render(panel);
+    find(tree,node=>node.props?.name==="apiKey").props.onInput({target:{value:"DS_KEY"}});
+    find(tree,node=>node.props?.name==="providerMode").props.onChange({target:{value:"local"}});tree=host.render(panel);
+    find(tree,node=>node.type==="button"&&node.props.children[0]==="保存并关闭").props.onClick();assert.equal(cancels,0);assert.equal(host.plugin.settings.providerProfiles.deepseek.apiKey,"DS_KEY");
+});
+
+
+test("restored provider requests use only that provider's endpoint, model and credentials",async()=>{
+    const host=settingsHost({baseUrl:"http://localhost:9911/v1",model:"vision-local",apiKey:"LOCAL_KEY"}),panel=host.plugin.getSettingsPanel();let tree=host.render(panel);const requests=[];
+    host.plugin.client=new TranslationClient(async(url,options)=>{requests.push({url,options,body:JSON.parse(options.body)});return {status:200,arrayBuffer:async()=>Buffer.from(JSON.stringify({choices:[{message:{content:"translated"}}]}))};});
+    const switchTo=mode=>{find(tree,node=>node.props?.name==="providerMode").props.onChange({target:{value:mode}});tree=host.render(panel);};
+    const save=()=>{find(tree,node=>node.type==="button"&&node.props.children[0]==="保存并关闭").props.onClick();tree=host.render(panel);};
+    switchTo("deepseek");find(tree,node=>node.props?.name==="apiKey").props.onInput({target:{value:"DEEPSEEK_KEY"}});save();
+    await host.plugin.client.translate("test",host.plugin.settings);
+    switchTo("local");save();await host.plugin.client.translate("test",host.plugin.settings);
+    assert.equal(requests.length,2);assert.equal(requests[0].options.headers.Authorization,"Bearer DEEPSEEK_KEY");assert.equal(requests[0].body.model,"deepseek-flash");
+    assert.equal(requests[1].url,"http://localhost:9911/v1/chat/completions");assert.equal(requests[1].options.headers.Authorization,"Bearer LOCAL_KEY");assert.equal(requests[1].body.model,"vision-local");
+    assert.ok(!JSON.stringify(requests[1]).includes("DEEPSEEK_KEY"));assert.ok(!JSON.stringify(requests[0]).includes("LOCAL_KEY"));
+    const count=host.writes.length;switchTo("online");save();assert.equal(host.writes.length,count);assert.equal(host.plugin.settings.providerMode,"local");
 });

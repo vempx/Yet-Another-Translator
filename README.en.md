@@ -34,6 +34,8 @@ An LLM-powered BetterDiscord plugin for automatic message translation, individua
 - On upgrade, an enabled legacy global switch migrates only to the currently identifiable area. Other areas remain off. If the current area cannot be identified, enable it using a context menu.
 - Open the manual translator from the context menu to translate text you enter yourself.
 
+Local, generic online and DeepSeek services remember their own endpoint, model, API key, timeout and token limits, including DeepSeek thinking options. Switching restores each profile; Save and close persists all edits, while Cancel discards them. Existing settings are retained for the active service. Unconfigured services start with defaults; previously overwritten settings must be entered again.
+
 ### Image text translation and summary (local)
 
 1. Run local llama-server with a vision-capable model and matching mmproj. The plugin uses your saved local API URL and model name.
