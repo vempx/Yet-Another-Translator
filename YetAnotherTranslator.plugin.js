@@ -950,43 +950,112 @@ function imageMime(bytes) {
 class ImageTranslator {
     constructor(plugin, environment = globalThis) {
         this.plugin = plugin; this.env = environment; this.entries = new Map(); this.running = false;
-        this.onContextMenu = event => {this.captured = {location: this.location(event.target), time: Date.now()};};
+        this.onContextMenu = event => {
+            const image = this.imageElement(event.target, event), location = this.location(image);
+            if (event.type === "contextmenu" || event.button === 2) this.captured = {location, urls: this.imageUrls(image), time: Date.now(), imageSeen: Boolean(image), targetTag: event.target?.tagName || null, rowId: image?.closest?.('[id^="chat-messages-"], [data-list-item-id^="chat-messages"]')?.id || null};
+            else if (event.button === 0 && location) this.viewerOrigin = {key: location.key, time: Date.now()};
+        };
     }
-    start() {if (!this.running && this.env.document) {this.running = true; this.env.document.addEventListener("contextmenu", this.onContextMenu, true);}}
+    start() {
+        if (this.running || !this.env.document) return;
+        this.running = true; this.captureTarget = this.env.document.defaultView || this.env.document;
+        for (const type of ["pointerdown", "mousedown", "contextmenu"]) this.captureTarget.addEventListener(type, this.onContextMenu, true);
+    }
     clear() {
         for (const entry of this.entries.values()) {entry.controller?.abort(); entry.output?.remove();}
-        this.entries.clear(); this.captured = null;
+        this.entries.clear(); this.captured = null; this.viewerOrigin = null;
         for (const output of this.env.document?.querySelectorAll?.(".lt-image-result") || []) output.remove();
     }
-    stop() {this.running = false; this.env.document?.removeEventListener("contextmenu", this.onContextMenu, true); this.clear();}
+    stop() {
+        this.running = false;
+        for (const type of ["pointerdown", "mousedown", "contextmenu"]) this.captureTarget?.removeEventListener(type, this.onContextMenu, true);
+        this.captureTarget = null; this.clear();
+    }
+    imageElement(target, point) {
+        if (target?.nodeType === 3) target = target.parentElement;
+        if (target?.tagName?.toLowerCase() === "img") return target;
+        const wrappers = '[class*="imageWrapper"], [class*="imageContainer"], [class*="imageContent"], [class*="visualMediaItem"], [class*="mediaContainer"], [class*="clickableWrapper"], picture, a[href]';
+        for (let node = target; node?.matches; node = node.parentElement) {
+            if (!node.matches(wrappers)) continue;
+            const images = [...node.querySelectorAll("img")];
+            if (images.length === 1) return images[0];
+            if (images.length > 1) {
+                if (!point || !(point.clientX || point.clientY)) return null;
+                const hits = images.filter(image => {const box = image.getBoundingClientRect(); return box.width > 0 && box.height > 0 && point.clientX >= box.left && point.clientX <= box.right && point.clientY >= box.top && point.clientY <= box.bottom;});
+                return hits.length === 1 ? hits[0] : null;
+            }
+        }
+        return null;
+    }
+    identities(values) {
+        const result = new Set();
+        for (const value of values) {try {if (typeof value === "string") result.add(imageIdentity(value));} catch { /* Non-media links never identify a downloadable picture. */ }}
+        return [...result];
+    }
+    imageUrls(image) {return this.identities([image?.closest?.("a[href]")?.href, image?.currentSrc, image?.src]);}
     location(target) {
         try {
-            const image = target?.tagName?.toLowerCase() === "img" ? target : target?.closest?.('[class*="imageWrapper"], [class*="imageContainer"], a[href]')?.querySelector("img");
-            if (!image?.isConnected || image.closest('.lt-image-result, [class*="avatar"], .emoji')) return null;
-            const row = image.closest('[id^="chat-messages-"]'), match = row?.id.match(/^chat-messages-(\d{1,22})-(\d{1,22})$/);
-            if (!match) return null;
+            const image = this.imageElement(target);
+            if (!image?.isConnected || image.hidden || image.closest('.lt-image-result, [class*="avatar"], .emoji, [hidden]')) return null;
+            let row, channelId, messageId;
+            for (let node = image.parentElement; node; node = node.parentElement) {
+                const match = node.id?.match(/^chat-messages-(\d{1,22})-(\d{1,22})$/)
+                    || node.getAttribute("data-list-item-id")?.match(/^chat-messages___(?:chat-messages-)?(\d{1,22})-(\d{1,22})$/);
+                const message = node.getAttribute("data-message-id"), channel = node.getAttribute("data-channel-id") || node.closest("[data-channel-id]")?.getAttribute("data-channel-id");
+                if (match) {row = node; channelId = match[1]; messageId = match[2]; break;}
+                if (/^\d{1,22}$/.test(message || "") && /^\d{1,22}$/.test(channel || "")) {row = node; channelId = channel; messageId = message; break;}
+            }
+            if (!row) return null;
             const spoiler = image.closest('[class*="spoilerContent"]');
             if (image.closest('[class*="spoilerHidden"], [class*="hiddenSpoiler"], [data-spoiler-hidden="true"]') || spoiler && /(?:^|\s)hidden(?:_|\s|$)/.test(spoiler.className)) return null;
             const href = image.closest("a[href]")?.href;
             let url; try {url = discordImageUrl(href);} catch {url = discordImageUrl(image.currentSrc || image.src);}
-            const anchor = image.closest('[class*="visualMediaItemContainer"]') || image.closest('[class*="imageContainer"]') || image.closest('[class*="imageWrapper"]') || image.closest("a[href]") || image;
+            const anchor = image.closest('[class*="visualMediaItemContainer"]') || image.closest('[class*="imageContainer"]') || image.closest('[class*="imageWrapper"]') || image.closest('[class*="mediaContainer"]') || image.closest("a[href]") || image;
             if (!row.contains(anchor)) return null;
-            return {image, row, anchor, url, channelId: match[1], messageId: match[2], key: match[1] + ":" + match[2] + ":" + imageIdentity(url)};
+            return {image, row, anchor, url, aliases: this.imageUrls(image), channelId, messageId, key: channelId + ":" + messageId + ":" + imageIdentity(url)};
         } catch {return null;}
     }
     locations() {
         const result = new Map();
-        for (const image of this.env.document.querySelectorAll('[id^="chat-messages-"] img')) {const location = this.location(image); if (location) result.set(location.key, location);}
+        for (const image of this.env.document.querySelectorAll('[id^="chat-messages-"] img, [data-list-item-id^="chat-messages"] img, [data-message-id] img')) {
+            const location = this.location(image); if (location) result.set(location.key, location);
+        }
         return result;
     }
-    menuLocation(props = {}) {
-        let location = this.location(props.target);
-        if (!location && this.captured && Date.now() - this.captured.time < 2000) location = this.captured.location;
-        if (!location) return null;
-        if (props.message?.id && String(props.message.id) !== location.messageId || props.channel?.id && String(props.channel.id) !== location.channelId) return null;
-        const declared = props.src || props.original || props.href;
-        if (declared) {try {if (imageIdentity(declared) !== imageIdentity(location.url)) return null;} catch { /* Some menus supply a page link alongside an image target. */ }}
-        return location;
+    menuLocation(props = {}, allowCaptured = true) {
+        props ||= {};
+        const targets = [props.target, props.event?.target, props.event?.nativeEvent?.target, props.nativeEvent?.target];
+        const explicit = this.identities([props.src, props.original, props.href, props.imageUrl, props.attachment?.url, props.attachment?.proxy_url]);
+        const capture = allowCaptured && this.captured && Date.now() - this.captured.time < 5000 ? this.captured : null;
+        const targetUrls = targets.flatMap(target => this.imageUrls(this.imageElement(target)));
+        const urls = explicit.length ? explicit : targetUrls.length ? targetUrls : capture?.urls || [];
+        const direct = targets.map(target => this.location(target)).find(Boolean);
+        if (!direct && !urls.length && !capture?.location) return null;
+        const messageId = props.message?.id || props.messageId, channelId = props.channel?.id || props.message?.channel_id || props.channelId;
+        const allowed = item => (!messageId || String(messageId) === item.messageId) && (!channelId || String(channelId) === item.channelId);
+        const matchesUrl = item => !urls.length || item.aliases.some(url => urls.includes(url));
+        const locations = this.locations();
+        if (direct) return allowed(direct) && matchesUrl(direct) ? locations.get(direct.key) || direct : null;
+        const matches = [...locations.values()].filter(item => allowed(item) && matchesUrl(item));
+        if (urls.length && matches.length === 1) return matches[0];
+        const origin = this.viewerOrigin && Date.now() - this.viewerOrigin.time < 60000 ? this.viewerOrigin.key : null;
+        for (const key of [capture?.location?.key, urls.length ? origin : null]) {
+            const item = locations.get(key); if (item && allowed(item) && matchesUrl(item)) return item;
+        }
+        return null;
+    }
+    diagnoseMenu(props, menuId) {
+        try {
+            const imageMenu = /(^|-)(image|media|attachment)($|-)/.test(menuId);
+            const recent = this.captured && Date.now() - this.captured.time < 5000 ? this.captured : null;
+            if (!imageMenu && !recent?.imageSeen) return;
+            if (this.lastMenuMiss?.id === menuId && Date.now() - this.lastMenuMiss.time < 1000) return;
+            this.lastMenuMiss = {id: menuId, time: Date.now()};
+            const debug = this.plugin.client.debugLogger?.operation(this.plugin.settings, {kind: "manual", task: "image_menu_unmatched"});
+            debug?.emit("operation_complete", () => ({modelInvoked: false, menu: {id: menuId, matched: false,
+                propNames: Object.keys(props || {}), targetTag: props?.target?.tagName || recent?.targetTag || null,
+                capturedImage: recent?.imageSeen === true, capturedRowId: recent?.rowId || null, recognizedImages: this.locations().size}}));
+        } catch { /* Diagnostics must never change Discord's menu. */ }
     }
     scan() {
         if (!this.running) return;
@@ -2037,7 +2106,8 @@ const NAME = "LocalTranslator";
 const DISPLAY_NAME = "Yet Another Translator";
 const MESSAGE_MENU = /(^|-)message($|-)/;
 const AREA_MENU = /(^|-)(channel|thread|gdm|group-dm)($|-)/;
-const IMAGE_MENU = /(^|-)image($|-)/;
+// Native image viewers and attachment menus use varying IDs; resolve real media targets before adding an item.
+const IMAGE_MENU = /./;
 function areaTopicFor(channelId, getChannel) {
     const channel = getChannel(channelId);
     // Private conversations have no named discussion area; do not send participant names.
@@ -2895,8 +2965,9 @@ module.exports = class LocalTranslator {
 
     patchImageMenu(tree, props) {
         if (!this.active || !tree?.props) return;
-        const location = this.imageTranslator?.menuLocation(props); if (!location) return;
-        const menu = findElement(tree, node => IMAGE_MENU.test(node.props.navId || "") || MESSAGE_MENU.test(node.props.navId || "")) || tree;
+        const menu = findElement(tree, node => typeof node.props.navId === "string") || tree;
+        const location = this.imageTranslator?.menuLocation(props, /(^|-)(image|media|attachment|message)($|-)/.test(menu.props.navId || ""));
+        if (!location) {this.imageTranslator?.diagnoseMenu(props, menu.props.navId || ""); return;}
         if (findElement(menu, node => node.props.id === "local-translator-image")) return;
         const group = this.api.ContextMenu.buildItem({type: "group", items: [{id: "local-translator-image", label: t("imageTranslate"),
             action: () => {if (this.active) void this.imageTranslator?.translate(location);}}]});

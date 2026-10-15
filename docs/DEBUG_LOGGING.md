@@ -51,6 +51,10 @@ Normal calls progress through start, request, response and completion events. Mo
 
 Local image processing logs two manual tasks: image_ocr and image_summary. Their start events include imageId, channelId and messageId for association; image metadata records MIME type and byte size. Inline image data is replaced by [IMAGE DATA OMITTED] in logs, while the real request carries the complete image. Recognition and translated/summary results appear in operation_complete.result. Restoring cached image results makes no request and creates no new model log.
 
+图片右键未能唯一定位回消息时，Debug 可记录 image_menu_unmatched 任务：包含菜单标识、属性名、点击元素类型及已识别图片数量，不记录菜单属性值或图片内容；不调用模型。诊断自身失败不会影响原生菜单。
+
+If an image menu cannot be uniquely linked to a message, Debug may log image_menu_unmatched with the menu ID, property names, target tag and recognized-image count. Property values and image content are excluded, no model is called, and diagnostic failures do not affect the native menu.
+
 ## 文件管理 / File management
 
 当前文件约 10 MB 时轮转为 `.log.1`、`.log.2`、`.log.3`，总计最多四份；单条记录完整保留，因此单份可超过软上限。异步排队并串行写入；BetterDiscord 缺少 Promise 文件接口时使用其支持的同步桥接。待写队列最多 256 条事件，过载时丢弃日志并提示，翻译继续。目录／权限问题同样只影响日志。多实例不要共用同一个文件。

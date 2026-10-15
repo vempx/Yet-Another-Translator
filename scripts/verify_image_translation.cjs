@@ -28,7 +28,41 @@ function row(channel="101",id="202"){
 function menuItem(tree,id){return tree.props.children.flatMap(group=>group.props.children||[]).find(node=>node.props.id===id);}
 const event=()=>({preventDefault(){},stopPropagation(){}});
 const flush=async()=>{for(let i=0;i<12;i++)await new Promise(setImmediate);};
+async function verifyMenuTargets(){
+    const host=document.createElement("div");host.id="chat-messages-707-808";
+    host.innerHTML='<div class="mediaContainer_fixture"><a href="https://cdn.discordapp.com/attachments/707/808/original.png"><img src="https://media.discordapp.net/external/proxy/original.png"></a><div class="overlay_fixture"></div></div>';
+    document.querySelector("main").append(host);const image=host.querySelector("img"),overlay=host.querySelector(".overlay_fixture");
+    overlay.dispatchEvent(new dom.window.MouseEvent("mousedown",{bubbles:true,button:2}));
+    let tree={props:{navId:"attachment-link",children:[]}};plugin.patchImageMenu(tree,{src:image.src});
+    assert.ok(menuItem(tree,"local-translator-image"),"right-down overlay capture should populate the menu before contextmenu");
+    const unknown={props:{navId:"native-context",children:[]}};plugin.patchImageMenu(unknown,{src:image.src});assert.ok(menuItem(unknown,"local-translator-image"));
+    const unrelated={props:{navId:"user-context",children:[]}};plugin.patchImageMenu(unrelated,{});assert.equal(menuItem(unrelated,"local-translator-image"),undefined);
+    translator.captured=null;
+    assert.equal(translator.menuLocation({src:image.src}).messageId,"808","props-only proxy URLs must resolve to their original attachment");
+    assert.equal(translator.menuLocation({event:{target:overlay}}).messageId,"808");
+    const viewer=document.createElement("img");viewer.src=image.src;document.body.append(viewer);
+    viewer.dispatchEvent(new dom.window.MouseEvent("contextmenu",{bubbles:true,button:2}));
+    assert.equal(translator.menuLocation({target:viewer,src:viewer.src}).messageId,"808","viewer must resolve the underlying message image");viewer.remove();
+    host.removeAttribute("id");host.setAttribute("data-list-item-id","chat-messages___chat-messages-707-808");translator.captured=null;
+    assert.equal(translator.menuLocation({src:image.src}).channelId,"707","stable message-list identifiers must also work");
+    assert.equal(translator.menuLocation({src:image.src,message:{id:"999"}}),null);
+    const duplicate=host.cloneNode(true);duplicate.setAttribute("data-list-item-id","chat-messages___chat-messages-707-909");document.querySelector("main").append(duplicate);translator.captured=null;translator.viewerOrigin=null;
+    assert.equal(translator.menuLocation({src:image.src}),null,"ambiguous image URLs must not choose another message");
+    image.dispatchEvent(new dom.window.MouseEvent("mousedown",{bubbles:true,button:0}));
+    assert.equal(translator.menuLocation({src:image.src}).messageId,"808","viewer origin must disambiguate a known image click");
+    assert.equal(translator.menuLocation({src:image.src,message:{id:"909"},channel:{id:"707"}}).messageId,"909");
+    duplicate.remove();host.remove();translator.captured=null;translator.viewerOrigin=null;
+    const diagnostics=[];plugin.client.debugLogger={operation(settings,info){diagnostics.push(info);return {emit(event,details){diagnostics.push(typeof details==="function"?details():details);}};}};
+    const missing={props:{navId:"image-context",children:[]}};translator.lastMenuMiss=null;
+    plugin.patchImageMenu(missing,{src:"https://cdn.discordapp.com/attachments/707/808/absent.png",secret:"MODEL_SECRET"});
+    assert.equal(diagnostics[0].task,"image_menu_unmatched");assert.equal(diagnostics[1].modelInvoked,false);assert.equal(diagnostics[1].menu.recognizedImages,0);
+    assert.ok(!JSON.stringify(diagnostics).includes("MODEL_SECRET"));
+    plugin.client.debugLogger.operation=()=>{throw Error("diagnostic failure");};translator.lastMenuMiss=null;
+    assert.doesNotThrow(()=>plugin.patchImageMenu({props:{navId:"image-context",children:[]}},{src:"https://cdn.discordapp.com/attachments/707/808/absent.png"}));delete plugin.client.debugLogger;
+    console.log("PASS: media overlays, pre-contextmenu capture, props-only proxy URLs, large-image viewers, stable row IDs, ambiguous-message rejection and isolated diagnostics.");
+}
 async function main(){
+    await verifyMenuTargets();
     let message=row(),images=message.querySelectorAll("img");
     images[0].dispatchEvent(new dom.window.MouseEvent("contextmenu",{bubbles:true}));
     const tree={props:{navId:"image-context",children:[]}};plugin.patchImageMenu(tree,{src:images[0].src});plugin.patchImageMenu(tree,{src:images[0].src});
@@ -71,7 +105,7 @@ async function main(){
     translator.clear();message.remove();message=row("303","404");images=message.querySelectorAll("img");let resolveOCR;ocrImpl=()=>new Promise(resolve=>{resolveOCR=resolve;});
     const cancelled=translator.translate(translator.location(images[0]));await flush();message.remove();translator.scan();resolveOCR({text:"late",sourceLanguage:"ENG",model:"vision"});await cancelled;
     message=row("303","404");translator.scan();assert.ok(message.textContent.includes("已取消"));assert.ok(!message.textContent.includes("late"));
-    translator.stop();assert.equal(document.querySelectorAll(".lt-image-result").length,0);assert.equal(translator.entries.size,0);
+    translator.stop();message.querySelector("img").dispatchEvent(new dom.window.MouseEvent("mousedown",{bubbles:true,button:2}));assert.equal(translator.captured,null);assert.equal(document.querySelectorAll(".lt-image-result").length,0);assert.equal(translator.entries.size,0);
     console.log("PASS: no-text images skip summarization, online mode never downloads/uploads, navigation cancels pending work, and stop removes all results.");
 
     class Bitmap {set src(value){if(value){this.naturalWidth=10;this.naturalHeight=20;queueMicrotask(()=>this.onload?.());}}}
