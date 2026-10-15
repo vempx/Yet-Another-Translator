@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Fixed sidebar auto-translation tags for non-link channel rows, stable list/name IDs and absolute links. Reserve space inside the name to avoid clipping, and clean up tags across remounts and row reuse.
 - Saved automatic visible-message translation per area, with sidebar/message context-menu switches, current-area settings and sidebar icon tags. Channels and threads are independent; legacy global enabling migrates only to the current area, and permanent language switching does not enable other areas.
 - Cache translations by the glossary content actually sent rather than local file versions. Empty selections normalize to no glossary; selected changes and explicit refresh still regenerate.
 - Added optional economical glossary prompts, off by default, with smaller nearby-term budgets, short-message filtering, matched aliases, duplicate merging and bounded notes while preserving disambiguation fields.

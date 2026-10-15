@@ -37,7 +37,7 @@ function verifyAreaTags() {
     const messageLink=document.createElement("a");messageLink.href="/channels/1/101/9";messageLink.innerHTML='<span class="name_test">message link</span>';document.body.append(messageLink);
     plugin.active=true;plugin.setAutoTranslation(true,"101");
     assert.equal(sidebar.querySelectorAll(".lt-area-auto-tag").length,1);assert.equal(messageLink.querySelector(".lt-area-auto-tag"),null);
-    let anchor=sidebar.querySelector('[href="/channels/1/101"]');assert.equal(anchor.querySelector(".name_test").nextElementSibling.className,"lt-area-auto-tag");
+    let anchor=sidebar.querySelector('[href="/channels/1/101"]');assert.ok(anchor.querySelector(".name_test > .lt-area-auto-tag"));
     assert.equal(sidebar.querySelector('[href="/channels/1/202"] .lt-area-auto-tag'),null);
     plugin.scanAreaTags();assert.equal(sidebar.querySelectorAll(".lt-area-auto-tag").length,1);
     anchor.innerHTML='<span class="name_test">renamed</span>';plugin.scanAreaTags();assert.equal(anchor.querySelectorAll(".lt-area-auto-tag").length,1);
@@ -47,8 +47,22 @@ function verifyAreaTags() {
     plugin.setAutoTranslation(true,"303");assert.ok(sidebar.querySelector('[href="/channels/1/303"] .lt-area-auto-tag'));assert.equal(sidebar.querySelector('[href="/channels/1/304"] .lt-area-auto-tag'),null);
     plugin.setAutoTranslation(true,"505");assert.ok(sidebar.querySelector('[href="/channels/@me/505"] .lt-area-auto-tag'));
     plugin.setAutoTranslation(false,"303");assert.equal(sidebar.querySelector('[href="/channels/1/303"] .lt-area-auto-tag'),null);
+    const list=document.createElement("div");list.setAttribute("role","treeitem");list.setAttribute("data-list-item-id","channels___606");
+    list.innerHTML='<span id="channel-name-606" class="hashLabel">No link</span>';document.body.append(list);plugin.setAutoTranslation(true,"606");
+    assert.ok(list.querySelector("#channel-name-606 > .lt-area-auto-tag"));
+    const compact=document.createElement("div");compact.className="sidebar_fresh";
+    compact.innerHTML='<div class="row"><a href="https://discord.com/channels/1/707"><div id="channel-name-707" style="overflow:hidden;white-space:nowrap;width:100%">Long compact name</div></a></div><div data-list-item-id="private-channels-uid_1___808" aria-labelledby="renamed-label"><span id="renamed-label">DM label</span></div><div data-list-item-id="channels___909">Raw text label</div>';
+    document.body.append(compact);plugin.setAutoTranslation(true,"707");plugin.setAutoTranslation(true,"808");plugin.setAutoTranslation(true,"909");
+    const label=compact.querySelector("#channel-name-707");assert.ok(label.querySelector(".lt-area-auto-tag"));
+    assert.equal(dom.window.getComputedStyle(label).paddingInlineEnd,"21px");assert.equal(dom.window.getComputedStyle(label.querySelector(".lt-area-auto-tag")).position,"absolute");
+    assert.ok(compact.querySelector("#renamed-label > .lt-area-auto-tag"));assert.ok(compact.querySelector('[data-list-item-id="channels___909"] > .lt-area-auto-tag'));
+    compact.querySelector(".row").setAttribute("data-list-item-id","channels___707");
+    plugin.scanAreaTags();plugin.scanAreaTags();assert.equal(label.querySelectorAll(".lt-area-auto-tag").length,1);assert.ok(label.classList.contains("lt-area-tagged-name"));
+    const clone=list.cloneNode(true);list.replaceWith(clone);plugin.scanAreaTags();assert.equal(clone.querySelectorAll(".lt-area-auto-tag").length,1);
+    plugin.setAutoTranslation(false,"606");assert.equal(clone.querySelector(".lt-area-auto-tag"),null);assert.equal(clone.querySelector(".lt-area-tagged-name"),null);
     plugin.api.DOM={removeStyle(){}};plugin.stop();assert.equal(sidebar.querySelector(".lt-area-auto-tag"),null);assert.equal(plugin.areaTags.size,0);
     sidebar.remove();messageLink.remove();
+    assert.equal(compact.querySelector(".lt-area-tagged-name"),null);clone.remove();compact.remove();
     console.log("PASS: sidebar per-area badges, same-name IDs, no forum inheritance, DM, remount/navigation, deduplication and plugin-stop cleanup.");
 }
 verifyAreaTags();

@@ -1738,7 +1738,8 @@ const CSS = `
 .lt-panel label { display: block; margin: 12px 0; font-weight: 600; }
 .lt-panel[data-lt-native-footer="true"] .lt-settings-footer { display: none; }
 .lt-ai-label { font-size: 0.75em; color: var(--text-muted, #999); font-weight: normal; line-height: inherit; }
-.lt-area-auto-tag { display: inline-flex; flex: 0 0 16px; width: 16px; height: 16px; margin-inline-start: 5px; align-self: center; vertical-align: middle; color: var(--brand-360, #a3adff); }
+.lt-area-tagged-name { position: relative !important; box-sizing: border-box; padding-inline-end: 21px !important; min-width: 0; }
+.lt-area-auto-tag { position: absolute; inset-inline-end: 0; top: 50%; transform: translateY(-50%); display: inline-flex; width: 16px; height: 16px; color: var(--brand-360, #a3adff); }
 .lt-markdown-subtext { display: block; color: var(--text-muted, #999); font-size: 0.85em; }
 .lt-panel input, .lt-panel textarea, .lt-panel select { display: block; width: 100%; margin-top: 6px; padding: 10px; border: 1px solid var(--background-modifier-accent, #555); border-radius: 6px; background: var(--input-background, #202225); color: var(--text-normal, #eee); font: inherit; }
 .lt-panel textarea { min-height: 120px; resize: vertical; }
@@ -2220,32 +2221,65 @@ module.exports = class LocalTranslator {
     }
 
     clearAreaTags() {
-        for (const item of this.areaTags.values()) item.tag.remove();
+        for (const item of this.areaTags.values()) {item.tag.remove(); item.name.classList.remove("lt-area-tagged-name");}
         this.areaTags.clear();
+        if (typeof document !== "undefined" && typeof document.querySelectorAll === "function") {
+            for (const tag of document.querySelectorAll('.lt-area-auto-tag')) tag.remove();
+            for (const name of document.querySelectorAll('.lt-area-tagged-name')) name.classList.remove("lt-area-tagged-name");
+        }
     }
 
     scanAreaTags() {
         const doc = typeof document !== "undefined" ? document : null;
         if (!this.active || !doc?.querySelectorAll) return;
-        const found = new Set();
-        for (const link of doc.querySelectorAll('a[href*="/channels/"]')) {
-            if (!link.closest('nav, [role="navigation"], [class*="sidebar_"], [class*="sidebarList_"]')) continue;
-            const id = /^\/channels\/(?:@me|\d+)\/(\d{1,22})(?:\/|$)/.exec(link.getAttribute("href"))?.[1];
+        const found = new Set(), names = new Set();
+        for (const row of doc.querySelectorAll('a[href*="/channels/"], [data-list-item-id^="channels___"], [data-list-item-id^="private-channels"], [data-channel-id]')) {
+            if (row.closest('[id^="chat-messages-"], [data-local-translator]')) continue;
+            const listId = row.getAttribute("data-list-item-id") || "";
+            const listChannel = /^(?:channels|private-channels.*?)___(\d{1,22})$/.exec(listId)?.[1];
+            if (!listChannel && !row.closest('nav, [role="navigation"], [class*="sidebar_"], [class*="sidebarList_"], [data-list-id="channels"]')) continue;
+            const link = row.matches('a[href]') ? row : row.querySelector('a[href*="/channels/"]');
+            let pathId;
+            try {
+                const url = new URL(link?.getAttribute("href") || "", "https://discord.com");
+                if (/(^|\.)discord(?:app)?\.com$/.test(url.hostname)) pathId = /^\/channels\/(?:@me|\d+)\/(\d{1,22})(?:\/|$)/.exec(url.pathname)?.[1];
+            } catch { /* A malformed link must not block the remaining sidebar. */ }
+            const id = listChannel || pathId || row.getAttribute("data-channel-id");
             if (!id || !this.isAreaAutoEnabled(id)) continue;
-            const name = link.querySelector('[class*="name_"], [class*="channelName_"], [class*="threadName_"], [class*="overflow_"]');
-            if (!name?.parentNode) continue;
-            found.add(link);
-            let item = this.areaTags.get(link);
-            if (item && (item.id !== id || item.name !== name || item.tag.parentNode !== name.parentNode)) {item.tag.remove(); this.areaTags.delete(link); item = null;}
+            const labelled = (row.getAttribute("aria-labelledby") || link?.getAttribute("aria-labelledby") || "").split(/\s+/)
+                .map(label => doc.getElementById(label)).find(node => node && row.contains(node));
+            const name = row.querySelector('[id^="channel-name-"], [data-channel-name]') ||
+                row.querySelector('[class*="name_"], [class*="channelName"], [class*="threadName"], [class*="overflow_"], [class~="name"], [dir="auto"]') || labelled ||
+                [...row.querySelectorAll('span, div')].find(node => !node.childElementCount && node.textContent.trim() === this.areaName(id)) ||
+                ([...row.children].every(node => node.classList.contains("lt-area-auto-tag")) && row.textContent.trim() ? row : null);
+            if (!name?.parentNode || names.has(name)) continue;
+            names.add(name); found.add(row);
+            let item = this.areaTags.get(row);
+            if (item && (item.id !== id || item.name !== name || item.tag.parentNode !== name)) {
+                item.tag.remove(); item.name.classList.remove("lt-area-tagged-name"); this.areaTags.delete(row); item = null;
+            }
+            if (!item) for (const [owner, previous] of this.areaTags) {
+                if (previous.id === id && previous.name === name && previous.tag.parentNode === name) {
+                    this.areaTags.delete(owner); this.areaTags.set(row, previous); item = previous; break;
+                }
+            }
             if (!item) {
+                for (const orphan of name.querySelectorAll('.lt-area-auto-tag')) orphan.remove();
                 const tag = doc.createElement("span"); tag.className = "lt-area-auto-tag";
                 tag.setAttribute("role", "img"); tag.setAttribute("data-lt-area-auto", id);
                 tag.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 8a8 8 0 1 0 0 8M20 3v5h-5M8 16l4-9 4 9m-6.7-3h5.4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>';
-                name.parentNode.insertBefore(tag, name.nextSibling); item = {tag, name, id}; this.areaTags.set(link, item);
+                name.append(tag); item = {tag, name, id}; this.areaTags.set(row, item);
             }
+            name.classList.add("lt-area-tagged-name");
             item.tag.title = t("areaAutoTag"); item.tag.setAttribute("aria-label", t("areaAutoTag"));
         }
-        for (const [link, item] of this.areaTags) if (!found.has(link) || !link.isConnected) {item.tag.remove(); this.areaTags.delete(link);}
+        for (const [row, item] of this.areaTags) if (!found.has(row) || !row.isConnected) {
+            item.tag.remove(); item.name.classList.remove("lt-area-tagged-name"); this.areaTags.delete(row);
+        }
+        const liveTags = new Set([...this.areaTags.values()].map(item => item.tag));
+        for (const tag of doc.querySelectorAll('.lt-area-auto-tag')) if (!liveTags.has(tag)) {
+            tag.parentElement?.classList.remove("lt-area-tagged-name"); tag.remove();
+        }
     }
 
     getAreaTopic(channelId) {
