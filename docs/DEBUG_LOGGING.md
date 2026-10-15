@@ -47,9 +47,9 @@ Normal calls progress through start, request, response and completion events. Mo
 
 ## 图片任务 / Image tasks
 
-本地图片翻译的两阶段分别记录为 manual 类型的 image_ocr 与 image_summary（task 字段）。开始事件的 imageId 对应消息内图片身份，可配合 channelId／messageId 关联两阶段；image 字段记录图片格式及字节数。识别请求的 Base64 图片数据替换为 [IMAGE DATA OMITTED]，实际请求仍携带完整图片。识别结果和翻译概括结果位于 operation_complete.result。恢复已缓存的图片结果不发请求，也不新建一次模型日志。
+本地图片翻译只记录一次 manual 类型的 image_translate（task 字段），不再有 image_ocr／image_summary 两阶段。imageId、channelId、messageId 对应具体消息图片；image 字段包含格式、实际字节数及宽高。Base64 在日志中替换为 [IMAGE DATA OMITTED]，实际请求完整。image_budget 记录原生输入计数或旧接口不支持时的尺寸限制回退；计数请求的 modelInvoked 为 false，不计入生成次数。译文、概括、hasText 及原文语言位于 operation_complete.result。右键主动重译会新建操作并读取新术语；恢复缓存不请求模型或新建模型日志。
 
-Local image processing logs two manual tasks: image_ocr and image_summary. Their start events include imageId, channelId and messageId for association; image metadata records MIME type and byte size. Inline image data is replaced by [IMAGE DATA OMITTED] in logs, while the real request carries the complete image. Recognition and translated/summary results appear in operation_complete.result. Restoring cached image results makes no request and creates no new model log.
+Local image processing uses one manual image_translate task. imageId, channelId and messageId identify the source; image metadata includes MIME type, actual bytes, width and height. image_budget records native multimodal counts or an unsupported-endpoint fallback. Counting is not generation (modelInvoked:false). Logs omit Base64 but retain prompts, context and results. Explicit image actions refresh terms and context; cached display creates no model operation.
 
 图片右键未能唯一定位回消息时，Debug 可记录 image_menu_unmatched 任务：包含菜单标识、属性名、点击元素类型及已识别图片数量，不记录菜单属性值或图片内容；不调用模型。诊断自身失败不会影响原生菜单。
 

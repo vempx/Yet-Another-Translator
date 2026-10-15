@@ -9,7 +9,7 @@ const path = require("node:path");
 function load(BdApi, environment = {}) {
     const sandbox = {module: {exports: {}}, require, __dirname, URL, AbortController, TextDecoder, setTimeout, clearTimeout, BdApi, ...environment};
     vm.runInNewContext(fs.readFileSync(`${__dirname}/YetAnotherTranslator.plugin.js`, "utf8") +
-        "\nmodule.exports.testing = {DEFAULTS, validateSettings, TranslationClient, AutoTranslator, areaTopicFor, GlossaryStore, DebugLogger, ImageTranslator, discordImageUrl, imageIdentity, imageMime, IMAGE_MAX_BYTES, OutgoingTranslator, referenceContext, orderedReferences, renderMessageEmoji, I18n, t, languageLabel, UI_MESSAGES, uiError, errorForUi, uiText, outgoingMessageText, LANGUAGES, bindSettingsFooter, renderTranslatedMessage};", sandbox);
+        "\nmodule.exports.testing = {DEFAULTS, validateSettings, TranslationClient, AutoTranslator, areaTopicFor, GlossaryStore, DebugLogger, ImageTranslator, discordImageUrl, imageIdentity, imageMime, inspectImage, imageDimensions, IMAGE_MAX_BYTES, OutgoingTranslator, referenceContext, orderedReferences, renderMessageEmoji, I18n, t, languageLabel, UI_MESSAGES, uiError, errorForUi, uiText, outgoingMessageText, LANGUAGES, bindSettingsFooter, renderTranslatedMessage};", sandbox);
     return sandbox.module.exports;
 }
 const Plugin = load();
@@ -2613,34 +2613,107 @@ test("image downloads reject oversized, redirected and non-image content and can
     const pending=client.downloadImage(url,DEFAULTS,controller.signal);controller.abort();await assert.rejects(pending,error=>error.name==="AbortError");assert.equal(received.signal.aborted,true);
 });
 
-test("local image OCR and summary preserve exact image inputs, topic, replies, terminology and omit base64 in Debug", async t => {
-    const f=debugFixture(t),requests=[];const image={dataUrl:"data:image/png;base64,iVBORw0KGgo=",mime:"image/png",bytes:8};
+const TINY_PNG = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jRZkAAAAASUVORK5CYII=";
+const imageFixture = (data = Buffer.from(TINY_PNG, "base64"), mime = "image/png") => ({dataUrl:"data:"+mime+";base64,"+data.toString("base64"),mime,bytes:data.length});
+
+test("single local vision call includes image, topic, replies and terms, with redacted Debug payload", async t => {
+    const f=debugFixture(t),requests=[],image=imageFixture();
     const client=new TranslationClient(async(url,options)=>{
         if(url.endsWith("/models"))return {status:200,arrayBuffer:async()=>Buffer.from(JSON.stringify({data:[{id:"vision-model"}]}))};
+        if(url.endsWith("/input_tokens"))return {status:200,arrayBuffer:async()=>Buffer.from(JSON.stringify({input_tokens:512}))};
         const body=JSON.parse(options.body);requests.push(body);
-        const data=requests.length===1?{text:"Iuno uses Astrite",sourceLanguage:"ENG",unwanted:"not copied"}:{translation:"译文",summary:"概括",unwanted:"not copied"};
+        const data={translation:"译文",summary:"概括",sourceLanguage:"ENG",hasText:true,unwanted:"not copied"};
         return {status:200,arrayBuffer:async()=>Buffer.from(JSON.stringify({choices:[{finish_reason:"stop",message:{content:JSON.stringify(data),reasoning_content:"HIDDEN_REASONING"}}],usage:{prompt_tokens:12,completion_tokens:5,total_tokens:17}}))};
     });
-    const settings={...f.settings,model:""},info={channelId:"101",messageId:"202"};
-    const ocr=await client.readImage(image,settings,null,info);assert.equal(ocr.model,"vision-model");assert.equal(ocr.unwanted,undefined);
-    const context={areaTopic:{threadTitle:"Wuthering Waves"},reply:{id:"reply",text:"original reply",speaker:"author"},glossary:{name:"game glossary",entries:[{en:"Iuno",zh:"尤诺"}]}};
-    const result=await client.summarizeImageText(ocr.text,{...settings,model:ocr.model},null,context,info);await client.debugLogger.flush();
-    assert.equal(result.translation,"译文");assert.equal(result.summary,"概括");assert.equal(result.unwanted,undefined);
-    assert.equal(requests.length,2);assert.equal(requests[0].messages[1].content[1].image_url.url,image.dataUrl);
-    assert.equal(requests[1].model,"vision-model");assert.equal(requests[1].messages.at(-1).content,ocr.text);
-    const payload=JSON.stringify(requests[1]);for(const reference of ["Wuthering Waves","original reply","Iuno","尤诺"])assert.ok(payload.includes(reference));
-    assert.equal(client.stats.generations,2);assert.equal(client.stats.repairs,0);assert.equal(client.stats.usageResponses,2);
-    const records=f.records();assert.ok(records.some(record=>record.task==="image_ocr"&&record.image.bytes===8));assert.ok(records.some(record=>record.task==="image_summary"));
-    assert.ok(f.read().includes("[IMAGE DATA OMITTED]"));assert.ok(!f.read().includes("iVBORw0KGgo="));assert.ok(!f.read().includes("HIDDEN_REASONING"));
-    assert.equal(records.filter(record=>record.event==="operation_complete").length,2);
+    const context={areaTopic:{threadTitle:"Wuthering Waves",imageCaption:"Iuno"},reply:{id:"reply",text:"original reply",speaker:"author"},glossary:{name:"game glossary",entries:[{en:"Iuno",zh:"尤诺"}]}};
+    const result=await client.translateImage(image,{...f.settings,model:""},null,context,{channelId:"101",messageId:"202"});await client.debugLogger.flush();
+    assert.equal(result.translation,"译文");assert.equal(result.summary,"概括");assert.equal(result.sourceLanguage,"ENG");assert.equal(result.unwanted,undefined);
+    assert.equal(requests.length,1);assert.equal(requests[0].messages.at(-1).content[1].image_url.url,image.dataUrl);
+    assert.equal(requests[0].model,"vision-model");
+    const payload=JSON.stringify(requests[0]);for(const reference of ["Wuthering Waves","original reply","Iuno","尤诺"])assert.ok(payload.includes(reference));
+    assert.equal(client.stats.generations,1);assert.equal(client.stats.repairs,0);assert.equal(client.stats.usageResponses,1);
+    const records=f.records();assert.ok(records.some(record=>record.task==="image_translate"&&record.image.width===1&&record.image.height===1));
+    assert.ok(f.read().includes("[IMAGE DATA OMITTED]"));assert.ok(!f.read().includes(TINY_PNG));assert.ok(!f.read().includes("HIDDEN_REASONING"));
+    assert.equal(records.filter(record=>record.event==="operation_complete").length,1);
 });
 
-test("image tasks reject online services, malformed OCR and truncated output without automatic retries", async () => {
-    const image={dataUrl:"data:image/png;base64,iVBORw0KGgo=",mime:"image/png",bytes:8};
-    for(const providerMode of ["online","deepseek"]){let calls=0;const client=new TranslationClient(async()=>{calls++;});await assert.rejects(client.readImage(image,{...DEFAULTS,providerMode,baseUrl:"https://api.example.com/v1"}));assert.equal(calls,0);}
-    for(const choice of [{finish_reason:"length",message:{content:'{"text":"partial","sourceLanguage":"ENG"}'}},{message:{content:'{"text":42,"sourceLanguage":"ENG"}'}},{message:{content:'{"text":"'+"x".repeat(12001)+'","sourceLanguage":"ENG"}'}},{message:{content:"not json"}}]){
-        let calls=0;const client=new TranslationClient(async()=>{calls++;return {status:200,arrayBuffer:async()=>Buffer.from(JSON.stringify({choices:[choice]}))};});
-        await assert.rejects(client.readImage(image,{...DEFAULTS,model:"vision"}));assert.equal(calls,1);assert.equal(client.active,0);
+test("vision tasks reject online mode, invalid JSON, truncation and contradictory empty output without retries", async () => {
+    const image=imageFixture();
+    for(const providerMode of ["online","deepseek"]){let calls=0;const client=new TranslationClient(async()=>{calls++;});await assert.rejects(client.translateImage(image,{...DEFAULTS,providerMode,baseUrl:"https://api.example.com/v1"}));assert.equal(calls,0);}
+    const good={translation:"text",summary:"summary",sourceLanguage:"ENG",hasText:true};
+    for(const choice of [{finish_reason:"length",message:{content:JSON.stringify(good)}},{message:{content:JSON.stringify({...good,translation:42})}},{message:{content:JSON.stringify({...good,translation:"x".repeat(24001)})}},{message:{content:"not json"}},{message:{content:JSON.stringify({...good,hasText:false})}}]){
+        let calls=0;const client=new TranslationClient(async url=>{if(url.endsWith("/input_tokens"))return {status:200,arrayBuffer:async()=>Buffer.from(JSON.stringify({input_tokens:512}))};calls++;return {status:200,arrayBuffer:async()=>Buffer.from(JSON.stringify({choices:[choice]}))};});
+        await assert.rejects(client.translateImage(image,{...DEFAULTS,model:"vision"}));assert.equal(calls,1);assert.equal(client.active,0);
     }
-    const client=new TranslationClient();assert.throws(()=>client.readImage({...image,dataUrl:"file:///C:/secret"},DEFAULTS));
+    const client=new TranslationClient();assert.throws(()=>client.translateImage({...image,dataUrl:"file:///C:/secret"},DEFAULTS));
+});
+
+function sizedImage(mime,width,height){
+    let bytes;
+    if(mime==="image/png"){
+        // A real compressed, grayscale PNG with valid chunk CRCs (including the audit reproducer).
+        const crc=body=>{let result=0xffffffff;for(const value of body){result^=value;for(let n=0;n<8;n++)result=(result>>>1)^((result&1)?0xedb88320:0);}return (result^0xffffffff)>>>0;};
+        const chunk=(type,body)=>{const head=Buffer.alloc(4),tail=Buffer.alloc(4),content=Buffer.concat([Buffer.from(type),body]);head.writeUInt32BE(body.length);tail.writeUInt32BE(crc(content));return Buffer.concat([head,content,tail]);};
+        const ihdr=Buffer.alloc(13);ihdr.writeUInt32BE(width);ihdr.writeUInt32BE(height,4);ihdr[8]=8;
+        bytes=Buffer.concat([Buffer.from(TINY_PNG,"base64").subarray(0,8),chunk("IHDR",ihdr),chunk("IDAT",require("node:zlib").deflateSync(Buffer.alloc((width+1)*height))),chunk("IEND",Buffer.alloc(0))]);
+    } else if(mime==="image/jpeg"){
+        bytes=Buffer.from([255,216,255,192,0,11,8,0,0,0,0,1,1,0x11,0,255,217]);bytes.writeUInt16BE(height,7);bytes.writeUInt16BE(width,9);
+    } else if(mime==="image/gif"){
+        bytes=Buffer.alloc(13);bytes.write("GIF89a");bytes.writeUInt16LE(width,6);bytes.writeUInt16LE(height,8);
+    } else {
+        bytes=Buffer.alloc(30);bytes.write("RIFF");bytes.writeUInt32LE(22,4);bytes.write("WEBPVP8X",8);bytes.writeUInt32LE(10,16);bytes.writeUIntLE(width-1,24,3);bytes.writeUIntLE(height-1,27,3);
+    }
+    return imageFixture(bytes,mime);
+}
+
+test("T15 all formats reject compressed-large pixels before decoding or generating and accept exact limits", async()=>{
+    const {ImageTranslator,inspectImage}=Plugin.testing;const translator=new ImageTranslator({},{});let calls=0;
+    const client=new TranslationClient(async()=>{calls++;throw Error("must not call model");});
+    for(const mime of ["image/png","image/jpeg","image/gif","image/webp"]){
+        const image=sizedImage(mime,8192,4096);assert.ok(image.bytes<100000);
+        await assert.rejects(translator.prepare(image,new AbortController().signal),error=>error.uiMessage?.key==="imageTooLarge");
+        if(mime!=="image/webp")assert.throws(()=>client.translateImage(image,{...DEFAULTS,contextTokens:2048,maxTokens:1024}),error=>error.uiMessage?.key==="imageTooLarge");
+        assert.equal(inspectImage(sizedImage(mime,8192,2048),true).width,8192);
+        assert.throws(()=>inspectImage(sizedImage(mime,8193,1),true));
+        const cancelled=new AbortController();cancelled.abort();await assert.rejects(translator.prepare(image,cancelled.signal),error=>error.name==="AbortError");
+    }
+    assert.equal(calls,0);
+    for(const mime of ["image/png","image/jpeg","image/gif"]){assert.throws(()=>inspectImage(sizedImage(mime,0,1)));}
+    assert.throws(()=>inspectImage(imageFixture(Buffer.from(TINY_PNG,"base64").subarray(0,8))));
+    const fake={...imageFixture(),width:8192,height:4096,bytes:1};assert.equal(inspectImage(fake).width,1);
+    const bridge=load(undefined,{require:name=>name==="buffer"?Buffer:require(name)});assert.equal(bridge.testing.inspectImage(fake).height,1);
+});
+
+
+test("T15 native visual budget blocks oversized inputs; older servers fall back without extra generations",async t=>{
+    const f=debugFixture(t),image=imageFixture(),limit=DEFAULTS.contextTokens-DEFAULTS.maxTokens;
+    for(const outcome of [{input_tokens:limit+1},{input_tokens:0},{input_tokens:"512"},null]){
+        const routes=[];const client=new TranslationClient(async(url)=>{routes.push(url);return {status:200,arrayBuffer:async()=>Buffer.from(JSON.stringify(outcome))};});
+        await assert.rejects(client.translateImage(image,{...DEFAULTS,model:"vision"}));assert.equal(routes.length,1);assert.ok(routes[0].endsWith("/input_tokens"));assert.equal(client.stats.generations,0);assert.equal(client.active,0);
+    }
+    for(const status of [200,404,405,501,401,500]){
+        const routes=[];const client=new TranslationClient(async(url,options)=>{routes.push({url,body:JSON.parse(options.body)});
+            const counting=url.endsWith("/input_tokens");return {status:counting?status:200,arrayBuffer:async()=>Buffer.from(JSON.stringify(counting?status===200?{input_tokens:limit}:{error:{message:"unsupported"}}:{choices:[{message:{content:JSON.stringify({translation:"",summary:"",sourceLanguage:"UNK",hasText:false})}}]}))};});
+        if([401,500].includes(status)){await assert.rejects(client.translateImage(image,f.settings));assert.equal(routes.length,1);assert.equal(client.stats.generations,0);}
+        else {const result=await client.translateImage(image,f.settings);assert.equal(result.hasText,false);assert.equal(routes.length,2);assert.equal(client.stats.generations,1);assert.deepEqual(routes[0].body,routes[1].body);}
+        await client.debugLogger.flush();assert.equal(client.active,0);
+    }
+    const records=f.records();assert.ok(records.some(item=>item.event==="image_budget"&&item.mode==="native"));assert.ok(records.some(item=>item.event==="image_budget"&&item.mode==="pixel_limits_only"));
+    assert.ok(records.filter(item=>item.event==="api_request"&&item.route.endsWith("/input_tokens")).every(item=>item.modelInvoked===false));
+    let release;const started=new Promise(resolve=>release=resolve),controller=new AbortController();
+    const client=new TranslationClient(async()=>{release();return new Promise(()=>{});});
+    const pending=client.translateImage(image,{...DEFAULTS,model:"vision"},controller.signal);await started;controller.abort();await assert.rejects(pending,error=>error.name==="AbortError");assert.equal(client.stats.generations,0);assert.equal(client.active,0);
+});
+
+
+test("T15 image payload retention is bounded and clearing cancels all retained work",async()=>{
+    const {ImageTranslator}=Plugin.testing;let current,downloads=0;
+    const plugin={active:true,settings:{...DEFAULTS,targetLanguage:"English"},readMessage:()=>null,loadedMessages:()=>[],readReply:()=>null,getAreaTopic:()=>null,getGlossary:async()=>null,
+        client:{downloadImage:async()=>{downloads++;return imageFixture();},translateImage:async()=>({hasText:true,translation:"translated",summary:"summary",sourceLanguage:"ENG"})}};
+    const translator=new ImageTranslator(plugin,{document:{querySelectorAll:()=>[]}});translator.running=true;translator.render=()=>{};translator.locations=()=>new Map([[current.key,current]]);
+    for(let i=0;i<101;i++){current={key:String(i),channelId:"101",messageId:String(i),url:"ignored by mock"};await translator.translate(current);}
+    assert.equal(translator.entries.size,100);assert.equal(translator.imageCache.size,100);assert.equal(translator.imageCache.has("0"),false);
+    assert.equal(translator.imageCacheSize,[...translator.imageCache.values()].reduce((sum,image)=>sum+image.dataUrl.length,0));
+    const before=downloads;await translator.translate(current,"日本語");assert.equal(downloads,before);assert.equal(translator.imageCache.size,100);
+    translator.clear();assert.equal(translator.entries.size,0);assert.equal(translator.imageCache.size,0);assert.equal(translator.imageCacheSize,0);
 });

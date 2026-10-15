@@ -14,11 +14,11 @@ const plugin=new Plugin();plugin.active=true;plugin.settings={...DEFAULTS,target
 plugin.api={ContextMenu:{buildItem:config=>({props:{...config,children:config.items.map(item=>({props:item}))}}),buildMenu:items=>items,open:(event,items)=>{menu=items;},close(){}},Data:{save(){throw Error("image language must not change saved settings");}}};
 plugin.readMessage=(channel,id)=>({id,channel_id:channel,content:"image caption",author:{id:"author"}});
 plugin.loadedMessages=()=>[];plugin.readReply=()=>({id:"reply",text:"original reply"});plugin.getAreaTopic=()=>({threadTitle:"Wuthering Waves"});
-const calls={download:[],ocr:[],summary:[],glossary:[]};let summaryImpl=null,ocrImpl=null;
+const tinyPng="iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jRZkAAAAASUVORK5CYII=";
+const calls={download:[],vision:[],glossary:[]};let visionImpl=null;
 plugin.getGlossary=async(channel,text,context)=>{calls.glossary.push({channel,text,context});return {entries:[{en:"Iuno",zh:"尤诺"}]};};
-plugin.client={async downloadImage(url){calls.download.push(url);return {dataUrl:"data:image/png;base64,iVBORw0KGgo=",mime:"image/png",bytes:8,tag:new URL(url).pathname.split("/").at(-1)};},
-    async readImage(image,settings,signal,info){calls.ocr.push({image,settings,signal,info});return ocrImpl?ocrImpl(image,settings,signal,info):{text:"Iuno "+image.tag,sourceLanguage:"ENG",model:"vision"};},
-    async summarizeImageText(text,settings,signal,context,info){calls.summary.push({text,settings,signal,context,info});return summaryImpl?summaryImpl(text,settings,signal,context,info):{translation:settings.targetLanguage+": "+text,summary:'<img src=x onerror="bad()"> summary'};}};
+plugin.client={async downloadImage(url){calls.download.push(url);return {dataUrl:"data:image/png;base64,"+tinyPng,mime:"image/png",bytes:Buffer.from(tinyPng,"base64").length,tag:new URL(url).pathname.split("/").at(-1)};},
+    async translateImage(image,settings,signal,context,info){calls.vision.push({image,settings,signal,context,info});return visionImpl?visionImpl(image,settings,signal,context,info):{translation:settings.targetLanguage+": "+image.tag,summary:'<img src=x onerror="bad()"> summary',sourceLanguage:"ENG",hasText:true};}};
 const translator=new ImageTranslator(plugin,{document,Image:dom.window.Image});plugin.imageTranslator=translator;translator.start();
 function row(channel="101",id="202"){
     const node=document.createElement("div");node.id=`chat-messages-${channel}-${id}`;
@@ -70,48 +70,70 @@ async function main(){
     assert.equal(translator.menuLocation({target:images[0],message:{id:"wrong-message"}}),null);
     images[1].parentElement.className="spoilerContent_fixture hidden_fixture";assert.equal(translator.location(images[1]),null);images[1].parentElement.className="";
     item.props.action();assert.equal(message.querySelector(".lt-image-language").disabled,true);item.props.action();await flush();
-    assert.equal(calls.download.length,1);assert.equal(calls.ocr.length,1);assert.equal(calls.summary.length,1);
+    assert.equal(calls.download.length,1);assert.equal(calls.vision.length,1);
     let first=message.querySelector(".lt-image-result");assert.equal(first.previousElementSibling,images[0].closest('[class*="visualMediaItemContainer"]'));
-    assert.ok(first.textContent.includes("English: Iuno one.png"));assert.equal(first.querySelector("img"),null);assert.equal(first.querySelector("button").textContent,"ENG");
+    assert.ok(first.textContent.includes("English: one.png"));assert.equal(first.querySelector("img"),null);assert.equal(first.querySelector("button").textContent,"ENG");
     assert.equal(dom.window.getComputedStyle(first).fontSize,"0.875rem");assert.ok(CSS.includes(".lt-image-result"));assert.match(dom.window.getComputedStyle(first).color,/text-muted|153/);
-    assert.equal(calls.summary[0].context.areaTopic.threadTitle,"Wuthering Waves");assert.equal(calls.summary[0].context.areaTopic.imageCaption,"image caption");
-    assert.equal(calls.summary[0].context.reply.text,"original reply");assert.equal(calls.glossary[0].text,"Iuno one.png");
+    assert.equal(calls.vision[0].context.areaTopic.threadTitle,"Wuthering Waves");assert.equal(calls.vision[0].context.areaTopic.imageCaption,"image caption");
+    assert.equal(calls.vision[0].context.reply.text,"original reply");assert.ok(calls.glossary[0].text.includes("image caption"));
     first.querySelector("button").click();const japanese=menu.find(item=>item.id.endsWith("JPN")),control=japanese.control({},null);
     assert.equal(control.props.children.filter(child=>child&&child.type==="button").length,1);
     control.props.children[0].props.onClick(event());await flush();
-    assert.equal(calls.download.length,1);assert.equal(calls.ocr.length,1);assert.equal(calls.summary.length,2);assert.equal(calls.summary[1].settings.targetLanguage,"日本語");
+    assert.equal(calls.download.length,1);assert.equal(calls.vision.length,2);assert.equal(calls.vision[1].settings.targetLanguage,"日本語");
     assert.equal(plugin.settings.targetLanguage,"English");assert.equal(plugin.settings.autoTranslateAreas["101"],undefined);
     assert.ok(message.querySelector(".lt-image-result").textContent.includes("日本語"));
-    await translator.translate(translator.location(images[0]),"English");assert.equal(calls.summary.length,2);
+    await translator.translate(translator.location(images[0]),"English");assert.equal(calls.vision.length,2);
     await translator.translate(translator.location(images[1]));assert.equal(calls.download.length,2);assert.equal(message.querySelectorAll(".lt-image-result").length,2);
     assert.ok(message.querySelectorAll(".lt-image-result")[1].textContent.includes("two.png"));
-    console.log("PASS: image context menu deduplication, exact image placement, muted small text, safe output, default language and OCR reuse across language changes.");
+    console.log("PASS: image context menu deduplication, exact image placement, muted small text, safe output, default language and image payload reuse across language changes.");
+
+    const beforeRefresh=calls.vision.length, downloads=calls.download.length;
+    plugin.readMessage=(channel,id)=>({id,channel_id:channel,content:"updated caption Iuno",author:{id:"author"}});
+    plugin.readReply=()=>({id:"reply",text:"updated reply"});
+    plugin.getGlossary=async(channel,text,context)=>{calls.glossary.push({channel,text,context});return {entries:[{en:"Iuno",zh:"新术语"}]};};
+    item.props.action();item.props.action();await flush();
+    assert.equal(calls.vision.length,beforeRefresh+1);assert.equal(calls.download.length,downloads);
+    assert.equal(calls.vision.at(-1).context.areaTopic.imageCaption,"updated caption Iuno");
+    assert.equal(calls.vision.at(-1).context.reply.text,"updated reply");assert.equal(calls.vision.at(-1).context.glossary.entries[0].zh,"新术语");
+    assert.equal(translator.entries.get(translator.location(images[0]).key).results.size,1,"refresh discards stale language results");
+    await translator.translate(translator.location(images[0]),"English");assert.equal(calls.vision.length,beforeRefresh+1);
+    console.log("PASS: explicit menu refresh rereads caption, reply and glossary, reuses image bytes, deduplicates clicks and invalidates stale language caches.");
 
     let completeOld,oldStarted;const started=new Promise(resolve=>oldStarted=resolve);
-    summaryImpl=(text,settings)=>settings.targetLanguage==="Deutsch"?new Promise(resolve=>{completeOld=resolve;oldStarted();}):Promise.resolve({translation:settings.targetLanguage,summary:"summary"});
+    visionImpl=(image,settings)=>settings.targetLanguage==="Deutsch"?new Promise(resolve=>{completeOld=resolve;oldStarted();}):Promise.resolve({translation:settings.targetLanguage,summary:"summary",sourceLanguage:"ENG",hasText:true});
     const pending=translator.translate(translator.location(images[0]),"Deutsch");await started;
     await translator.translate(translator.location(images[0]),"Español");completeOld({translation:"STALE RESULT",summary:"old"});await pending;
     assert.ok(message.querySelector(".lt-image-result").textContent.includes("Español"));assert.ok(!message.textContent.includes("STALE RESULT"));
-    const counts=JSON.stringify([calls.download.length,calls.ocr.length,calls.summary.length]);const clone=message.cloneNode(true);message.remove();translator.scan();document.querySelector("main").append(clone);message=clone;images=message.querySelectorAll("img");translator.scan();translator.scan();
-    assert.equal(message.querySelectorAll(".lt-image-result").length,2);assert.equal(JSON.stringify([calls.download.length,calls.ocr.length,calls.summary.length]),counts);
+    const counts=JSON.stringify([calls.download.length,calls.vision.length]);const clone=message.cloneNode(true);message.remove();translator.scan();document.querySelector("main").append(clone);message=clone;images=message.querySelectorAll("img");translator.scan();translator.scan();
+    assert.equal(message.querySelectorAll(".lt-image-result").length,2);assert.equal(JSON.stringify([calls.download.length,calls.vision.length]),counts);
     message.id="chat-messages-303-404";translator.scan();assert.equal(message.querySelectorAll(".lt-image-result").length,0);
     console.log("PASS: latest image language wins, remounted messages restore results without requests, recycled rows cannot inherit another message's output.");
 
-    ocrImpl=async()=>({text:"",sourceLanguage:"UNK",model:"vision"});let before=calls.summary.length;
-    await translator.translate(translator.location(images[0]));assert.equal(calls.summary.length,before);assert.ok(message.textContent.includes("未识别到可读文字"));
+    visionImpl=async()=>({translation:"",summary:"",sourceLanguage:"UNK",hasText:false});let before=calls.vision.length;
+    await translator.translate(translator.location(images[0]));assert.equal(calls.vision.length,before+1);assert.ok(message.textContent.includes("未识别到可读文字"));
     plugin.settings={...plugin.settings,providerMode:"online",baseUrl:"https://api.example.com/v1"};before=calls.download.length;
     await translator.translate(translator.location(images[1]));assert.equal(calls.download.length,before);assert.ok(message.textContent.includes("仅支持本地"));
     plugin.settings={...plugin.settings,providerMode:"local",baseUrl:DEFAULTS.baseUrl};
-    translator.clear();message.remove();message=row("303","404");images=message.querySelectorAll("img");let resolveOCR;ocrImpl=()=>new Promise(resolve=>{resolveOCR=resolve;});
-    const cancelled=translator.translate(translator.location(images[0]));await flush();message.remove();translator.scan();resolveOCR({text:"late",sourceLanguage:"ENG",model:"vision"});await cancelled;
+    translator.clear();message.remove();message=row("303","404");images=message.querySelectorAll("img");let resolveVision;visionImpl=()=>new Promise(resolve=>{resolveVision=resolve;});
+    const cancelled=translator.translate(translator.location(images[0]));await flush();message.remove();translator.scan();resolveVision({translation:"late",summary:"late",sourceLanguage:"ENG",hasText:true});await cancelled;
     message=row("303","404");translator.scan();assert.ok(message.textContent.includes("已取消"));assert.ok(!message.textContent.includes("late"));
     translator.stop();message.querySelector("img").dispatchEvent(new dom.window.MouseEvent("mousedown",{bubbles:true,button:2}));assert.equal(translator.captured,null);assert.equal(document.querySelectorAll(".lt-image-result").length,0);assert.equal(translator.entries.size,0);
-    console.log("PASS: no-text images skip summarization, online mode never downloads/uploads, navigation cancels pending work, and stop removes all results.");
+    console.log("PASS: no-text images return a single empty result, online mode never downloads/uploads, navigation cancels pending work, and stop removes all results.");
 
-    class Bitmap {set src(value){if(value){this.naturalWidth=10;this.naturalHeight=20;queueMicrotask(()=>this.onload?.());}}}
-    let drawn=0;const webpTranslator=new ImageTranslator(plugin,{Image:Bitmap,document:{createElement:()=>({getContext:()=>({drawImage(){drawn++;}}),toDataURL:()=>"data:image/png;base64,iVBORw0KGgo="})}});
-    const prepared=await webpTranslator.prepare({mime:"image/webp",dataUrl:"data:image/webp;base64,UklGRg=="},new AbortController().signal);
+    class Bitmap {set src(value){if(value){this.naturalWidth=1;this.naturalHeight=1;queueMicrotask(()=>this.onload?.());}}}
+    let drawn=0;const webpTranslator=new ImageTranslator(plugin,{Image:Bitmap,document:{createElement:()=>({getContext:()=>({drawImage(){drawn++;}}),toDataURL:()=>"data:image/png;base64,"+tinyPng})}});
+    const webp=Buffer.alloc(30);webp.write("RIFF");webp.writeUInt32LE(22,4);webp.write("WEBPVP8X",8);webp.writeUInt32LE(10,16);
+    const prepared=await webpTranslator.prepare({mime:"image/webp",dataUrl:"data:image/webp;base64,"+webp.toString("base64")},new AbortController().signal);
     assert.equal(prepared.mime,"image/png");assert.equal(drawn,1);
+    // Padding in Base64 must not inflate a valid exactly-8-MiB conversion by one byte.
+    const boundaryPng=Buffer.alloc(8*1024*1024);Buffer.from(tinyPng,"base64").copy(boundaryPng);
+    const boundaryTranslator=new ImageTranslator(plugin,{Image:Bitmap,document:{createElement:()=>({getContext:()=>({drawImage(){}}),toDataURL:()=>"data:image/png;base64,"+boundaryPng.toString("base64")})}});
+    const boundaryResult=await boundaryTranslator.prepare({mime:"image/webp",dataUrl:"data:image/webp;base64,"+webp.toString("base64")},new AbortController().signal);assert.equal(boundaryResult.bytes,8*1024*1024);
+    const controller=new AbortController();
+    class PendingBitmap {set src(value){this.value=value;}}
+    const waiting=new ImageTranslator(plugin,{Image:PendingBitmap,document:{createElement(){throw Error("cancelled decoding must not draw");}}});
+    const pendingWebp=waiting.prepare({mime:"image/webp",dataUrl:"data:image/webp;base64,"+webp.toString("base64")},controller.signal);
+    controller.abort();await assert.rejects(pendingWebp,error=>error.name==="AbortError");
     console.log("PASS: WebP conversion uses decoded pixels to produce a PNG input for llama-server.");
 }
 main().catch(error=>{console.error(error);process.exitCode=1;}).finally(()=>dom.window.close());

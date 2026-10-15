@@ -2,9 +2,12 @@
 
 ## Unreleased
 
+- Replaced the two-stage image flow with one local vision generation, with native input-token preflight where supported. Enforce byte and decoded-dimension limits for PNG, JPEG, GIF and WebP before model requests.
+- Fixed image retranslation returning stale terms and context: the image menu now refreshes results, while cached language selection and remounting remain request-free. Retain bounded image payloads for reuse.
+
 - Fixed missing image context-menu entries across media overlays, early right-button events, original/proxy URL differences, full-size viewers and stable message-list IDs. Resolve actual image targets independently of menu IDs and add opt-in diagnostics for unmatched image menus.
 
-- Added local llama-server image text recognition, translation and summaries from the image context menu. Results appear below the selected image in smaller muted text, with a source-language badge for per-image target changes. Reuse recognized text and completed results; apply area context, replies and matched glossary terms. Keep image data out of Debug logs.
+- Added local llama-server image text recognition, translation and summaries from the image context menu. Results appear below the selected image in smaller muted text, with a source-language badge for per-image target changes. Reuse image data and completed results; apply area context, replies and matched glossary terms. Keep image data out of Debug logs.
 
 - Removed the extra blank line between the original and translation in bilingual sending.
 

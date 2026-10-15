@@ -1,25 +1,31 @@
 # 图片翻译 / Image translation
 
-右键消息图片，选择“翻译概括图片内文字”。本功能仅使用已配置的本机 llama-server，不会转发给在线模型。需要加载支持图片的视觉模型及匹配的 mmproj；只加载文字模型无法接收图片。设置方式参考 [llama.cpp 多模态文档](https://github.com/ggml-org/llama.cpp/blob/master/docs/multimodal.md)。
+右键消息图片，选择“翻译概括图片内文字”。仅使用已配置的本机 llama-server，需要支持图片的视觉模型及匹配的 mmproj；在线／DeepSeek 模式暂不支持。
 
-Right-click a message image and choose Translate and summarize image text. This feature uses the configured local llama-server only, with a vision-capable model and matching mmproj. It does not route images to online services. See the [llama.cpp multimodal documentation](https://github.com/ggml-org/llama.cpp/blob/master/docs/multimodal.md).
+Right-click a message image and choose Translate and summarize image text. This uses the configured local llama-server with a vision model and matching mmproj. Online/DeepSeek image processing is not enabled. See the [llama.cpp multimodal documentation](https://github.com/ggml-org/llama.cpp/blob/master/docs/multimodal.md).
 
 ## 行为 / Behavior
 
-- 在被选中的图片后显示结果，不替换原图；同一消息多张图片分别绑定。文字较小、灰色，无引用边框。输出作为纯文本显示，模型输出不会作为 HTML 执行。
-- 初始目标语言使用版面自动翻译的共享默认值；标签表示识别出的原文语言。点击标签只改变这张图片的目标语言，不修改默认语言、不启用自动翻译。
-- 第一阶段通过 Chat Completions 的 user content 数组发送文字与 image_url（Base64 data URL），要求返回原文及原文语言。第二阶段发送识别出的文字及预算筛选后的版面、图片消息正文、附近消息、回复和术语参考，生成译文与简短概括。两阶段均只调用本机服务。
-- 切换语言复用已识别原文，保留每图最近四种目标语言结果；最多保留 100 张图片记录。滚动或切换频道后可恢复已完成结果，停用或更改翻译配置后清空。断开显示的待处理任务会取消；可右键重试。
-- 模糊、过长、截断或格式不完整的识别结果不会被当作成功译文。没有文字时直接提示，不生成概括。不进行自动重试。
+- 一次视觉生成直接识别、翻译并概括图片内文字，不调用额外 OCR，也不先生成识别正文。请求通过 Chat Completions 的 user content 数组携带文字和 image_url（Base64 data URL）。
+- 附带预算筛选后的版面主题、图片消息正文、附近原文、回复和事先匹配的术语。术语按图片说明、版面名称及上下文筛选；仅出现在图片内的词条无法提前命中，不会因此额外调用识别或塞入整份词表。
+- 在所选图片后插入小号灰色纯文本，保留原图，不执行模型返回的 HTML。多图分别绑定。标签显示原文语言，点击仅改变本图目标语言，不修改自动翻译默认值。
+- 初始目标使用版面自动翻译采用的共享默认值。再次右键选择图片翻译会强制读取当前说明、回复、附近消息及最新术语，重新生成；清除此图其他语言的旧结果。
+- 切换至未缓存语言需要一次新视觉生成，尽量复用图片数据；切回已缓存语言、滚动或重新显示消息不生成。保留最多 100 图及每图四种语言结果；图片载荷另限 100 项和 32 Mi 字符（UTF-16 约 64 MiB），超限淘汰后可能重新下载。
+- 同目标进行中的重复点击去重。切换目标、离开消息、停用或更改翻译配置会取消相关任务；旧结果不能覆盖新结果。没有文字时提示，格式错误或截断时报错，无自动重试。
 
-Results appear below the selected image, with smaller muted text and a clickable source-language badge. Multiple images remain independent. Model output is displayed as plain text. The initial target follows the shared automatic-translation default; badge choices affect this image only. OCR runs first, followed by contextual translation and summarization. Switching language reuses OCR; up to four target results per image and 100 image records are retained. Finished results restore after remounts; pending disconnected work is cancelled. Disabling or changing translation configuration clears results. Empty images skip summarization; truncated or malformed output is rejected without automatic retries.
+One vision generation reads, translates and summarizes the image; no separate OCR step or service is used. Typed user content carries text and an image_url data URL. Budgeted references include area names, captions, nearby original messages, replies and terms matched before the request. Terms appearing only inside the image cannot be matched in advance.
 
-## 限制 / Limits
+Smaller muted plain-text results appear below the selected image, with a source-language badge for changing only that image's target. Choosing the image action again refreshes context and glossary terms and clears stale language results. Switching to an uncached language generates once; cached language choices and remounts generate nothing. Up to 100 image records and four language results per image are kept. A separate image payload cache is capped at 100 items and 32 Mi characters (roughly 64 MiB in UTF-16); eviction can require downloading again. Repeated pending actions are deduplicated and stale results cannot overwrite newer work. Empty, malformed and cancelled results are handled without automatic retries.
 
-- 仅处理消息中的 Discord CDN 附件或 Discord 代理的图片预览，不获取任意网页、本地文件、头像或表情图片。图片下载不携带模型 API Key、Cookie 或登录凭据，不跟随跳转。
-- 单张下载最多 8 MB，按文件内容识别 PNG、JPEG、GIF、WebP；WebP 在浏览器解码为 PNG，再发送给 llama-server。WebP 转换限制为约 1600 万像素，转换结果同样限制为 8 MB。其余格式由后端解码；不进行动画逐帧翻译。
-- 识别正文最多 12000 字符，翻译与概括合计最多 24000 字符，并服从现有输出 token 上限。图像 token 消耗由视觉模型决定，不能按 Base64 字符数当作文字 token 估算。
-- 使用现有超时与并发限制。两阶段各有请求超时；图像过大、模型未启用视觉、上下文不足或输出额度不足都会显示错误。识别质量取决于图片清晰度和视觉模型。
-- Debug 记录图片任务阶段、模型、格式、字节数、提示词和结果，但省略 Base64 图像数据。OCR 原文、聊天上下文与术语仍会写入已启用的日志，请留意其隐私内容。
+## 限制与预算 / Limits and budget
 
-Only Discord-hosted message attachments and Discord-proxied previews are fetched. Arbitrary websites, local files, avatars and emoji are excluded. Downloads omit model credentials and do not follow redirects. Input is limited to 8 MB and recognized from file signatures. WebP conversion is limited to roughly 16 million pixels and an 8 MB PNG output. Animation frames are not translated individually. OCR text is capped at 12000 characters; translation plus summary at 24000, subject to the configured output-token budget. Image token costs depend on the model. Existing concurrency and per-request timeouts apply. Debug omits Base64 image content but retains recognized text, context, prompts and results.
+- 仅下载 Discord CDN 消息附件或 Discord 代理的图片预览，不读取任意网站、本地文件、头像或表情。下载不携带模型 API Key／Cookie，不跟随重定向。
+- 下载及转换结果均最多 8 MiB；PNG、JPEG、GIF、WebP 全部先解析头部检查尺寸，单边最多 8192 像素，总计最多 16,777,216 像素。超限提示裁剪，不静默缩小文字。WebP 检查后浏览器解码转 PNG，并再次检查结果；不逐帧翻译动画。
+- 生成前尝试 llama-server 的 /v1/chat/completions/input_tokens 原生多模态计数接口，以配置的 contextTokens − maxTokens 检查输入。计数不生成文字，但会另发送一份带图片的本地请求；自动发现模型另有 /models 查询。因此“一次生成”不代表只发生一次 HTTP 请求。
+- 旧服务返回 404／405／501 时保留字节、像素和文本参考预算限制，再由服务端判断实际视觉容量；此时插件无法保证图片 token 与剩余上下文完全匹配，Debug 明确记录回退。其他接口错误、无效计数或已知超预算会阻止生成。绝不把 Base64 长度当作视觉 token 数。
+- 译文及概括合计最多 24000 字符，同时服从输出 token 限制。计数、模型发现与生成共用一次超时期限及已有并发限制。结果质量取决于模型与图片清晰度。
+- Debug 省略 Base64，保留图片尺寸、提示词、上下文、术语及结果。分享日志前检查其中聊天内容。
+
+Only Discord-hosted attachments and proxied previews are downloaded, without model credentials, cookies or redirects. Downloads and converted PNGs are limited to 8 MiB. Every supported format is checked before decoding: at most 8192 pixels per side and 16,777,216 total pixels. Oversized images are rejected for cropping rather than silently resized. WebP is decoded to PNG and checked again; animations are not translated frame by frame.
+
+The native [llama-server input-token counting endpoint](https://github.com/ggml-org/llama.cpp/blob/master/tools/server/README.md#post-v1chatcompletionsinput_tokens-token-counting) is tried before generation, checking input against contextTokens minus maxTokens. Counting is a separate local HTTP request carrying the image, with no text generation; model discovery may also query /models. Older servers returning 404/405/501 fall back to byte/pixel/text-reference limits and server-side capacity validation, so exact visual capacity cannot be guaranteed in that fallback. Other failures or known oversized inputs prevent generation. Base64 length is never treated as visual token count. Translation and summary total at most 24000 characters, subject to output tokens. Counting, discovery and generation share one deadline and existing concurrency limits. Debug omits image Base64 but retains prompts, context, dimensions and results.

@@ -40,9 +40,9 @@ An LLM-powered BetterDiscord plugin for automatic message translation, individua
 2. Right-click an image in a message and choose Translate and summarize image text. Smaller muted text appears below that image, preserving the original.
 3. The initial target follows the shared default used by automatic translation in that area. Click the ENG/JPN source-language badge to change this image’s target without changing global settings.
 
-The plugin recognizes original text first, then uses the area topic, nearby messages, replies and matching glossary terms to translate and summarize it. Initial processing usually requires two model generations, plus a model-list query when discovering the model automatically. Language changes reuse recognized text; completed language results can be restored directly. Images are processed only on manual request. Online/DeepSeek image processing is not enabled.
+One local vision API generation reads, translates and summarizes the image, with no separate OCR. References include area names, captions, nearby messages, replies and terms matched before the request; terms visible only in the image cannot be matched in advance. A token-count preflight is separate from generation; automatic model discovery also queries the model list. Target changes reuse image data, while completed language results and remounted messages restore without generation. Choosing the image action again refreshes context and terminology and retranslates. Images are processed only on manual request. Online/DeepSeek image processing is not enabled.
 
-Discord image attachments and Discord-proxied previews are supported, up to 8 MB per image. WebP is converted to PNG before sending. Results are visible only to you and are cleared on disable or translation-configuration changes. See [image translation details](docs/IMAGE_TRANSLATION.md).
+Discord image attachments and Discord-proxied previews are supported, up to 8 MB, 8192 pixels per side and 16,777,216 total pixels per image. All supported formats are checked before decoding; WebP is converted to PNG before sending. Results are visible only to you and are cleared on disable or translation-configuration changes. See [image translation details](docs/IMAGE_TRANSLATION.md).
 
 ### Translate before sending
 
