@@ -72,7 +72,7 @@
   "outgoingFailed": "La traducción antes de enviar falló. Tu borrador se mantuvo: {error}",
   "singleLanguage": "Traducir solo este mensaje a {language}",
   "permanentLanguage": "Cambiar permanentemente la traducción automática a {language}",
-  "permanentLanguageHint": "Traducir permanentemente a {language} y retraducir el canal actual",
+  "permanentLanguageHint": "Usar {language} permanentemente por defecto, activar traducción aquí y borrar preferencias individuales. Las otras secciones mantienen su estado.",
   "customAreaEnabled": "Traducción personalizada habilitada para {name}. Establece una ruta de glosario en la configuración del plugin.",
   "customAreaDisabled": "Traducción personalizada deshabilitada para {name}.",
   "关闭自定义翻译": "Deshabilitar traducción personalizada",
@@ -185,5 +185,10 @@
   "testUsageUnavailable": "Uso real de pruebas no disponible: no se recibió usage; cancelar puede consumir tokens.",
   "testUsageEmpty": "Todavía no hay generaciones de prueba.",
   "glossaryEconomy": "Prompts de glosario económicos",
-  "glossaryEconomyHelp": "Desactivado por defecto. Omite términos solo cercanos en mensajes cortos sin respuesta ni referencia clara; reduce su presupuesto en otros casos. Une duplicados, conserva alias coincidentes y juego/categoría/personaje, limita notas a 96 caracteres. Puede reducir información auxiliar. Guardar y cerrar para aplicar."
+  "glossaryEconomyHelp": "Desactivado por defecto. Omite términos solo cercanos en mensajes cortos sin respuesta ni referencia clara; reduce su presupuesto en otros casos. Une duplicados, conserva alias coincidentes y juego/categoría/personaje, limita notas a 96 caracteres. Puede reducir información auxiliar. Guardar y cerrar para aplicar.",
+  "areaAutoLabel": "Traducir automáticamente esta sección",
+  "areaAutoOn": "Activar traducción automática aquí",
+  "areaAutoOff": "Desactivar traducción automática aquí",
+  "areaAutoTag": "Traducción automática activada aquí",
+  "areaAutoHelp": "Se guarda por ID; canales e hilos son independientes. Los menús contextuales guardan al instante; los ajustes se aplican al guardar y cerrar."
 }

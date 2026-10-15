@@ -72,7 +72,7 @@
   "outgoingFailed": "發送前翻譯失敗。您的草稿已保留：{error}",
   "singleLanguage": "僅將此訊息翻譯為 {language}",
   "permanentLanguage": "永久將自動翻譯切換為 {language}",
-  "permanentLanguageHint": "永久翻譯為 {language} 並重新翻譯目前頻道",
+  "permanentLanguageHint": "永久將預設譯文語言改為{language}，開啟此版面自動翻譯並清除單則覆蓋。其它版面保持各自開關。",
   "customAreaEnabled": "已為 {name} 啟用自訂翻譯。請在插件設定中設定詞彙表路徑。",
   "customAreaDisabled": "已為 {name} 停用自訂翻譯。",
   "关闭自定义翻译": "停用自訂翻譯",
@@ -185,5 +185,10 @@
   "testUsageUnavailable": "測試實際用量不可用：未收到測試 usage（取消請求也可能消耗 tokens）。",
   "testUsageEmpty": "尚無連線測試生成請求。",
   "glossaryEconomy": "術語節省用量",
-  "glossaryEconomyHelp": "預設關閉。短訊息無回覆或明顯指代時省略僅附近命中的術語，其餘附近術語使用較小額度。合併重複條目，保留命中別名，備註最多 96 字元，保留遊戲、類別及角色資訊。可能減少輔助資訊，儲存並關閉後生效。"
+  "glossaryEconomyHelp": "預設關閉。短訊息無回覆或明顯指代時省略僅附近命中的術語，其餘附近術語使用較小額度。合併重複條目，保留命中別名，備註最多 96 字元，保留遊戲、類別及角色資訊。可能減少輔助資訊，儲存並關閉後生效。",
+  "areaAutoLabel": "自動翻譯此版面",
+  "areaAutoOn": "開啟此版面自動翻譯",
+  "areaAutoOff": "關閉此版面自動翻譯",
+  "areaAutoTag": "此版面已開啟自動翻譯",
+  "areaAutoHelp": "按版面 ID 獨立儲存，頻道與帖子各自設定。可右鍵側欄版面或訊息切換並立即儲存；設定頁修改須儲存並關閉。"
 }

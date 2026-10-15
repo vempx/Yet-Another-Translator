@@ -216,8 +216,9 @@ test("T4 mention-only messages retain the native node, skip generation and never
 });
 
 test("T4 settings dropdown reaches persisted config, rebuilt queue and next request with original references", async () => {
-    const host = settingsHost({autoTranslate: true}), panel = host.plugin.getSettingsPanel();
+    const host = settingsHost({autoTranslateAreas:{"101":{name:"test",enabled:true}}}), panel = host.plugin.getSettingsPanel();
     const chat = chatEnvironment(), requests = [];
+    chat.auto.sources.isAutoTranslationEnabled=()=>host.plugin.isAreaAutoEnabled("101");
     chat.document.nodes = [chat.message("1", "Rover is fun"), chat.message("2", "I agree")];
     chat.auto.sources.readReply = () => ({id: "0", channelId: "channel", text: "original reply"});
     chat.auto.getAreaTopic = () => ({threadTitle: "Wuthering Waves"});
@@ -1112,14 +1113,14 @@ test("live Discord locale subscription refreshes cached message UI and releases 
     class Api {
         static Webpack = {getStore: name => name === "LocaleStore" ? {getLocale: () => locale,
             addChangeListener: callback => listeners.add(callback), removeChangeListener: callback => listeners.delete(callback)} : null};
-        Data = {load: () => ({autoTranslate: true})};
+        Data = {load: () => ({autoTranslateAreas:{"101":{name:"test",enabled:true}}})};
         DOM = {addStyle() {}, removeStyle() {}};
         ContextMenu = {patch: () => () => {}};
     }
     const Local = load(Api), plugin = new Local(); plugin.start();
     const chat = chatEnvironment();
     chat.document.nodes = [chat.message("1", "This is the original message")];
-    plugin.autoTranslator = new Local.testing.AutoTranslator(chat.client, plugin.settings, chat.auto.env);
+    plugin.autoTranslator = new Local.testing.AutoTranslator(chat.client, plugin.settings, chat.auto.env, undefined, undefined, {isAutoTranslationEnabled:()=>plugin.isAreaAutoEnabled("101")});
     plugin.autoTranslator.running = true;
     for (let i = 0; i < 8; i++) {plugin.autoTranslator.scan(); await new Promise(setImmediate);}
     const entry = plugin.autoTranslator.entries.get(chat.document.nodes[0]);
@@ -1528,6 +1529,68 @@ test("glossary loading also supports BetterDiscord filesystem bridges without pr
     store.fs = {statSync: fs.statSync, readFileSync: fs.readFileSync};
     const result = await store.select(fixture.file, "Iuno", {});
     assert.equal(result.entries[0].zh, "尤诺");
+});
+
+test("area auto switches are ID-scoped, independent for forums/threads and migrate legacy global state once", () => {
+    const plugin=new Plugin();let stored={...DEFAULTS,autoTranslate:true};delete stored.autoTranslateAreas;let writes=0,current="101";
+    plugin.api={Data:{load:()=>stored,save:(key,value)=>{stored=value;writes++;}}};plugin.currentChannelId=()=>current;
+    plugin.channelStore={getChannel:id=>({id,name:"same name",parent_id:id==="102"?"101":null})};
+    plugin.loadSettings();assert.equal(writes,1);assert.equal(plugin.isAreaAutoEnabled("101"),true);assert.equal(plugin.isAreaAutoEnabled("102"),false);assert.equal(plugin.settings.autoTranslate,false);
+    current="102";plugin.loadSettings();assert.equal(writes,1);assert.equal(plugin.isAreaAutoEnabled("102"),false);
+    plugin.setAutoTranslation(true,"102");plugin.setAutoTranslation(false,"101");assert.equal(plugin.isAreaAutoEnabled("102"),true);assert.equal(plugin.isAreaAutoEnabled("101"),false);
+    plugin.setAutoTranslation(true,"103");assert.equal(plugin.isAreaAutoEnabled("104"),false);
+    const before=writes;plugin.setAutoTranslation(true,null);assert.equal(writes,before);
+    assert.throws(()=>validateSettings({...DEFAULTS,autoTranslateAreas:{invalid:{enabled:true}}}));
+});
+
+test("area and message menus toggle the menu's area even after navigation and do not duplicate items", () => {
+    const host=settingsHost();host.plugin.getSettingsPanel();const plugin=host.plugin;plugin.active=true;plugin.currentChannelId=()=>"999";
+    const area={props:{navId:"channel-context",children:[]}};plugin.patchAreaMenu(area,{channel:{id:"101",type:0,name:"A"}});plugin.patchAreaMenu(area,{channel:{id:"101",type:0,name:"A"}});
+    assert.equal(area.props.children.length,1);find(area,node=>node.props?.id==="local-translator-area-auto").props.action();
+    assert.equal(plugin.isAreaAutoEnabled("101"),true);assert.equal(plugin.isAreaAutoEnabled("999"),false);
+    const message={props:{navId:"message",children:[]}};plugin.patchMessageMenu(message,{message:{id:"1",channel_id:"202"}});
+    find(message,node=>node.props?.id==="local-translator-area-auto").props.action();assert.equal(plugin.isAreaAutoEnabled("202"),true);assert.equal(plugin.isAreaAutoEnabled("101"),true);
+    const dm={props:{navId:"gdm-context",children:[]}};plugin.patchAreaMenu(dm,{channel:{id:"303",type:3}});
+    assert.ok(find(dm,node=>node.props?.id==="local-translator-area-auto"));assert.equal(find(dm,node=>node.props?.id==="local-translator-custom-area"),undefined);
+    const reopened={props:{navId:"message",children:[]}};plugin.patchMessageMenu(reopened,{channel:{id:"101"},message:{id:"1"}});
+    find(reopened,node=>node.props?.id==="local-translator-area-auto").props.action();assert.equal(plugin.isAreaAutoEnabled("101"),false);assert.equal(plugin.isAreaAutoEnabled("202"),true);
+});
+
+test("automatic translation isolates simultaneous areas and restores retained results without new requests", async () => {
+    const chat=chatEnvironment(),enabled=new Set(["101"]);chat.auto.sources.isAutoTranslationEnabled=id=>enabled.has(id);
+    const a=chat.message("1","area A","101"),b=chat.message("2","area B","202");chat.document.nodes=[a,b];await chat.drain();
+    assert.deepEqual(chat.calls,["area A"]);assert.equal(chat.auto.entries.get(a).sourceHidden,true);
+    enabled.delete("101");chat.auto.syncAutoTranslation();assert.equal(chat.auto.entries.get(a).output,null);assert.equal(chat.auto.entries.get(a).sourceHidden,false);
+    enabled.add("202");chat.auto.syncAutoTranslation();await chat.drain();assert.deepEqual(chat.calls,["area A","area B"]);
+    enabled.add("101");chat.auto.syncAutoTranslation();await chat.drain();assert.equal(chat.calls.length,2);assert.equal(chat.auto.entries.get(a).sourceHidden,true);
+    enabled.delete("202");chat.auto.syncAutoTranslation();chat.auto.refresh("2","202");await chat.drain();
+    assert.equal(chat.auto.entries.get(b).sourceHidden,false);assert.equal(chat.auto.entries.get(b).manual,true);assert.ok(chat.auto.entries.get(b).output);
+});
+
+test("disabling one area cancels its pending receive translation and preserves other enabled areas", async () => {
+    const chat=chatEnvironment(),enabled=new Set(["101","202"]);chat.auto.sources.isAutoTranslationEnabled=id=>enabled.has(id);
+    let finish;chat.client.translate=text=>text==="pending A"?new Promise(resolve=>finish=resolve):Promise.resolve("translated B");
+    const a=chat.message("1","pending A","101"),b=chat.message("2","ready B","202");chat.document.nodes=[a,b];
+    chat.auto.scan();await new Promise(setImmediate);enabled.delete("101");chat.auto.syncAutoTranslation();assert.equal(chat.auto.pending.controller.signal.aborted,true);
+    finish("stale A");await chat.drain();assert.equal(chat.auto.entries.get(a).output,null);assert.equal(chat.auto.entries.get(b).state,"done");assert.equal(chat.auto.entries.get(b).sourceHidden,true);
+});
+
+test("changing a different area's switch does not cancel the current area's pending translation", async () => {
+    const chat=chatEnvironment(),enabled=new Set(["101","202"]);chat.auto.sources.isAutoTranslationEnabled=id=>enabled.has(id);
+    let finish;chat.client.translate=()=>new Promise(resolve=>finish=resolve);
+    const node=chat.message("1","pending A","101");chat.document.nodes=[node];chat.auto.scan();await new Promise(setImmediate);
+    enabled.delete("202");chat.auto.syncAutoTranslation();assert.equal(chat.auto.pending.controller.signal.aborted,false);
+    finish("translated A");await chat.drain();assert.equal(chat.auto.entries.get(node).state,"done");
+});
+
+test("area settings merge only edited IDs, preserve menu changes and discard cancellation", () => {
+    const host=settingsHost(),plugin=host.plugin;plugin.currentChannelId=()=>"101";const panel=plugin.getSettingsPanel();let tree=host.render(panel);
+    find(tree,node=>node.props?.name==="autoTranslateCurrentArea").props.onChange({target:{checked:true}});
+    plugin.setAutoTranslation(true,"202");tree=host.render(panel);find(tree,node=>node.type==="button"&&node.props.children[0]==="保存并关闭").props.onClick();
+    assert.equal(plugin.isAreaAutoEnabled("101"),true);assert.equal(plugin.isAreaAutoEnabled("202"),true);
+    tree=host.render(panel);find(tree,node=>node.props?.name==="autoTranslateCurrentArea").props.onChange({target:{checked:false}});
+    tree=host.render(panel);find(tree,node=>node.type==="button"&&node.props.children[0]==="取消").props.onClick();assert.equal(plugin.isAreaAutoEnabled("101"),true);
+    plugin.active=true;plugin.setAutomaticTargetLanguage("日本語","303");assert.equal(plugin.isAreaAutoEnabled("303"),true);assert.equal(plugin.isAreaAutoEnabled("404"),false);
 });
 
 test("forum bindings inherit by ID, individual thread overrides and disabled thread bindings take precedence", () => {

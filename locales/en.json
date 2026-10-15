@@ -72,7 +72,7 @@
   "outgoingFailed": "Translation before sending failed. Your draft was kept: {error}",
   "singleLanguage": "Translate only this message into {language}",
   "permanentLanguage": "Permanently switch automatic translation to {language}",
-  "permanentLanguageHint": "Permanently translate into {language} and retranslate the current channel",
+  "permanentLanguageHint": "Permanently use {language} as the default, enable automatic translation for this area and clear per-message overrides. Other areas keep their own on/off state.",
   "customAreaEnabled": "Custom translation enabled for {name}. Set a glossary path in plugin settings.",
   "customAreaDisabled": "Custom translation disabled for {name}.",
   "关闭自定义翻译": "Disable custom translation",
@@ -185,5 +185,10 @@
   "testUsageUnavailable": "Actual test token usage unavailable: no test usage received (cancelled requests may still consume tokens).",
   "testUsageEmpty": "No connection-test generation requests yet.",
   "glossaryEconomy": "Economical glossary prompts",
-  "glossaryEconomyHelp": "Off by default. Omits nearby-only terms for short messages without a reply or clear reference, and gives other nearby terms a smaller budget. Merges duplicates, retains matched aliases, caps notes at 96 characters and preserves game, category and character details. May reduce supporting context. Save and close to apply."
+  "glossaryEconomyHelp": "Off by default. Omits nearby-only terms for short messages without a reply or clear reference, and gives other nearby terms a smaller budget. Merges duplicates, retains matched aliases, caps notes at 96 characters and preserves game, category and character details. May reduce supporting context. Save and close to apply.",
+  "areaAutoLabel": "Automatically translate this area",
+  "areaAutoOn": "Enable automatic translation here",
+  "areaAutoOff": "Disable automatic translation here",
+  "areaAutoTag": "Automatic translation enabled here",
+  "areaAutoHelp": "Saved separately by area ID. Channels and threads are independent. Toggle from sidebar or message context menus for immediate saving; settings edits apply with Save and close."
 }

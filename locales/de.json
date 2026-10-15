@@ -72,7 +72,7 @@
   "outgoingFailed": "Übersetzung vor dem Senden fehlgeschlagen. Ihr Entwurf wurde beibehalten: {error}",
   "singleLanguage": "Nur diese Nachricht in {language} übersetzen",
   "permanentLanguage": "Automatische Übersetzung dauerhaft auf {language} umstellen",
-  "permanentLanguageHint": "Dauerhaft in {language} übersetzen und den aktuellen Kanal neu übersetzen",
+  "permanentLanguageHint": "Dauerhaft {language} als Standard verwenden, automatische Übersetzung hier aktivieren und Einzelvorgaben löschen. Andere Bereiche behalten ihren Schaltzustand.",
   "customAreaEnabled": "Benutzerdefinierte Übersetzung für {name} aktiviert. Setzen Sie einen Glossarpfad in den Plugin-Einstellungen.",
   "customAreaDisabled": "Benutzerdefinierte Übersetzung für {name} deaktiviert.",
   "关闭自定义翻译": "Benutzerdefinierte Übersetzung deaktivieren",
@@ -185,5 +185,10 @@
   "testUsageUnavailable": "Testnutzung unbekannt: keine usage empfangen; abgebrochene Anfragen können tokens verbrauchen.",
   "testUsageEmpty": "Noch keine Testgenerierungen.",
   "glossaryEconomy": "Sparsame Glossar-Prompts",
-  "glossaryEconomyHelp": "Standardmäßig aus. Bei kurzen Nachrichten ohne Antwort oder klaren Bezug entfallen nur im Umfeld gefundene Begriffe; sonst kleineres Umfeldbudget. Duplikate zusammenführen, passende Aliasse und Spiel/Kategorie/Figur behalten, Notizen auf 96 Zeichen kürzen. Kann Hilfsinformationen reduzieren. Speichern und schließen zum Anwenden."
+  "glossaryEconomyHelp": "Standardmäßig aus. Bei kurzen Nachrichten ohne Antwort oder klaren Bezug entfallen nur im Umfeld gefundene Begriffe; sonst kleineres Umfeldbudget. Duplikate zusammenführen, passende Aliasse und Spiel/Kategorie/Figur behalten, Notizen auf 96 Zeichen kürzen. Kann Hilfsinformationen reduzieren. Speichern und schließen zum Anwenden.",
+  "areaAutoLabel": "Diesen Bereich automatisch übersetzen",
+  "areaAutoOn": "Automatische Übersetzung hier aktivieren",
+  "areaAutoOff": "Automatische Übersetzung hier deaktivieren",
+  "areaAutoTag": "Automatische Übersetzung hier aktiv",
+  "areaAutoHelp": "Nach Bereichs-ID getrennt gespeichert; Kanäle und Threads sind unabhängig. Kontextmenüs speichern sofort, Einstellungen erst mit Speichern und schließen."
 }

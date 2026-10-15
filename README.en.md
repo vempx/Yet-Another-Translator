@@ -6,7 +6,7 @@ An LLM-powered BetterDiscord plugin for automatic message translation, individua
 
 ## Features
 
-- **Automatic translation:** Translates visible messages one at a time, follows new messages and scrolling, and reuses cached results.
+- **Automatic translation:** Enabled separately for each area, follows visible and new messages, and reuses cached results. Sidebar icons identify enabled areas.
 - **Per-message language selection:** Click a source-language badge to change that message's target or permanently switch the global default.
 - **Translate before sending:** Translates drafts while retaining replies and attachments. Optionally includes the original and an AI translation label in the target language.
 - **Context and terminology:** Uses channel topics, nearby messages, quoted originals, and custom glossaries.
@@ -27,10 +27,11 @@ An LLM-powered BetterDiscord plugin for automatic message translation, individua
 
 ### Translate messages
 
-- Enable automatic translation in settings or the message context menu. Successful translations replace the displayed originals; use the context menu to view the original. Disabling automatic translation restores the originals.
+- Right-click a sidebar area or a message within it to enable automatic translation for that area. Settings can also change the current area. State is saved by area ID; channels and forum threads are independent, without inheriting the parent forum's switch. Enabled areas have a sidebar icon. Disabling affects only that area; use the message context menu to view originals.
 - Use the message context menu to translate an individual message or translate it again. Manual translations retain the original when automatic translation is off.
 - The settings target language applies with Save and close. To remove per-message overrides, select the explicit apply-and-clear-overrides action before saving.
-- Click a source-language badge, then a language name to retranslate just that message. The circular arrows permanently change the global default and enable automatic translation, including for other channels and future plugin sessions.
+- Click a source-language badge, then a language name to retranslate just that message. The circular arrows permanently change the shared default target and enable automatic translation for the message's area, preserving other areas' on/off states. Settings persist across plugin sessions.
+- On upgrade, an enabled legacy global switch migrates only to the currently identifiable area. Other areas remain off. If the current area cannot be identified, enable it using a context menu.
 - Open the manual translator from the context menu to translate text you enter yourself.
 
 ### Translate before sending

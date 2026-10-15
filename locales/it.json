@@ -72,7 +72,7 @@
   "outgoingFailed": "La traduzione prima dell'invio non è riuscita. La tua bozza è stata mantenuta: {error}",
   "singleLanguage": "Traduci solo questo messaggio in {language}",
   "permanentLanguage": "Passa permanentemente la traduzione automatica a {language}",
-  "permanentLanguageHint": "Traduci permanentemente in {language} e ritraduci il canale corrente",
+  "permanentLanguageHint": "Usa {language} permanentemente come predefinita, attiva la traduzione qui e cancella le scelte individuali. Le altre sezioni mantengono il loro stato.",
   "customAreaEnabled": "Traduzione personalizzata abilitata per {name}. Imposta un percorso del glossario nelle impostazioni del plugin.",
   "customAreaDisabled": "Traduzione personalizzata disabilitata per {name}.",
   "关闭自定义翻译": "Disabilita traduzione personalizzata",
@@ -185,5 +185,10 @@
   "testUsageUnavailable": "Uso reale dei test non disponibile: nessuna usage ricevuta; annullare può consumare tokens.",
   "testUsageEmpty": "Ancora nessuna generazione di test.",
   "glossaryEconomy": "Prompt del glossario economici",
-  "glossaryEconomyHelp": "Disattivato per impostazione predefinita. Omette termini solo vicini nei messaggi brevi senza risposta o riferimento chiaro; ne riduce il budget negli altri casi. Unisce duplicati, mantiene alias corrispondenti e gioco/categoria/personaggio, note fino a 96 caratteri. Può ridurre informazioni utili. Salva e chiudi per applicare."
+  "glossaryEconomyHelp": "Disattivato per impostazione predefinita. Omette termini solo vicini nei messaggi brevi senza risposta o riferimento chiaro; ne riduce il budget negli altri casi. Unisce duplicati, mantiene alias corrispondenti e gioco/categoria/personaggio, note fino a 96 caratteri. Può ridurre informazioni utili. Salva e chiudi per applicare.",
+  "areaAutoLabel": "Traduci automaticamente questa sezione",
+  "areaAutoOn": "Attiva traduzione automatica qui",
+  "areaAutoOff": "Disattiva traduzione automatica qui",
+  "areaAutoTag": "Traduzione automatica attiva qui",
+  "areaAutoHelp": "Salvato per ID; canali e discussioni sono indipendenti. I menu contestuali salvano subito, le impostazioni con Salva e chiudi."
 }

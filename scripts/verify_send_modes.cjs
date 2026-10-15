@@ -4,7 +4,7 @@ const dependencies=require("node:module").createRequire(path.resolve(__dirname,"
 const {JSDOM}=dependencies("jsdom");
 const dom=new JSDOM('<!doctype html><html><head></head><body><div class="channelTextArea_test"><div class="buttons_test"></div><div role="textbox" contenteditable="true" data-slate-editor="true"></div></div></body></html>',{url:"https://discord.com"});
 const filename=path.resolve(__dirname,"../YetAnotherTranslator.plugin.js");
-const sandbox={module:{exports:{}},require,__dirname:path.dirname(filename),URL,AbortController,TextDecoder,setTimeout,clearTimeout,BdApi:{}};
+const sandbox={module:{exports:{}},require,__dirname:path.dirname(filename),URL,AbortController,TextDecoder,setTimeout,clearTimeout,document:dom.window.document,BdApi:{}};
 vm.runInNewContext(fs.readFileSync(filename,"utf8")+'\nmodule.exports.testing={DEFAULTS,OutgoingTranslator,CSS,bindSettingsFooter};',sandbox);
 const Plugin=sandbox.module.exports,{DEFAULTS,OutgoingTranslator,CSS}=Plugin.testing,plugin=new Plugin();
 const document=dom.window.document,style=document.createElement("style");style.textContent=CSS;document.head.append(style);
@@ -31,6 +31,27 @@ assert.equal(toggle.getAttribute("data-send-mode"),"bilingual");
 plugin.settings.outgoingIncludeOriginal=false;outgoing.scan();assert.equal(toggle.getAttribute("data-send-mode"),"translated");
 outgoing.stop();assert.equal(document.querySelector(".lt-compose-controls"),null);
 console.log("PASS: three-state button clicks, distinct active colors, settings linkage, language preservation and cleanup in real DOM simulation.");
+function verifyAreaTags() {
+    const sidebar=document.createElement("nav");sidebar.innerHTML='<a href="/channels/1/101"><span class="name_test">same name</span></a><a href="/channels/1/202"><span class="name_test">same name</span></a><a href="/channels/1/303"><span class="name_test">forum</span></a><a href="/channels/1/304"><span class="threadName_test">thread</span></a><a href="/channels/@me/505"><span class="name_test">DM</span></a>';
+    document.body.append(sidebar);
+    const messageLink=document.createElement("a");messageLink.href="/channels/1/101/9";messageLink.innerHTML='<span class="name_test">message link</span>';document.body.append(messageLink);
+    plugin.active=true;plugin.setAutoTranslation(true,"101");
+    assert.equal(sidebar.querySelectorAll(".lt-area-auto-tag").length,1);assert.equal(messageLink.querySelector(".lt-area-auto-tag"),null);
+    let anchor=sidebar.querySelector('[href="/channels/1/101"]');assert.equal(anchor.querySelector(".name_test").nextElementSibling.className,"lt-area-auto-tag");
+    assert.equal(sidebar.querySelector('[href="/channels/1/202"] .lt-area-auto-tag'),null);
+    plugin.scanAreaTags();assert.equal(sidebar.querySelectorAll(".lt-area-auto-tag").length,1);
+    anchor.innerHTML='<span class="name_test">renamed</span>';plugin.scanAreaTags();assert.equal(anchor.querySelectorAll(".lt-area-auto-tag").length,1);
+    const replacement=anchor.cloneNode(true);replacement.querySelector(".lt-area-auto-tag").remove();anchor.replaceWith(replacement);anchor=replacement;
+    plugin.scanAreaTags();assert.equal(sidebar.querySelectorAll(".lt-area-auto-tag").length,1);
+    anchor.setAttribute("href","/channels/1/202");plugin.scanAreaTags();assert.equal(sidebar.querySelectorAll(".lt-area-auto-tag").length,0);
+    plugin.setAutoTranslation(true,"303");assert.ok(sidebar.querySelector('[href="/channels/1/303"] .lt-area-auto-tag'));assert.equal(sidebar.querySelector('[href="/channels/1/304"] .lt-area-auto-tag'),null);
+    plugin.setAutoTranslation(true,"505");assert.ok(sidebar.querySelector('[href="/channels/@me/505"] .lt-area-auto-tag'));
+    plugin.setAutoTranslation(false,"303");assert.equal(sidebar.querySelector('[href="/channels/1/303"] .lt-area-auto-tag'),null);
+    plugin.api.DOM={removeStyle(){}};plugin.stop();assert.equal(sidebar.querySelector(".lt-area-auto-tag"),null);assert.equal(plugin.areaTags.size,0);
+    sidebar.remove();messageLink.remove();
+    console.log("PASS: sidebar per-area badges, same-name IDs, no forum inheritance, DM, remount/navigation, deduplication and plugin-stop cleanup.");
+}
+verifyAreaTags();
 async function verifyFooter() {
     const modal=document.createElement("div");modal.className="bd-addon-modal";
     modal.innerHTML='<div class="lt-panel"><button type="button">Test</button></div><footer><button type="submit" class="native-button">Done</button><span class="anchor"></span></footer>';

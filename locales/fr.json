@@ -72,7 +72,7 @@
   "outgoingFailed": "Échec de la traduction avant l'envoi. Votre brouillon a été conservé : {error}",
   "singleLanguage": "Traduire uniquement ce message en {language}",
   "permanentLanguage": "Basculer définitivement la traduction automatique vers {language}",
-  "permanentLanguageHint": "Traduire définitivement en {language} et retraduire le canal actuel",
+  "permanentLanguageHint": "Utiliser définitivement {language} par défaut, activer la traduction ici et effacer les choix individuels. Les autres salons gardent leur état.",
   "customAreaEnabled": "Traduction personnalisée activée pour {name}. Définissez un chemin de glossaire dans les paramètres du plugin.",
   "customAreaDisabled": "Traduction personnalisée désactivée pour {name}.",
   "关闭自定义翻译": "Désactiver la traduction personnalisée",
@@ -185,5 +185,10 @@
   "testUsageUnavailable": "Utilisation réelle des tests inconnue : aucune usage reçue ; une requête annulée peut consommer des tokens.",
   "testUsageEmpty": "Aucune génération de test pour le moment.",
   "glossaryEconomy": "Prompts de glossaire économiques",
-  "glossaryEconomyHelp": "Désactivé par défaut. Omet les termes trouvés seulement à proximité pour les messages courts sans réponse ni référence claire ; réduit leur budget sinon. Fusionne les doublons, garde les alias correspondants et jeu/catégorie/personnage, limite les notes à 96 caractères. Peut réduire le contexte utile. Enregistrer et fermer pour appliquer."
+  "glossaryEconomyHelp": "Désactivé par défaut. Omet les termes trouvés seulement à proximité pour les messages courts sans réponse ni référence claire ; réduit leur budget sinon. Fusionne les doublons, garde les alias correspondants et jeu/catégorie/personnage, limite les notes à 96 caractères. Peut réduire le contexte utile. Enregistrer et fermer pour appliquer.",
+  "areaAutoLabel": "Traduire automatiquement ce salon",
+  "areaAutoOn": "Activer la traduction automatique ici",
+  "areaAutoOff": "Désactiver la traduction automatique ici",
+  "areaAutoTag": "Traduction automatique activée ici",
+  "areaAutoHelp": "Enregistré séparément par ID ; salons et fils sont indépendants. Les menus contextuels enregistrent immédiatement, les réglages avec Enregistrer et fermer."
 }
