@@ -34,6 +34,16 @@ An LLM-powered BetterDiscord plugin for automatic message translation, individua
 - On upgrade, an enabled legacy global switch migrates only to the currently identifiable area. Other areas remain off. If the current area cannot be identified, enable it using a context menu.
 - Open the manual translator from the context menu to translate text you enter yourself.
 
+### Image text translation and summary (local)
+
+1. Run local llama-server with a vision-capable model and matching mmproj. The plugin uses your saved local API URL and model name.
+2. Right-click an image in a message and choose Translate and summarize image text. Smaller muted text appears below that image, preserving the original.
+3. The initial target follows the shared default used by automatic translation in that area. Click the ENG/JPN source-language badge to change this image’s target without changing global settings.
+
+The plugin recognizes original text first, then uses the area topic, nearby messages, replies and matching glossary terms to translate and summarize it. Initial processing usually requires two model generations, plus a model-list query when discovering the model automatically. Language changes reuse recognized text; completed language results can be restored directly. Images are processed only on manual request. Online/DeepSeek image processing is not enabled.
+
+Discord image attachments and Discord-proxied previews are supported, up to 8 MB per image. WebP is converted to PNG before sending. Results are visible only to you and are cleared on disable or translation-configuration changes. See [image translation details](docs/IMAGE_TRANSLATION.md).
+
 ### Translate before sending
 
 1. Click the paper-plane icon with an A next to the message box to cycle through three modes: unlit sends the original, blue-violet sends only the translation, and teal sends both. Hover for the current mode and next action.

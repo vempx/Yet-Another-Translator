@@ -195,5 +195,15 @@
   "debugLogPath": "Caminho do arquivo de registro Debug (.log)",
   "debugHelp": "Desativado por padrão. Os registros contêm mensagens originais, respostas/contexto e prompts completos; mantenha-os privados. Chaves de API e texto de raciocínio são excluídos. Informe um caminho absoluto de arquivo .log e salve e feche. Rotação em cerca de 10 MB com 3 cópias de segurança.",
   "debugPathInvalid": "O caminho do registro Debug deve ser um caminho absoluto local de arquivo .log.",
-  "debugWriteFailed": "Falha no registro Debug ({code}); a tradução continua. Verifique o caminho e as permissões de escrita."
+  "debugWriteFailed": "Falha no registro Debug ({code}); a tradução continua. Verifique o caminho e as permissões de escrita.",
+  "imageTranslate": "Traduzir e resumir o texto da imagem",
+  "imageLoading": "Reconhecendo e traduzindo a imagem…",
+  "imageNoText": "Nenhum texto legível foi reconhecido na imagem.",
+  "imageLocalOnly": "A tradução de imagens aceita apenas llama-server local. Selecione primeiro um serviço de modelo local.",
+  "imageInvalid": "Não foi possível ler a imagem. Use um anexo de imagem Discord ou sua prévia em uma mensagem.",
+  "imageTooLarge": "A imagem excede 8 MB ou tem dimensões excessivas. Recorte e tente novamente.",
+  "imageFormat": "Formato não suportado. Use PNG, JPEG, GIF ou WebP.",
+  "imageModelError": "Falha no processamento. Verifique o modelo visual e o mmproj correspondente no llama-server, além do limite de saída.",
+  "imageCancelled": "Tradução de imagem cancelada. Tente novamente pelo menu de contexto da imagem.",
+  "imageEmpty": "O reconhecimento ou tradução retornou saída inválida, longa demais ou incompleta. Tente novamente."
 }

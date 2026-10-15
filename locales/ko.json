@@ -195,5 +195,15 @@
   "debugLogPath": "Debug 로그 파일 경로 (.log)",
   "debugHelp": "기본값은 꺼짐입니다. 로그에는 채팅 원문, 답장/문맥 및 전체 프롬프트가 포함되므로 안전하게 보관하세요. API Key와 추론 본문은 기록하지 않습니다. .log 파일의 절대 경로를 입력하고 저장 후 닫으면 적용됩니다. 약 10 MB마다 순환하며 백업 3 개를 유지합니다.",
   "debugPathInvalid": "Debug 로그 경로는 로컬 .log 파일의 절대 경로여야 합니다.",
-  "debugWriteFailed": "Debug 로그 기록에 실패했습니다({code}). 번역은 계속됩니다. 로그 경로와 쓰기 권한을 확인하세요."
+  "debugWriteFailed": "Debug 로그 기록에 실패했습니다({code}). 번역은 계속됩니다. 로그 경로와 쓰기 권한을 확인하세요.",
+  "imageTranslate": "이미지 텍스트 번역 및 요약",
+  "imageLoading": "이미지를 인식하고 번역하는 중…",
+  "imageNoText": "이미지에서 읽을 수 있는 텍스트를 찾지 못했습니다.",
+  "imageLocalOnly": "이미지 번역은 로컬 llama-server만 지원합니다. 먼저 로컬 모델 서비스를 선택하세요.",
+  "imageInvalid": "이미지를 읽을 수 없습니다. 메시지의 Discord 이미지 첨부 또는 미리보기를 사용하세요.",
+  "imageTooLarge": "이미지가 8 MB를 초과하거나 크기가 너무 큽니다. 자른 후 다시 시도하세요.",
+  "imageFormat": "지원하지 않는 이미지 형식입니다. PNG, JPEG, GIF 또는 WebP를 사용하세요.",
+  "imageModelError": "이미지 처리에 실패했습니다. llama-server에 시각 모델과 맞는 mmproj가 로드되었는지, 출력 한도를 확인하세요.",
+  "imageCancelled": "이미지 번역을 취소했습니다. 이미지 우클릭 메뉴에서 다시 시도하세요.",
+  "imageEmpty": "이미지 인식 또는 번역 출력이 잘못되었거나 너무 길거나 불완전합니다. 다시 시도하세요."
 }

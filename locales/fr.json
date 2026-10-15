@@ -195,5 +195,15 @@
   "debugLogPath": "Chemin du fichier journal Debug (.log)",
   "debugHelp": "Désactivé par défaut. Les journaux contiennent les messages originaux, les réponses/le contexte et les prompts complets ; gardez-les confidentiels. Les clés API et le texte de raisonnement sont exclus. Saisissez un chemin absolu vers un fichier .log, puis enregistrez et fermez. Rotation à environ 10 MB avec 3 sauvegardes.",
   "debugPathInvalid": "Le chemin du journal Debug doit être un chemin absolu local vers un fichier .log.",
-  "debugWriteFailed": "Échec du journal Debug ({code}) ; la traduction continue. Vérifiez le chemin et les droits d’écriture."
+  "debugWriteFailed": "Échec du journal Debug ({code}) ; la traduction continue. Vérifiez le chemin et les droits d’écriture.",
+  "imageTranslate": "Traduire et résumer le texte de l’image",
+  "imageLoading": "Reconnaissance et traduction de l’image…",
+  "imageNoText": "Aucun texte lisible n’a été reconnu dans cette image.",
+  "imageLocalOnly": "La traduction d’images prend uniquement en charge llama-server en local. Sélectionnez un service de modèle local.",
+  "imageInvalid": "Impossible de lire l’image. Utilisez une pièce jointe image Discord ou son aperçu dans un message.",
+  "imageTooLarge": "L’image dépasse 8 MB ou ses dimensions sont excessives. Recadrez-la et réessayez.",
+  "imageFormat": "Format non pris en charge. Utilisez PNG, JPEG, GIF ou WebP.",
+  "imageModelError": "Échec du traitement. Vérifiez que llama-server a chargé un modèle visuel et le mmproj correspondant, ainsi que la limite de sortie.",
+  "imageCancelled": "Traduction d’image annulée. Réessayez depuis le menu contextuel de l’image.",
+  "imageEmpty": "La reconnaissance ou traduction a renvoyé une sortie invalide, trop longue ou incomplète. Réessayez."
 }

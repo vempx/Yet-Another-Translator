@@ -45,6 +45,12 @@ Use operationId to connect start, requests and results. Cache events indicate a 
 
 Normal calls progress through start, request, response and completion events. Model discovery and repair requests share the operation ID. Cache hits and skipped native-only content do not call the model. Restoring already displayed historical translations does not enter the client and adds no translation log. Errors and cancellations are explicit; local checks before entering the translation client do not create model request logs.
 
+## 图片任务 / Image tasks
+
+本地图片翻译的两阶段分别记录为 manual 类型的 image_ocr 与 image_summary（task 字段）。开始事件的 imageId 对应消息内图片身份，可配合 channelId／messageId 关联两阶段；image 字段记录图片格式及字节数。识别请求的 Base64 图片数据替换为 [IMAGE DATA OMITTED]，实际请求仍携带完整图片。识别结果和翻译概括结果位于 operation_complete.result。恢复已缓存的图片结果不发请求，也不新建一次模型日志。
+
+Local image processing logs two manual tasks: image_ocr and image_summary. Their start events include imageId, channelId and messageId for association; image metadata records MIME type and byte size. Inline image data is replaced by [IMAGE DATA OMITTED] in logs, while the real request carries the complete image. Recognition and translated/summary results appear in operation_complete.result. Restoring cached image results makes no request and creates no new model log.
+
 ## 文件管理 / File management
 
 当前文件约 10 MB 时轮转为 `.log.1`、`.log.2`、`.log.3`，总计最多四份；单条记录完整保留，因此单份可超过软上限。异步排队并串行写入；BetterDiscord 缺少 Promise 文件接口时使用其支持的同步桥接。待写队列最多 256 条事件，过载时丢弃日志并提示，翻译继续。目录／权限问题同样只影响日志。多实例不要共用同一个文件。

@@ -195,5 +195,15 @@
   "debugLogPath": "Percorso del file di log Debug (.log)",
   "debugHelp": "Disattivato per impostazione predefinita. I log contengono messaggi originali, risposte/contesto e prompt completi; conservali privatamente. Le chiavi API e il testo di ragionamento sono esclusi. Inserisci un percorso assoluto di file .log, quindi salva e chiudi. Rotazione a circa 10 MB con 3 copie di backup.",
   "debugPathInvalid": "Il percorso del log Debug deve essere un percorso assoluto locale di file .log.",
-  "debugWriteFailed": "Scrittura del log Debug non riuscita ({code}); la traduzione continua. Controlla il percorso e i permessi di scrittura."
+  "debugWriteFailed": "Scrittura del log Debug non riuscita ({code}); la traduzione continua. Controlla il percorso e i permessi di scrittura.",
+  "imageTranslate": "Traduci e riassumi il testo dell’immagine",
+  "imageLoading": "Riconoscimento e traduzione dell’immagine…",
+  "imageNoText": "Nessun testo leggibile riconosciuto nell’immagine.",
+  "imageLocalOnly": "La traduzione di immagini supporta solo llama-server locale. Seleziona prima un servizio modello locale.",
+  "imageInvalid": "Impossibile leggere l’immagine. Usa un allegato immagine Discord o la sua anteprima in un messaggio.",
+  "imageTooLarge": "L’immagine supera 8 MB o ha dimensioni eccessive. Ritagliala e riprova.",
+  "imageFormat": "Formato non supportato. Usa PNG, JPEG, GIF o WebP.",
+  "imageModelError": "Elaborazione non riuscita. Verifica il modello visivo, il relativo mmproj in llama-server e il limite di output.",
+  "imageCancelled": "Traduzione immagine annullata. Riprova dal menu contestuale dell’immagine.",
+  "imageEmpty": "Il riconoscimento o la traduzione ha restituito un output non valido, troppo lungo o incompleto. Riprova."
 }

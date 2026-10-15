@@ -9,7 +9,7 @@ const path = require("node:path");
 function load(BdApi, environment = {}) {
     const sandbox = {module: {exports: {}}, require, __dirname, URL, AbortController, TextDecoder, setTimeout, clearTimeout, BdApi, ...environment};
     vm.runInNewContext(fs.readFileSync(`${__dirname}/YetAnotherTranslator.plugin.js`, "utf8") +
-        "\nmodule.exports.testing = {DEFAULTS, validateSettings, TranslationClient, AutoTranslator, areaTopicFor, GlossaryStore, DebugLogger, OutgoingTranslator, referenceContext, orderedReferences, renderMessageEmoji, I18n, t, languageLabel, UI_MESSAGES, uiError, errorForUi, uiText, outgoingMessageText, LANGUAGES, bindSettingsFooter, renderTranslatedMessage};", sandbox);
+        "\nmodule.exports.testing = {DEFAULTS, validateSettings, TranslationClient, AutoTranslator, areaTopicFor, GlossaryStore, DebugLogger, ImageTranslator, discordImageUrl, imageIdentity, imageMime, IMAGE_MAX_BYTES, OutgoingTranslator, referenceContext, orderedReferences, renderMessageEmoji, I18n, t, languageLabel, UI_MESSAGES, uiError, errorForUi, uiText, outgoingMessageText, LANGUAGES, bindSettingsFooter, renderTranslatedMessage};", sandbox);
     return sandbox.module.exports;
 }
 const Plugin = load();
@@ -2585,4 +2585,62 @@ test("T13 lazy Debug payload projection failures are isolated from translation a
     }
     assert.equal(f.records().filter(event=>event.event==="operation_complete").length,2);
     assert.ok(!f.records().some(event=>event.event==="api_error"||event.event==="operation_error"));
+});
+
+test("image downloads allow Discord media only and never send model credentials", async () => {
+    const {discordImageUrl,imageIdentity}=Plugin.testing;
+    for(const url of ["http://127.0.0.1/image.png","file:///C:/secret.png","https://example.com/a.png","https://cdn.discordapp.com.evil/a.png","https://cdn.discordapp.com/emojis/1.png","https://user:pass@cdn.discordapp.com/attachments/1/2/a.png"])
+        assert.throws(()=>discordImageUrl(url));
+    assert.equal(imageIdentity("https://media.discordapp.net/attachments/1/2/a.png?width=100"),imageIdentity("https://cdn.discordapp.com/attachments/1/2/a.png?ex=123"));
+    assert.equal(imageIdentity("https://media.discordapp.net/ephemeral-attachments/1/2/a.png?width=100"),imageIdentity("https://cdn.discordapp.com/ephemeral-attachments/1/2/a.png?ex=123"));
+    let options;const png=Uint8Array.from([137,80,78,71,13,10,26,10]);
+    const client=new TranslationClient(async(url,input)=>{options=input;return {status:200,arrayBuffer:async()=>png.buffer};});
+    const image=await client.downloadImage("https://cdn.discordapp.com/attachments/1/2/a.png",{...DEFAULTS,apiKey:"MODEL_SECRET"});
+    assert.equal(image.mime,"image/png");assert.equal(image.bytes,8);assert.equal(image.dataUrl,"data:image/png;base64,iVBORw0KGgo=");
+    assert.equal(options.headers.Authorization,undefined);assert.equal(options.credentials,"omit");assert.equal(options.redirect,"manual");assert.equal(options.maxRedirects,0);
+    const Bridged=load(undefined,{require:name=>name==="buffer"?Buffer:require(name)}).testing.TranslationClient;
+    const bridged=new Bridged(async()=>({status:200,arrayBuffer:async()=>png.buffer}));
+    assert.equal((await bridged.downloadImage("https://cdn.discordapp.com/attachments/1/2/a.png",DEFAULTS)).dataUrl,image.dataUrl);
+    for(const providerMode of ["online","deepseek"]){await assert.rejects(client.downloadImage("https://cdn.discordapp.com/attachments/1/2/a.png",{...DEFAULTS,providerMode,baseUrl:"https://api.example.com/v1"}));}
+});
+
+test("image downloads reject oversized, redirected and non-image content and cancel promptly", async () => {
+    const url="https://cdn.discordapp.com/attachments/1/2/a.png";
+    for(const response of [{status:200,arrayBuffer:async()=>new ArrayBuffer(8*1024*1024+1)},{status:302,arrayBuffer:()=>{throw Error("must not follow");}},{status:200,headers:{get:()=>String(9*1024*1024)},arrayBuffer:()=>{throw Error("must not read");}},{status:200,arrayBuffer:async()=>Buffer.from("<html>not an image</html>")}]){
+        const client=new TranslationClient(async()=>response);await assert.rejects(client.downloadImage(url,DEFAULTS));
+    }
+    let received;const client=new TranslationClient(async(url,options)=>{received=options;return new Promise(()=>{});}),controller=new AbortController();
+    const pending=client.downloadImage(url,DEFAULTS,controller.signal);controller.abort();await assert.rejects(pending,error=>error.name==="AbortError");assert.equal(received.signal.aborted,true);
+});
+
+test("local image OCR and summary preserve exact image inputs, topic, replies, terminology and omit base64 in Debug", async t => {
+    const f=debugFixture(t),requests=[];const image={dataUrl:"data:image/png;base64,iVBORw0KGgo=",mime:"image/png",bytes:8};
+    const client=new TranslationClient(async(url,options)=>{
+        if(url.endsWith("/models"))return {status:200,arrayBuffer:async()=>Buffer.from(JSON.stringify({data:[{id:"vision-model"}]}))};
+        const body=JSON.parse(options.body);requests.push(body);
+        const data=requests.length===1?{text:"Iuno uses Astrite",sourceLanguage:"ENG",unwanted:"not copied"}:{translation:"译文",summary:"概括",unwanted:"not copied"};
+        return {status:200,arrayBuffer:async()=>Buffer.from(JSON.stringify({choices:[{finish_reason:"stop",message:{content:JSON.stringify(data),reasoning_content:"HIDDEN_REASONING"}}],usage:{prompt_tokens:12,completion_tokens:5,total_tokens:17}}))};
+    });
+    const settings={...f.settings,model:""},info={channelId:"101",messageId:"202"};
+    const ocr=await client.readImage(image,settings,null,info);assert.equal(ocr.model,"vision-model");assert.equal(ocr.unwanted,undefined);
+    const context={areaTopic:{threadTitle:"Wuthering Waves"},reply:{id:"reply",text:"original reply",speaker:"author"},glossary:{name:"game glossary",entries:[{en:"Iuno",zh:"尤诺"}]}};
+    const result=await client.summarizeImageText(ocr.text,{...settings,model:ocr.model},null,context,info);await client.debugLogger.flush();
+    assert.equal(result.translation,"译文");assert.equal(result.summary,"概括");assert.equal(result.unwanted,undefined);
+    assert.equal(requests.length,2);assert.equal(requests[0].messages[1].content[1].image_url.url,image.dataUrl);
+    assert.equal(requests[1].model,"vision-model");assert.equal(requests[1].messages.at(-1).content,ocr.text);
+    const payload=JSON.stringify(requests[1]);for(const reference of ["Wuthering Waves","original reply","Iuno","尤诺"])assert.ok(payload.includes(reference));
+    assert.equal(client.stats.generations,2);assert.equal(client.stats.repairs,0);assert.equal(client.stats.usageResponses,2);
+    const records=f.records();assert.ok(records.some(record=>record.task==="image_ocr"&&record.image.bytes===8));assert.ok(records.some(record=>record.task==="image_summary"));
+    assert.ok(f.read().includes("[IMAGE DATA OMITTED]"));assert.ok(!f.read().includes("iVBORw0KGgo="));assert.ok(!f.read().includes("HIDDEN_REASONING"));
+    assert.equal(records.filter(record=>record.event==="operation_complete").length,2);
+});
+
+test("image tasks reject online services, malformed OCR and truncated output without automatic retries", async () => {
+    const image={dataUrl:"data:image/png;base64,iVBORw0KGgo=",mime:"image/png",bytes:8};
+    for(const providerMode of ["online","deepseek"]){let calls=0;const client=new TranslationClient(async()=>{calls++;});await assert.rejects(client.readImage(image,{...DEFAULTS,providerMode,baseUrl:"https://api.example.com/v1"}));assert.equal(calls,0);}
+    for(const choice of [{finish_reason:"length",message:{content:'{"text":"partial","sourceLanguage":"ENG"}'}},{message:{content:'{"text":42,"sourceLanguage":"ENG"}'}},{message:{content:'{"text":"'+"x".repeat(12001)+'","sourceLanguage":"ENG"}'}},{message:{content:"not json"}}]){
+        let calls=0;const client=new TranslationClient(async()=>{calls++;return {status:200,arrayBuffer:async()=>Buffer.from(JSON.stringify({choices:[choice]}))};});
+        await assert.rejects(client.readImage(image,{...DEFAULTS,model:"vision"}));assert.equal(calls,1);assert.equal(client.active,0);
+    }
+    const client=new TranslationClient();assert.throws(()=>client.readImage({...image,dataUrl:"file:///C:/secret"},DEFAULTS));
 });

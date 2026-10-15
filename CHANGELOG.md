@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Added local llama-server image text recognition, translation and summaries from the image context menu. Results appear below the selected image in smaller muted text, with a source-language badge for per-image target changes. Reuse recognized text and completed results; apply area context, replies and matched glossary terms. Keep image data out of Debug logs.
+
 - Removed the extra blank line between the original and translation in bilingual sending.
 
 ## 0.9.6 — 2026-10-15

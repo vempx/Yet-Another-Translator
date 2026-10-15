@@ -195,5 +195,15 @@
   "debugLogPath": "Debug log file path (.log)",
   "debugHelp": "Off by default. Logs contain original chat text, replies/context and full prompts; keep them private. API keys and reasoning text are excluded. Enter an absolute .log file path, then Save and close. Files rotate at about 10 MB with 3 backups.",
   "debugPathInvalid": "The Debug log path must be a local absolute .log file path.",
-  "debugWriteFailed": "Debug logging failed ({code}); translation continues. Check the log path and write permissions."
+  "debugWriteFailed": "Debug logging failed ({code}); translation continues. Check the log path and write permissions.",
+  "imageTranslate": "Translate and summarize image text",
+  "imageLoading": "Recognizing and translating image…",
+  "imageNoText": "No readable text was recognized in this image.",
+  "imageLocalOnly": "Image translation supports local llama-server only. Select a local model service first.",
+  "imageInvalid": "Unable to read this image. Use a Discord image attachment or preview in a message.",
+  "imageTooLarge": "The image exceeds 8 MB or has excessive dimensions. Crop it and try again.",
+  "imageFormat": "Unsupported image format. Use PNG, JPEG, GIF or WebP.",
+  "imageModelError": "Image processing failed. Confirm that llama-server has a vision model and matching mmproj loaded, and check the output budget.",
+  "imageCancelled": "Image translation cancelled. Retry from the image context menu.",
+  "imageEmpty": "Image recognition or translation returned invalid, oversized or incomplete output. Try again."
 }
