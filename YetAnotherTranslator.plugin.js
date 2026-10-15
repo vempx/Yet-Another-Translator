@@ -4,7 +4,7 @@
  * @authorLink https://github.com/vempx/Yet-Another-Translator
  * @website https://github.com/vempx/Yet-Another-Translator
  * @source https://github.com/vempx/Yet-Another-Translator/blob/main/YetAnotherTranslator.plugin.js
- * @version 0.9.6
+ * @version 0.9.7
  * @description LLM-powered Discord translation with automatic, per-message, and pre-send translation.
  */
 "use strict";

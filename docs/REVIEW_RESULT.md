@@ -1,5 +1,12 @@
 # Review results / 审核记录
 
+## v0.9.7
+
+第十六轮复核（2026-10-15）关闭 T15-1、T15-2，基线为 2e813d7：图片尺寸限制、多模态输入计数、主动刷新与缓存，以及单次视觉生成链路通过复核。之后提交 5ee2d6a 修正附言被视为图片翻译目标的请求结构，补充 yup 回归，170 项离线测试和图片 DOM 专项通过，Windows／Linux CI 成功。该附言修复的测试结果不等同于独立复核结论或真实模型效果验收。发布准备仅更新版本与文档；真实 Discord 与模型服务仍需现场确认。
+
+The sixteenth review on 2026-10-15 closed T15-1 and T15-2 against 2e813d7, covering image limits, native multimodal input counting, explicit refresh/caching and single-generation vision processing. Commit 5ee2d6a subsequently corrected captions being used as the image translation target and added a yup regression. All 170 offline tests, image DOM checks and Windows/Linux CI passed. These caption-fix tests do not constitute an independent review or live-model acceptance. Release preparation updates only version metadata and documentation; live Discord and model behavior remain to be confirmed.
+
+
 ## v0.9.6
 
 第十四轮复核（2026-10-15）关闭 T13-1，本次修改范围未发现新的重要问题。审核基线为 f19fdd5。Debug 模型列表与业务模型发现共享有效 ID 过滤；日志响应字段整理在异常隔离范围内执行。术语缓存／节省用量、版面独立开关与侧栏标记、日志兼容写入及去重的既有回归通过。162 项离线测试、Markdown 渲染、发送模式／设置 React 与侧栏模拟、10 份各 197 条语言包一致性检查均通过。发布准备仅提升版本与更新文档，不修改已审核实现。真实 Discord／实际模型服务仍待现场验收。

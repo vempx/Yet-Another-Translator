@@ -2,16 +2,29 @@
 
 ## Unreleased
 
-- Fixed accompanying Discord captions being translated with image text. Keep captions in reference metadata and use an image-only user instruction for vision requests.
+## 0.9.7 — 2026-10-15
 
-- Replaced the two-stage image flow with one local vision generation, with native input-token preflight where supported. Enforce byte and decoded-dimension limits for PNG, JPEG, GIF and WebP before model requests.
-- Fixed image retranslation returning stale terms and context: the image menu now refreshes results, while cached language selection and remounting remain request-free. Retain bounded image payloads for reuse.
+## 中文
 
-- Fixed missing image context-menu entries across media overlays, early right-button events, original/proxy URL differences, full-size viewers and stable message-list IDs. Resolve actual image targets independently of menu IDs and add opt-in diagnostics for unmatched image menus.
+- **图片文字翻译与概括**：右键消息图片，一次视觉生成即可翻译图片内文字并概括要点，无额外 OCR 步骤。结果以灰色小字显示在图片下方，点击原文语言标签可切换本图目标语言。
+- **图片菜单兼容改进**：完善媒体遮罩、代理图片及放大查看器中的右键入口，支持同一消息中的多张图片。
+- **重译与缓存**：再次选择图片翻译会读取最新术语和聊天上下文；复用图片数据及已完成的语言结果，减少重复下载与生成。修复消息附言被混入图片译文的问题。
+- **图片请求限制**：PNG、JPEG、GIF、WebP 统一检查文件大小和尺寸；服务支持时，在生成前检查输入 token 预算。
+- **双语发送排版**：去掉原文与译文之间额外的空行。
 
-- Added local llama-server image text recognition, translation and summaries from the image context menu. Results appear below the selected image in smaller muted text, with a source-language badge for per-image target changes. Reuse image data and completed results; apply area context, replies and matched glossary terms. Keep image data out of Debug logs.
+**使用说明**：图片翻译目前仅支持本地 llama-server，需使用视觉模型及匹配的 mmproj。术语在请求前按图片附言、版面名称和聊天上下文筛选，仅出现在图片内的词条无法提前匹配。
 
-- Removed the extra blank line between the original and translation in bilingual sending.
+---
+
+## English
+
+- **Image text translation and summaries**: Right-click a message image to translate its text and summarize key points in one vision generation, with no separate OCR step. Results appear below the image in small gray text; click the source-language badge to change that image’s target language.
+- **More reliable image menus**: Improved right-click support for media overlays, proxied images, full-size viewers, and multiple images in one message.
+- **Refresh and caching**: Choosing image translation again reloads current glossary terms and chat context. Image data and completed language results are reused to reduce repeated downloads and generation. Fixed message captions being included in image translations.
+- **Image request limits**: File-size and dimension checks now cover PNG, JPEG, GIF, and WebP. Input tokens are checked before generation when the server supports counting.
+- **Bilingual sending**: Removed the extra blank line between the original and translated text.
+
+**Usage**: Image translation currently requires a local llama-server with a vision model and matching mmproj. Glossary terms are selected before the request using the image caption, area names, and chat context; terms appearing only inside the image cannot be matched in advance.
 
 ## 0.9.6 — 2026-10-15
 
