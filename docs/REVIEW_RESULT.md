@@ -1,5 +1,12 @@
 # Review results / 审核记录
 
+## v0.9.8
+
+第十七轮审核（2026-10-16）通过，基线 56c0686。复核覆盖服务配置隔离与保存／取消、旧命名空间迁移、非文字发送过滤及图片附言请求结构。179 项离线测试、Markdown／发送／设置／侧栏／图片 DOM 模拟与 10 份各 207 条语言包一致性检查通过。发布准备仅更新版本元数据及文档；真实宿主启用状态、模型及实际发送效果仍需现场确认。
+
+The seventeenth review on 2026-10-16 passed against 56c0686, covering service profiles and save/cancel behavior, legacy namespace migration, non-text sending and image-caption request structure. All 179 offline tests, Markdown/send/settings/sidebar/image DOM checks and consistency checks for 10 catalogs of 207 entries passed. Release preparation changes only version metadata and documentation. Live host enable state, models and actual sending remain outside this verification.
+
+
 ## v0.9.7
 
 第十六轮复核（2026-10-15）关闭 T15-1、T15-2，基线为 2e813d7：图片尺寸限制、多模态输入计数、主动刷新与缓存，以及单次视觉生成链路通过复核。之后提交 5ee2d6a 修正附言被视为图片翻译目标的请求结构，补充 yup 回归，170 项离线测试和图片 DOM 专项通过，Windows／Linux CI 成功。该附言修复的测试结果不等同于独立复核结论或真实模型效果验收。发布准备仅更新版本与文档；真实 Discord 与模型服务仍需现场确认。

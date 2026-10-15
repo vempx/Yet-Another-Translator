@@ -2,11 +2,21 @@
 
 ## Unreleased
 
-- Skip before-send translation for emoji-only, link-only and text-free image/attachment messages. Send the original payload unchanged, including in bilingual mode, and prevent stale pending translations from sending afterward.
+## 0.9.8 — 2026-10-16
 
-- Complete the YetAnotherTranslator registration/configuration rename, including internal menu/DOM identifiers and tooling. Import existing settings only when the new namespace has none.
+## 中文
 
-- Remember independent local, online and DeepSeek service profiles (endpoint, model, key, limits and thinking options). Restore each profile on switching, preserve save/cancel behavior and migrate existing active settings.
+- **服务配置记忆**：本地、在线和 DeepSeek 分别保存地址、模型、密钥及参数，切换时自动恢复。
+- **统一命名**：注册名和配置文件统一为 YetAnotherTranslator，支持迁移旧设置。
+- **发送内容过滤**：纯表情、纯链接及无文字图片／附件直接原样发送，跳过翻译；双语模式也不重复附加内容。
+
+---
+
+## English
+
+- **Service profiles**: Local, online and DeepSeek services remember their own endpoint, model, key and parameters.
+- **Consistent naming**: Registration and configuration now use YetAnotherTranslator, with legacy settings migration.
+- **Send filtering**: Emoji-only, link-only and text-free image/attachment messages bypass translation and are sent unchanged, including in bilingual mode.
 
 ## 0.9.7 — 2026-10-15
 
