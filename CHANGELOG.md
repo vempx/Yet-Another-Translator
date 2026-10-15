@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Skip before-send translation for emoji-only, link-only and text-free image/attachment messages. Send the original payload unchanged, including in bilingual mode, and prevent stale pending translations from sending afterward.
+
 - Complete the YetAnotherTranslator registration/configuration rename, including internal menu/DOM identifiers and tooling. Import existing settings only when the new namespace has none.
 
 - Remember independent local, online and DeepSeek service profiles (endpoint, model, key, limits and thinking options). Restore each profile on switching, preserve save/cancel behavior and migrate existing active settings.

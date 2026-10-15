@@ -9,7 +9,7 @@ const path = require("node:path");
 function load(BdApi, environment = {}) {
     const sandbox = {module: {exports: {}}, require, __dirname, URL, AbortController, TextDecoder, setTimeout, clearTimeout, BdApi, ...environment};
     vm.runInNewContext(fs.readFileSync(`${__dirname}/YetAnotherTranslator.plugin.js`, "utf8") +
-        "\nmodule.exports.testing = {DEFAULTS, validateSettings, TranslationClient, AutoTranslator, areaTopicFor, GlossaryStore, DebugLogger, ImageTranslator, rememberProviderSettings, switchProviderSettings, discordImageUrl, imageIdentity, imageMime, inspectImage, imageDimensions, IMAGE_MAX_BYTES, OutgoingTranslator, referenceContext, orderedReferences, renderMessageEmoji, I18n, t, languageLabel, UI_MESSAGES, uiError, errorForUi, uiText, outgoingMessageText, LANGUAGES, bindSettingsFooter, renderTranslatedMessage};", sandbox);
+        "\nmodule.exports.testing = {DEFAULTS, validateSettings, TranslationClient, AutoTranslator, areaTopicFor, GlossaryStore, DebugLogger, ImageTranslator, rememberProviderSettings, switchProviderSettings, discordImageUrl, imageIdentity, imageMime, inspectImage, imageDimensions, IMAGE_MAX_BYTES, OutgoingTranslator, referenceContext, orderedReferences, renderMessageEmoji, I18n, t, languageLabel, UI_MESSAGES, uiError, errorForUi, uiText, outgoingMessageText, hasOutgoingText, LANGUAGES, bindSettingsFooter, renderTranslatedMessage};", sandbox);
     return sandbox.module.exports;
 }
 const Plugin = load();
@@ -2838,4 +2838,31 @@ test("legacy namespace load failures do not write defaults over existing user da
         Data={load:()=>undefined,save(){writes++;}};DOM={addStyle(){}};
     }
     const Renamed=load(Api);assert.throws(()=>new Renamed().getSettingsPanel(),/synthetic legacy read failure/);assert.equal(writes,0);
+});
+
+
+test("outgoing non-text filter sends emoji, links and attachment-only payloads unchanged without context or model calls",async()=>{
+    const sources=["", "  \n", "😀", "👍🏽", "👨‍👩‍👧‍👦", "🇨🇳", "1️⃣", "❤", "❤️", "🏴󠁧󠁢󠁥󠁮󠁧󠁿", "<:happy:1409648830307369061>", "<a:dance:1409649023870173377>", "https://example.test/image.png?a=1&b=2", "<https://example.test/game>", "||😀||", "😀 https://example.test", "<@123456789012345678>"];
+    for(const source of sources)for(const includeOriginal of [false,true]){
+        const f=outgoingFixture({source});f.plugin.settings.outgoingIncludeOriginal=includeOriginal;
+        f.plugin.outgoingContext=()=>{throw Error("must skip reference lookup");};f.plugin.getGlossary=()=>{throw Error("must skip terminology lookup");};
+        f.payload.uploads=[{id:"image-upload"}];f.payload.stickers=["sticker-id"];
+        const result=await f.outgoing.submit("101",[f.payload,f.extra],f.original,f.editor);
+        assert.equal(result.shouldClear,true);assert.equal(f.requests.length,0);assert.equal(f.errors.length,0);assert.equal(f.sent.length,1);
+        assert.equal(f.sent[0][0],f.payload);assert.equal(f.sent[0][1],f.extra);assert.equal(f.sent[0][0].value,source);assert.equal(f.outgoing.pending.size,0);
+    }
+});
+
+test("outgoing filter keeps real words, digits and captions eligible for translation",async()=>{
+    for(const source of ["hello 😀","请看 https://example.test","1","#","*",":)","[guide](https://example.test)","||需要翻译||","文字 <:happy:1409648830307369061>"]){
+        const f=outgoingFixture({source});await f.outgoing.submit("101",[f.payload,f.extra],f.original,f.editor);assert.equal(f.requests.length,1,source);assert.equal(f.sent.length,1);assert.equal(f.sent[0][0].value,"I want the signature weapon");
+    }
+});
+
+test("direct native sending cancels the previous channel job and prevents a late translated send",async()=>{
+    const f=outgoingFixture();let complete;f.plugin.client.translate=()=>new Promise(resolve=>{complete=resolve;});
+    const old=f.outgoing.submit("101",[f.payload,f.extra],f.original,f.editor);await new Promise(setImmediate);
+    const job=f.outgoing.pending.get("101"),native={...f.payload,value:"😀"};
+    await f.outgoing.submit("101",[native,f.extra],f.original,f.editor);assert.equal(job.controller.signal.aborted,true);
+    complete("late translation");await old;assert.equal(f.sent.length,1);assert.equal(f.sent[0][0],native);assert.equal(f.outgoing.pending.size,0);
 });

@@ -2396,6 +2396,14 @@ button.lt-rendered-mention:focus-visible { outline: 2px solid #7983f5; }
 .lt-message-button:focus-visible { outline: 2px solid #7983f5; outline-offset: 2px; }
 `;
 
+function hasOutgoingText(text) {
+    // Inspect a copy only: native sending keeps the original payload and formatting.
+    const remaining = text.replace(/\|\|([\s\S]*?)\|\|/g, "$1")
+        .replace(/<https?:\/\/[^\s<>]+>|https?:\/\/[^\s<>]+|<a?:[A-Za-z0-9_~]{1,32}:\d{15,22}>|<@!?\d+>|<@&\d+>|<#\d+>/g, "")
+        .replace(/(?:\p{Regional_Indicator}{2}|[0-9#*]\uFE0F?\u20E3|\p{Extended_Pictographic}(?:\uFE0F|\p{Emoji_Modifier})*(?:\u200D\p{Extended_Pictographic}(?:\uFE0F|\p{Emoji_Modifier})*)*(?:[\u{E0020}-\u{E007E}]+\u{E007F})?)/gu, "");
+    return Boolean(remaining.trim());
+}
+
 class OutgoingTranslator {
     constructor(plugin, environment = globalThis) {
         this.plugin = plugin;
@@ -2579,7 +2587,11 @@ class OutgoingTranslator {
 
     async submit(channelId, args, original, editor, binding = null) {
         const payload = args[0];
-        if (!this.plugin.settings.outgoingTranslate || typeof payload?.value !== "string" || !payload.value.trim()) return original(...args);
+        if (!this.plugin.settings.outgoingTranslate || typeof payload?.value !== "string") return original(...args);
+        if (!hasOutgoingText(payload.value)) {
+            this.pending.get(channelId)?.controller.abort();
+            return original(...args);
+        }
         const keepDraft = {shouldClear: false, shouldRefocus: true};
         if (this.pending.has(channelId)) return keepDraft;
         const controller = new AbortController();
