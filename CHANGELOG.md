@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Reduced Debug log duplication: originals appear only at operation start, full prompts remain once in request JSON, and cache-hit events refer to the final result instead of repeating it. Version 2 entries retain request/response correlation and leave existing logs unchanged.
+
 - Fixed missing Debug request/response events after the first log entry: support BetterDiscord’s direct Buffer export when measuring UTF-8 log size. Added full-chain logging coverage with an existing file and an automatically resolved model.
 
 - Fixed Debug logging on BetterDiscord’s limited filesystem bridge, which has no fs.promises or appendFile. Preserve append/rotation behavior and recover filesystem error codes stripped by Electron.

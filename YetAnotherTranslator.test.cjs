@@ -41,10 +41,10 @@ test("debug records readable exact prompts, resolved models, caller kind, respon
     await client.translate("你好\n```literal```",{...f.settings,model:""},undefined,{areaTopic:{channelName:"test area"}},null,{kind:"automatic",channelId:"101",messageId:"202"});
     await client.debugLogger.flush();const records=f.records(),request=records.find(record=>record.event==="api_request"&&record.route==="/chat/completions");
     assert.deepEqual(request.requestBody,requests[0]);assert.equal(request.model,"resolved-model");assert.equal(request.translationType,"automatic");
-    assert.equal(request.channelId,"101");assert.equal(request.messageId,"202");assert.equal(request.originalText,"你好\n```literal```");
+    assert.equal(request.channelId,"101");assert.equal(request.messageId,"202");assert.equal(records[0].originalText,"你好\n```literal```");assert.equal(request.originalText,undefined);
     assert.ok(Number.isFinite(Date.parse(request.timestamp)));assert.ok(request.localTime);assert.equal(new Set(records.map(record=>record.operationId)).size,1);
     assert.equal(records.at(-1).event,"operation_complete");assert.equal(records.at(-1).translation,"hello");
-    assert.ok(f.read().includes("### 提示词 / Prompt [system]"));assert.ok(f.read().includes("你好\n```literal```"));assert.ok(!f.read().includes("NEVER_LOG_REASONING"));
+    assert.ok(!f.read().includes("### 提示词 / Prompt"));assert.ok(!f.read().includes("### 原文 / Original"));assert.ok(!f.read().includes("NEVER_LOG_REASONING"));
     assert.equal(records.find(record=>record.event==="api_response"&&record.usage).usage.prompt_tokens,11);
 });
 
@@ -2515,6 +2515,24 @@ test("debug writes a complete manual translation on BetterDiscord fs and direct 
     assert.ok(f.read().startsWith("Existing log header"));
     const request=records.find(event=>event.route==="/chat/completions"&&event.event==="api_request");
     assert.equal(request.model,"discovered-model");assert.equal(request.translationType,"manual");
-    assert.equal(request.originalText,"manual source 中文");assert.ok(request.requestBody.messages.some(message=>message.content.includes("manual source 中文")));
+    assert.equal(records[0].originalText,"manual source 中文");assert.equal(request.originalText,undefined);assert.ok(request.requestBody.messages.some(message=>message.content.includes("manual source 中文")));
     assert.equal(records.at(-1).translation,"译文内容");assert.ok(records.some(event=>event.usage?.total_tokens===16));
+});
+
+
+test("compact debug logs retain each payload once and correlate cached operations without duplicating translations", async t => {
+    const f=debugFixture(t),requests=[];const source="source line 1\nsource line 2",translated="final translation";
+    const client=new TranslationClient(async(url,options)=>{requests.push(JSON.parse(options.body));return {status:200,arrayBuffer:async()=>Buffer.from(JSON.stringify({choices:[{message:{content:translated}}]}))};});
+    await client.translate(source,f.settings);await client.translate(source,f.settings);await client.debugLogger.flush();
+    const records=f.records();assert.equal(requests.length,1);assert.equal(records.length,7);
+    const ids=[...new Set(records.map(record=>record.operationId))];assert.equal(ids.length,2);
+    for(const id of ids){const events=records.filter(record=>record.operationId===id);assert.equal(events[0].event,"operation_start");
+        assert.equal(events[0].originalText,source);assert.equal(events.at(-1).translation,translated);
+        assert.equal(events.filter(record=>Object.hasOwn(record,"originalText")).length,1);
+        assert.equal(events.filter(record=>Object.hasOwn(record,"translation")).length,1);
+    }
+    assert.ok(records.every(record=>record.schemaVersion===2));
+    assert.equal(records.filter(record=>record.requestBody).length,1);assert.deepEqual(records.find(record=>record.requestBody).requestBody,requests[0]);
+    assert.equal(records.find(record=>record.event==="cache_hit").translation,undefined);
+    assert.ok(!f.read().includes("### 提示词 / Prompt"));assert.ok(!f.read().includes("### 原文 / Original"));
 });

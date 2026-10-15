@@ -383,10 +383,10 @@ class DebugLogger {
                     return value;
                 };
                 const now = new Date();
-                const record = redact({schemaVersion: 1, timestamp: now.toISOString(), localTime: now.toString(), operationId: operation.id,
+                const record = redact({schemaVersion: 2, timestamp: now.toISOString(), localTime: now.toString(), operationId: operation.id,
                     translationType: kind, translationLabel: labels[kind], event, provider: settings.providerMode, endpoint: settings.baseUrl,
                     model: operation.model, targetLanguage: settings.targetLanguage, channelId: info.channelId || null, messageId: info.messageId || null,
-                    originalText: info.originalText, phase: operation.phase, elapsedMs: Date.now() - started, ...details});
+                    ...(event === "operation_start" ? {originalText: info.originalText} : {}), phase: operation.phase, elapsedMs: Date.now() - started, ...details});
                 this.write(destination, record, () => {
                     const latest = this.currentSettings?.() || settings;
                     return latest.debugEnabled === true && latest.debugLogPath === destination;
@@ -402,8 +402,6 @@ class DebugLogger {
         };
         let output = `\n## ${record.timestamp} | ${record.translationLabel} | ${record.event} | ${record.operationId}\n\n`;
         output += block(JSON.stringify(record, null, 2), "json");
-        if (record.originalText !== undefined) output += "\n### 原文 / Original\n" + block(record.originalText);
-        for (const message of record.requestBody?.messages || []) output += `\n### 提示词 / Prompt [${message.role}]\n` + block(message.content);
         return output;
     }
     write(file, record, enabled) {
@@ -768,7 +766,7 @@ class TranslationClient {
                 if (!signal?.aborted && error.name !== "AbortError" && this.cache.get(key) === cached) this.cache.delete(key);
                 throw error;
             }
-            debug?.emit("cache_hit", {modelInvoked: false, translation: cached.text});
+            debug?.emit("cache_hit", {modelInvoked: false});
             this.stats.cacheHits++; this.rememberLanguage(text, cached.sourceLanguage); return cached.text;
         }
         let translated;

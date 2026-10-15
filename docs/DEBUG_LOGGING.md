@@ -12,25 +12,29 @@ Logs can contain chat text, nearby messages, replies, area names and selected gl
 
 ## 格式与字段 / Format and fields
 
-每条事件以 Markdown 二级标题分隔，标题含 UTC 时间、翻译类型、事件名称与关联 ID。其后的 `json` 代码块是完整结构化记录；原文和请求内每条消息另外展开为文本代码块，方便直接阅读。包含反引号的内容使用更长的围栏。提示词与实际请求一致，但密钥经过脱敏。
+每条事件以 Markdown 二级标题分隔，标题含 UTC 时间、翻译类型、事件名称与关联 ID。其后的 `json` 代码块是完整结构化记录，使用缩进方便阅读。原文仅在 operation_start 保存，完整提示词仅在对应 api_request.requestBody.messages 保存，不再额外展开同一份文本。包含反引号的内容使用更长的围栏。提示词与实际请求一致，但密钥经过脱敏。
 
-Each event has a Markdown heading with UTC time, translation kind, event name and operation ID. The following `json` block is the authoritative structured record. Original text and each request message also appear in readable text blocks with collision-safe fences. Prompts match the actual request except for secret redaction.
+Each event has a Markdown heading with UTC time, translation kind, event name and operation ID. Its indented `json` block is the authoritative structured record. Original text appears only in operation_start, and full prompts appear only in the corresponding api_request.requestBody.messages. Duplicate expanded text blocks are omitted. Fences remain collision-safe. Prompts match the actual request except for secret redaction.
 
 | 字段 / Field | 含义 / Meaning |
 | --- | --- |
-| `schemaVersion` | 当前为 1 / Currently 1 |
+| `schemaVersion` | 当前为 2；旧日志 1 保持原样 / Currently 2; existing version 1 entries are unchanged |
 | `timestamp`, `localTime` | UTC ISO 时间与本地时间 / UTC ISO and local time |
 | `operationId`, `requestId` | 一次翻译及其接口请求的关联 ID / Translation and API request correlation IDs |
 | `translationType` | `manual` 手动（含单条重译）、`outgoing` 发送、`automatic` 自动、`connection_test` 连接测试 |
 | `provider`, `endpoint`, `model` | 服务类型、基础地址、实际模型；自动选择前可为空 / Provider, base URL and resolved model; model may be null before discovery |
 | `targetLanguage`, `channelId`, `messageId` | 目标语言及可获取的版面／消息 ID / Target language and available channel/message IDs |
-| `originalText` | 本次待翻译原文 / Original text submitted for translation |
+| `originalText` | 仅 operation_start 保存本次原文 / Original text, stored only in operation_start |
 | `requestBody` | 实际请求参数及 `messages`，包含选中的上下文与术语 / Actual request parameters and messages, including selected context/glossary |
 | `phase` | `initial` 首次请求或 `repair` 修复请求 / Initial or repair request |
 | `elapsedMs`, `durationMs` | 操作总耗时与单次接口耗时（毫秒）/ Operation elapsed time and individual API duration in milliseconds |
 | `usage`, `finishReason` | 服务返回的用量与结束原因；未提供时为空 / Reported usage and finish reason; null when unavailable |
-| `responseText`, `translation` | 模型响应内容与最终译文 / Model response content and final translation |
+| `responseText`, `translation` | api_response 保留原始响应；operation_complete 保留最终译文 / Raw response in api_response; final translation in operation_complete |
 | `error` | 错误名称、可用代码及说明 / Error name, available code and message |
+
+通过 operationId 关联开始、请求与结果。缓存事件只记录命中，最终译文统一在 operation_complete，避免重复。新旧格式可以追加在同一文件中，不会重写既有日志。轮转后可按 operationId 在编号备份中查找开始事件。
+
+Use operationId to connect start, requests and results. Cache events indicate a hit; the final translation is stored in operation_complete only. New and old formats may coexist in one file; existing logs are not rewritten. After rotation, look up the start event by operationId in numbered backups.
 
 ## 事件 / Events
 
