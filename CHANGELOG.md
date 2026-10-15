@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- Cache translations by the glossary content actually sent rather than local file versions. Empty selections normalize to no glossary; selected changes and explicit refresh still regenerate.
+- Added optional economical glossary prompts, off by default, with smaller nearby-term budgets, short-message filtering, matched aliases, duplicate merging and bounded notes while preserving disambiguation fields.
+
 ## 0.9.5 — 2026-10-14
 
 ## 中文

@@ -183,5 +183,7 @@
   "testUsageCounts": "Connection tests: {requests} generation requests, {modelChecks} model-list checks, {cancelled} cancellations, {failures} failures.",
   "testUsageActual": "Server-reported test usage: {promptTokens} input tokens, {completionTokens} output tokens; {missing} test generation requests did not return usage.",
   "testUsageUnavailable": "Actual test token usage unavailable: no test usage received (cancelled requests may still consume tokens).",
-  "testUsageEmpty": "No connection-test generation requests yet."
+  "testUsageEmpty": "No connection-test generation requests yet.",
+  "glossaryEconomy": "Economical glossary prompts",
+  "glossaryEconomyHelp": "Off by default. Omits nearby-only terms for short messages without a reply or clear reference, and gives other nearby terms a smaller budget. Merges duplicates, retains matched aliases, caps notes at 96 characters and preserves game, category and character details. May reduce supporting context. Save and close to apply."
 }

@@ -183,5 +183,7 @@
   "testUsageCounts": "Verbindungstests: {requests} Generierungen, {modelChecks} Modelllisten, {cancelled} Abbrüche, {failures} Fehler.",
   "testUsageActual": "Testnutzung: {promptTokens} Eingabe-tokens, {completionTokens} Ausgabe-tokens; {missing} Generierungen ohne Nutzungsdaten.",
   "testUsageUnavailable": "Testnutzung unbekannt: keine usage empfangen; abgebrochene Anfragen können tokens verbrauchen.",
-  "testUsageEmpty": "Noch keine Testgenerierungen."
+  "testUsageEmpty": "Noch keine Testgenerierungen.",
+  "glossaryEconomy": "Sparsame Glossar-Prompts",
+  "glossaryEconomyHelp": "Standardmäßig aus. Bei kurzen Nachrichten ohne Antwort oder klaren Bezug entfallen nur im Umfeld gefundene Begriffe; sonst kleineres Umfeldbudget. Duplikate zusammenführen, passende Aliasse und Spiel/Kategorie/Figur behalten, Notizen auf 96 Zeichen kürzen. Kann Hilfsinformationen reduzieren. Speichern und schließen zum Anwenden."
 }

@@ -1606,7 +1606,7 @@ test("automatic translation forwards matched glossary references and cancels bef
     assert.equal(cancelled.calls.length, 0);
 });
 
-test("model requests retain glossary references on retry and file versions separate the cache", async () => {
+test("model requests retain glossary references on retry and cache only actual glossary content", async () => {
     const requests = [];
     const client = new TranslationClient(async (url, options) => {
         const request = JSON.parse(options.body); requests.push(request);
@@ -1625,7 +1625,66 @@ test("model requests retain glossary references on retry and file versions separ
     await client.translate("Iuno", settings, undefined, context);
     assert.equal(requests.length, 2);
     await client.translate("Iuno", settings, undefined, {...context, glossary: {...context.glossary, version: "2"}});
+    assert.equal(requests.length, 2);
+    await client.translate("Iuno", settings, undefined, {...context, glossary: {...context.glossary, version: "3", entries: [{en:"Iuno",zh:"新译名"}]}});
     assert.equal(requests.length, 3);
+    await client.translate("Iuno", settings, undefined, {...context, refresh:true});assert.equal(requests.length,4);
+});
+
+test("G12 empty glossaries normalize to no glossary despite file name, version and priority changes", async () => {
+    const requests=[];const client=new TranslationClient(async(url,options)=>{requests.push(JSON.parse(options.body));return {status:200,arrayBuffer:async()=>Buffer.from(JSON.stringify({choices:[{message:{content:"hello"}}]}))};});
+    const settings={...DEFAULTS,model:"test"};
+    for(const glossary of [undefined,{name:"one",version:"1",entries:[],priorities:[]},{name:"two",version:"2",entries:[],priorities:["nearby"]}]) await client.translate("你好",settings,undefined,glossary?{glossary}:null);
+    assert.equal(requests.length,1);assert.equal(client.stats.cacheHits,2);assert.equal(requests[0].messages.some(message=>message.content.startsWith("LOCAL TERMINOLOGY")),false);
+});
+
+test("G12 local file reloads retain request cache for unselected changes and invalidate selected changes", async t => {
+    const fixture=glossaryFixture(t,[{en:"Iuno",zh:"尤诺"},{en:"Unrelated",zh:"无关"}]),store=new GlossaryStore();let calls=0;
+    const client=new TranslationClient(async()=>({status:200,arrayBuffer:async()=>{calls++;return Buffer.from(JSON.stringify({choices:[{message:{content:"尤诺"}}]}));}}));
+    const settings={...DEFAULTS,model:"test"};
+    let selected=await store.select(fixture.file,"Iuno");await client.translate("Iuno",settings,undefined,{glossary:selected});
+    const write=(entries,time)=>{fs.writeFileSync(fixture.file,JSON.stringify({version:1,name:"Test glossary",entries}));fs.utimesSync(fixture.file,time,time);};
+    write([{en:"Iuno",zh:"尤诺"},{en:"Unrelated",zh:"未使用的新词条"}],2000000000);
+    let changed=await store.select(fixture.file,"Iuno");assert.notEqual(changed.version,selected.version);
+    await client.translate("Iuno",settings,undefined,{glossary:changed});assert.equal(calls,1);
+    write([{en:"Iuno",zh:"新译名"}],2000000001);changed=await store.select(fixture.file,"Iuno");
+    await client.translate("Iuno",settings,undefined,{glossary:changed});assert.equal(calls,2);
+    await client.translate("Iuno",settings,undefined,{glossary:changed,refresh:true});assert.equal(calls,3);
+});
+
+test("G12 economy is opt-in, removes short standalone nearby terms and bounds pronoun/reply terms", () => {
+    const client=new TranslationClient(),glossary={name:"game",version:"1",entries:Array.from({length:20},(_,index)=>({en:"Character "+index,zh:"角色"+index})),priorities:Array(20).fill("nearby")};
+    const context={before:[{text:"Character 0 and Character 1"}],after:[]};
+    assert.ok(client.budget("你好",DEFAULTS,context,null,glossary).glossary.entries.length>0);
+    assert.equal(client.budget("你好",{...DEFAULTS,glossaryEconomy:true},context,null,glossary).glossary.entries.length,0);
+    for(const text of ["Is she good?","这个角色呢？","Это хорошо?","それは？"]) {
+        const selected=client.budget(text,{...DEFAULTS,glossaryEconomy:true},context,null,glossary);
+        assert.ok(selected.glossary.entries.length>0,text);
+        const without=client.estimate(client.messages(text,DEFAULTS,selected.context,null,null,true));
+        assert.ok(client.estimate(client.messages(text,DEFAULTS,selected.context,null,selected.glossary,true))-without<=700);
+    }
+    const reply={...context,reply:{text:"Character 7"}};
+    const selected=client.budget("好",{...DEFAULTS,glossaryEconomy:true},reply,null,glossary);
+    assert.equal(selected.glossary.entries[0].en,"Character 7");assert.ok(selected.context.reply.text.includes("Character 7"));
+});
+
+test("G12 economy compacts aliases and notes, merges duplicates and preserves same-name disambiguation", () => {
+    const client=new TranslationClient(),entry={en:"Hero",zh:"英雄",game:"Game A",character:"Alice",category:"skill",note:"x".repeat(200),aliases:["HERO","heroine","unused","Heroine"]};
+    const input={entries:[entry,{...entry,aliases:["heroine"]},{...entry,game:"Game B",character:"Bob"}],priorities:["nearby","direct","direct"]};
+    const original=JSON.stringify(input),compact=client.compactGlossary("heroine",null,input);
+    assert.equal(compact.entries.length,2);assert.ok(compact.priorities.every(priority=>priority==="direct"));
+    for(const value of compact.entries){assert.equal(value.aliases.length,1);assert.equal(value.aliases[0].toLowerCase(),"heroine");assert.equal(value.note.length,96);assert.equal(value.category,"skill");}
+    assert.equal(compact.entries[0].game,"Game A");assert.equal(compact.entries[1].game,"Game B");assert.equal(JSON.stringify(input),original);
+    const selected=client.budget("heroine",{...DEFAULTS,glossaryEconomy:true},null,null,input);assert.equal(selected.glossary.entries.length,2);
+});
+
+test("G12 glossary economy setting saves with the draft and cancels without changing defaults", () => {
+    const host=settingsHost(),panel=host.plugin.getSettingsPanel();let tree=host.render(panel);
+    assert.equal(DEFAULTS.glossaryEconomy,false);
+    find(tree,node=>node.props?.name==="glossaryEconomy").props.onChange({target:{checked:true}});assert.equal(host.writes.length,0);
+    tree=host.render(panel);find(tree,node=>node.type==="button"&&node.props.children[0]==="取消").props.onClick();assert.equal(host.plugin.settings.glossaryEconomy,false);
+    tree=host.render(panel);find(tree,node=>node.props?.name==="glossaryEconomy").props.onChange({target:{checked:true}});tree=host.render(panel);
+    find(tree,node=>node.type==="button"&&node.props.children[0]==="保存并关闭").props.onClick();assert.equal(host.plugin.settings.glossaryEconomy,true);
 });
 
 test("bundled glossaries contain current character, skill and resource names and validate", async () => {

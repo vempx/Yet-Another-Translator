@@ -183,5 +183,7 @@
   "testUsageCounts": "Test: {requests} generazioni, {modelChecks} elenchi modelli, {cancelled} annullamenti, {failures} errori.",
   "testUsageActual": "Uso dei test: {promptTokens} tokens in ingresso, {completionTokens} tokens in uscita; {missing} generazioni senza usage.",
   "testUsageUnavailable": "Uso reale dei test non disponibile: nessuna usage ricevuta; annullare può consumare tokens.",
-  "testUsageEmpty": "Ancora nessuna generazione di test."
+  "testUsageEmpty": "Ancora nessuna generazione di test.",
+  "glossaryEconomy": "Prompt del glossario economici",
+  "glossaryEconomyHelp": "Disattivato per impostazione predefinita. Omette termini solo vicini nei messaggi brevi senza risposta o riferimento chiaro; ne riduce il budget negli altri casi. Unisce duplicati, mantiene alias corrispondenti e gioco/categoria/personaggio, note fino a 96 caratteri. Può ridurre informazioni utili. Salva e chiudi per applicare."
 }

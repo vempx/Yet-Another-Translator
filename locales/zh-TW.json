@@ -183,5 +183,7 @@
   "testUsageCounts": "連線測試：生成請求 {requests}，模型清單檢查 {modelChecks}，取消 {cancelled}，失敗 {failures}。",
   "testUsageActual": "測試回報用量：輸入 {promptTokens} tokens，輸出 {completionTokens} tokens；{missing} 次生成請求未回報用量。",
   "testUsageUnavailable": "測試實際用量不可用：未收到測試 usage（取消請求也可能消耗 tokens）。",
-  "testUsageEmpty": "尚無連線測試生成請求。"
+  "testUsageEmpty": "尚無連線測試生成請求。",
+  "glossaryEconomy": "術語節省用量",
+  "glossaryEconomyHelp": "預設關閉。短訊息無回覆或明顯指代時省略僅附近命中的術語，其餘附近術語使用較小額度。合併重複條目，保留命中別名，備註最多 96 字元，保留遊戲、類別及角色資訊。可能減少輔助資訊，儲存並關閉後生效。"
 }

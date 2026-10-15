@@ -48,6 +48,8 @@ An LLM-powered BetterDiscord plugin for automatic message translation, individua
 
 Use the supplied [glossaries](glossaries/README.md), or create your own using the [generation prompt](GLOSSARY_GENERATION_PROMPT.md). New translations read saved glossary changes; manually retranslate existing results to refresh them. Configuring a glossary does not enable automatic translation.
 
+The optional economical glossary mode is off by default. It reduces nearby-only terms for independent short messages, keeps matched aliases, merges duplicates and shortens notes while preserving game and character details. It may reduce supporting information; turn it off when needed. Request caches use the glossary content actually sent, so editing an unselected entry alone does not regenerate a translation. Changes to selected entries and explicit retranslation still take effect.
+
 ## Notes
 
 - Incoming translations are visible only to you. Translate-before-sending submits the final content to the conversation.

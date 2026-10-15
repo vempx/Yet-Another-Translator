@@ -183,5 +183,7 @@
   "testUsageCounts": "Tests : {requests} générations, {modelChecks} listes de modèles, {cancelled} annulations, {failures} échecs.",
   "testUsageActual": "Utilisation des tests : {promptTokens} tokens en entrée, {completionTokens} tokens en sortie ; {missing} générations sans usage.",
   "testUsageUnavailable": "Utilisation réelle des tests inconnue : aucune usage reçue ; une requête annulée peut consommer des tokens.",
-  "testUsageEmpty": "Aucune génération de test pour le moment."
+  "testUsageEmpty": "Aucune génération de test pour le moment.",
+  "glossaryEconomy": "Prompts de glossaire économiques",
+  "glossaryEconomyHelp": "Désactivé par défaut. Omet les termes trouvés seulement à proximité pour les messages courts sans réponse ni référence claire ; réduit leur budget sinon. Fusionne les doublons, garde les alias correspondants et jeu/catégorie/personnage, limite les notes à 96 caractères. Peut réduire le contexte utile. Enregistrer et fermer pour appliquer."
 }
