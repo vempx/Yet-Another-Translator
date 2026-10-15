@@ -205,5 +205,7 @@
   "imageFormat": "Nicht unterstütztes Bildformat. Verwenden Sie PNG, JPEG, GIF oder WebP.",
   "imageModelError": "Bildverarbeitung fehlgeschlagen. Prüfen Sie das geladene Vision-Modell, die passende mmproj in llama-server und das Ausgabelimit.",
   "imageCancelled": "Bildübersetzung abgebrochen. Wiederholen Sie sie über das Bildkontextmenü.",
-  "imageEmpty": "Bilderkennung oder Übersetzung lieferte ungültige, zu lange oder unvollständige Ausgabe. Versuchen Sie es erneut."
+  "imageEmpty": "Bilderkennung oder Übersetzung lieferte ungültige, zu lange oder unvollständige Ausgabe. Versuchen Sie es erneut.",
+  "skipOwnMessages": "Eigene Nachrichten bei automatischer Übersetzung überspringen",
+  "skipOwnMessagesHelp": "Standardmäßig aktiviert. Eigene Originalnachrichten bleiben Kontext für andere; manuelle Übersetzung bleibt möglich."
 }

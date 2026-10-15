@@ -2866,3 +2866,65 @@ test("direct native sending cancels the previous channel job and prevents a late
     await f.outgoing.submit("101",[native,f.extra],f.original,f.editor);assert.equal(job.controller.signal.aborted,true);
     complete("late translation");await old;assert.equal(f.sent.length,1);assert.equal(f.sent[0][0],native);assert.equal(f.outgoing.pending.size,0);
 });
+
+
+function ownMessageChat(){
+    const chat=chatEnvironment(),records=new Map();let account="self";
+    const add=(id,text,author)=>{records.set(String(id),{id:String(id),channel_id:"channel",content:text,author:{id:author},timestamp:"2026-10-16T00:00:"+String(id).padStart(2,"0")+".000Z"});return chat.message(String(id),text);};
+    chat.auto.sources={currentUserId:()=>account,readMessage:(channel,id)=>records.get(id),loadedMessages:()=>[]};
+    return {...chat,records,add,setAccount:value=>{account=value;}};
+}
+
+test("automatic translation skips own messages by default but keeps own originals before, after and in replies",async()=>{
+    const chat=ownMessageChat(),requests=[];
+    const before=chat.add(1,"my original before","self"),other=chat.add(2,"their message","other"),after=chat.add(3,"my original after","self");
+    chat.document.nodes=[before,other,after];
+    chat.auto.sources.loadedMessages=()=>[{id:"0",channel_id:"channel",content:"my loaded original",author:{id:"self"},timestamp:"2026-10-16T00:00:00.000Z"}];
+    chat.auto.sources.readReply=()=>({id:"1",channelId:"channel",text:"my original before",speaker:"self"});
+    chat.client.translate=async(text,settings,signal,context)=>{requests.push({text,context});return "their translation";};
+    await chat.drain();assert.equal(DEFAULTS.skipOwnMessages,true);assert.equal(requests.length,1);assert.equal(requests[0].text,"their message");
+    const context=requests[0].context;assert.ok(context.before.some(item=>item.text==="my loaded original"));assert.ok(context.before.some(item=>item.id==="1"&&item.reference==="reply"));assert.equal(context.reply.text,"my original before");assert.ok(context.after.some(item=>item.text==="my original after"));assert.equal(context.reply.id,"1");
+    assert.equal(before.classList.contains("lt-original-hidden"),false);assert.equal(after.classList.contains("lt-original-hidden"),false);assert.equal(chat.auto.entries.get(before).output,null);assert.equal(chat.auto.entries.get(other).state,"done");
+});
+
+test("own messages allow explicit manual translation; switching accounts restores the new owner's originals",async()=>{
+    const chat=ownMessageChat(),own=chat.add(1,"mine","self"),other=chat.add(2,"theirs","other");chat.document.nodes=[own,other];
+    await chat.drain();assert.deepEqual(chat.calls,["theirs"]);
+    chat.auto.toggle(own);await chat.drain();assert.deepEqual(chat.calls,["theirs","mine"]);assert.equal(chat.auto.entries.get(own).manual,true);
+    chat.auto.toggle(own);await chat.drain();assert.equal(chat.auto.entries.get(own).output,null);
+    chat.setAccount("other");await chat.drain();assert.equal(chat.auto.entries.get(other).output,null);assert.equal(other.classList.contains("lt-original-hidden"),false);
+    // An explicit per-message language choice is still manual even in an automatic area.
+    chat.auto.refresh("2","channel","日本語");await chat.drain();assert.equal(chat.auto.entries.get(other).manual,true);assert.equal(chat.calls.at(-1),"theirs");
+});
+
+test("skip-own setting saves or cancels transactionally and preserves completed translations for other users",async()=>{
+    const host=settingsHost(),panel=host.plugin.getSettingsPanel();let tree=host.render(panel),cancelled=0;
+    assert.equal(find(tree,node=>node.props?.name==="skipOwnMessages").props.checked,true);
+    find(tree,node=>node.props?.name==="skipOwnMessages").props.onChange({target:{checked:false}});tree=host.render(panel);
+    find(tree,node=>node.type==="button"&&node.props.children[0]==="取消").props.onClick();assert.equal(host.plugin.settings.skipOwnMessages,true);assert.equal(host.writes.length,0);
+    const chat=ownMessageChat(),own=chat.add(1,"mine","self"),other=chat.add(2,"theirs","other");chat.document.nodes=[own,other];await chat.drain();host.plugin.autoTranslator=chat.auto;
+    host.plugin.outgoingTranslator={cancel(){cancelled++;},scan(){}};host.plugin.restartAutoTranslation=()=>{throw Error("do not restart unrelated translations");};
+    tree=host.render(panel);find(tree,node=>node.props?.name==="skipOwnMessages").props.onChange({target:{checked:false}});tree=host.render(panel);find(tree,node=>node.type==="button"&&node.props.children[0]==="保存并关闭").props.onClick();await chat.drain();
+    assert.equal(host.plugin.settings.skipOwnMessages,false);assert.deepEqual(chat.calls,["theirs","mine"]);assert.equal(cancelled,0);
+    tree=host.render(panel);find(tree,node=>node.props?.name==="skipOwnMessages").props.onChange({target:{checked:true}});tree=host.render(panel);find(tree,node=>node.type==="button"&&node.props.children[0]==="保存并关闭").props.onClick();await chat.drain();
+    assert.equal(chat.auto.entries.get(own).output,null);assert.equal(own.classList.contains("lt-original-hidden"),false);assert.deepEqual(chat.calls,["theirs","mine"]);
+    const reopened=settingsHost(host.writes.at(-1).value);reopened.plugin.getSettingsPanel();assert.equal(reopened.plugin.settings.skipOwnMessages,true);
+    assert.equal(validateSettings({...DEFAULTS,skipOwnMessages:undefined}).skipOwnMessages,true);assert.equal(validateSettings({...DEFAULTS,skipOwnMessages:false}).skipOwnMessages,false);
+});
+
+test("account changes during glossary or generation prevent automatic translation of the now-current user's messages",async()=>{
+    for(const phase of ["glossary","generation"]){
+        const chat=ownMessageChat(),node=chat.add(1,"message","other");chat.document.nodes=[node];let release,modelCalls=0;
+        if(phase==="glossary")chat.auto.getGlossary=()=>new Promise(resolve=>{release=resolve;});
+        chat.client.translate=async()=>{modelCalls++;return phase==="generation"?new Promise(resolve=>{release=resolve;}):"translated";};
+        chat.auto.scan();await new Promise(setImmediate);assert.ok(release);chat.setAccount("other");release(phase==="glossary"?null:"translated");await chat.drain();
+        assert.equal(modelCalls,phase==="glossary"?0:1);assert.equal(chat.auto.entries.get(node).output,null);assert.equal(node.classList.contains("lt-original-hidden"),false);
+    }
+});
+
+test("current user identity uses UserStore dynamically and unknown identities never exclude other messages",async()=>{
+    let account={id:"123"};const Local=load({Webpack:{getStore:name=>name==="UserStore"?{getCurrentUser:()=>account}:null}});const plugin=new Local();assert.equal(plugin.currentUserId(),"123");account={id:"456"};assert.equal(plugin.currentUserId(),"456");account=null;assert.equal(plugin.currentUserId(),null);
+    const unavailable=load({Webpack:{getStore(){throw Error("store unavailable");}}});assert.equal(new unavailable().currentUserId(),null);
+    const chat=ownMessageChat();chat.setAccount(null);chat.document.nodes=[chat.add(1,"mine","self"),chat.add(2,"unknown","unknown")];await chat.drain();assert.deepEqual(chat.calls,["mine","unknown"]);
+    chat.setAccount("self");chat.auto.sources.currentUserId=()=>{throw Error("identity unavailable");};assert.equal(chat.auto.skipsOwnMessage({speaker:"self"}),false);
+});

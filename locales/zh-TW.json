@@ -205,5 +205,7 @@
   "imageFormat": "圖片格式不支援，請使用 PNG、JPEG、GIF 或 WebP。",
   "imageModelError": "圖片處理失敗，請確認 llama-server 已載入視覺模型及相符的 mmproj，並檢查輸出額度。",
   "imageCancelled": "圖片翻譯已取消，可從圖片右鍵選單重試。",
-  "imageEmpty": "圖片辨識或翻譯回傳的格式無效、內容過長或輸出不完整，請重試。"
+  "imageEmpty": "圖片辨識或翻譯回傳的格式無效、內容過長或輸出不完整，請重試。",
+  "skipOwnMessages": "自動翻譯時略過自己的訊息",
+  "skipOwnMessagesHelp": "預設開啟。自己的原文仍作為其他訊息的上下文；手動翻譯不受影響。"
 }

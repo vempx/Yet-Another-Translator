@@ -205,5 +205,7 @@
   "imageFormat": "Formato não suportado. Use PNG, JPEG, GIF ou WebP.",
   "imageModelError": "Falha no processamento. Verifique o modelo visual e o mmproj correspondente no llama-server, além do limite de saída.",
   "imageCancelled": "Tradução de imagem cancelada. Tente novamente pelo menu de contexto da imagem.",
-  "imageEmpty": "O reconhecimento ou tradução retornou saída inválida, longa demais ou incompleta. Tente novamente."
+  "imageEmpty": "O reconhecimento ou tradução retornou saída inválida, longa demais ou incompleta. Tente novamente.",
+  "skipOwnMessages": "Ignorar minhas mensagens na tradução automática",
+  "skipOwnMessagesHelp": "Ativado por padrão. Suas mensagens originais continuam como contexto; a tradução manual não é afetada."
 }

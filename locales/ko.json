@@ -205,5 +205,7 @@
   "imageFormat": "지원하지 않는 이미지 형식입니다. PNG, JPEG, GIF 또는 WebP를 사용하세요.",
   "imageModelError": "이미지 처리에 실패했습니다. llama-server에 시각 모델과 맞는 mmproj가 로드되었는지, 출력 한도를 확인하세요.",
   "imageCancelled": "이미지 번역을 취소했습니다. 이미지 우클릭 메뉴에서 다시 시도하세요.",
-  "imageEmpty": "이미지 인식 또는 번역 출력이 잘못되었거나 너무 길거나 불완전합니다. 다시 시도하세요."
+  "imageEmpty": "이미지 인식 또는 번역 출력이 잘못되었거나 너무 길거나 불완전합니다. 다시 시도하세요.",
+  "skipOwnMessages": "자동 번역에서 내 메시지 제외",
+  "skipOwnMessagesHelp": "기본으로 켜집니다. 내 원문은 다른 메시지의 문맥으로 사용되며 수동 번역에는 영향을 주지 않습니다."
 }

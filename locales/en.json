@@ -205,5 +205,7 @@
   "imageFormat": "Unsupported image format. Use PNG, JPEG, GIF or WebP.",
   "imageModelError": "Image processing failed. Confirm that llama-server has a vision model and matching mmproj loaded, and check the output budget.",
   "imageCancelled": "Image translation cancelled. Retry from the image context menu.",
-  "imageEmpty": "Image recognition or translation returned invalid, oversized or incomplete output. Try again."
+  "imageEmpty": "Image recognition or translation returned invalid, oversized or incomplete output. Try again.",
+  "skipOwnMessages": "Skip my own messages during automatic translation",
+  "skipOwnMessagesHelp": "On by default. Your original messages still provide context for others; manual translation is unaffected."
 }
