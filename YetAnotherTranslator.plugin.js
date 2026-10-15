@@ -3262,6 +3262,7 @@ module.exports = class YetAnotherTranslator {
             const [status, setStatus] = React.useState("");
             const [error, setError] = React.useState("");
             const [busy, setBusy] = React.useState(false);
+            const [connectionFeedback, setConnectionFeedback] = React.useState(null);
             const [glossaryChecks, setGlossaryChecks] = React.useState({});
             const draftRef = React.useRef({...plugin.settings});
             const dirtyFields = React.useRef(new Set());
@@ -3272,6 +3273,7 @@ module.exports = class YetAnotherTranslator {
             const mounted = React.useRef(false);
             const request = React.useRef(null);
             const edit = (key, value) => {
+                setConnectionFeedback(null);
                 dirtyFields.current.add(key);
                 draftRef.current = {...draftRef.current, [key]: value};
                 setDraft(previous => ({...previous, [key]: value}));
@@ -3307,11 +3309,11 @@ module.exports = class YetAnotherTranslator {
             const test = async () => {
                 if (request.current) return;
                 const controller = new AbortController(); request.current = controller;
-                setBusy(true); setStatus(""); setError("");
+                setBusy(true); setStatus(""); setError(""); setConnectionFeedback(null);
                 try {
                     const result = await plugin.client.testConnection({...draftRef.current}, controller.signal);
-                    if (mounted.current && !controller.signal.aborted) setStatus(result.generated ? uiMessage("onlineConnectionSuccess", {model: result.models[0]}) : uiMessage("connectionSuccess", {models: result.models.join(", ")}));
-                } catch (error) {if (mounted.current && !controller.signal.aborted) setError(errorForUi(error));}
+                    if (mounted.current && !controller.signal.aborted) setConnectionFeedback({message: result.generated ? uiMessage("onlineConnectionSuccess", {model: result.models[0]}) : uiMessage("connectionSuccess", {models: result.models.join(", ")})});
+                } catch (error) {if (mounted.current && !controller.signal.aborted) setConnectionFeedback({failed: true, message: errorForUi(error)});}
                 finally {request.current = null; if (mounted.current) setBusy(false);}
             };
             const updateField = key => event => edit(key, event.currentTarget?.value ?? event.target.value);
@@ -3319,7 +3321,7 @@ module.exports = class YetAnotherTranslator {
                 const mode = event.currentTarget?.value ?? event.target.value;
                 const next = switchProviderSettings(draftRef.current, mode);
                 for (const key of ["providerMode", "providerProfiles", ...PROVIDER_FIELDS]) dirtyFields.current.add(key);
-                draftRef.current = next; setDraft(next); setError(""); setStatus("");
+                draftRef.current = next; setDraft(next); setError(""); setStatus(""); setConnectionFeedback(null);
             };
             const changeDefaultLanguage = updateField("targetLanguage");
             const field = (key, label, note, type = "text", extra = {}) => {
@@ -3404,6 +3406,7 @@ module.exports = class YetAnotherTranslator {
                     h("div", {className: "lt-actions"},
                         h("button", {onClick: test, disabled: busy}, busy && request.current ? t("连接中…") : t("测试连接"))
                     ),
+                    connectionFeedback && h("p", {"data-lt-connection-result": "true", role: connectionFeedback.failed ? "alert" : "status", className: connectionFeedback.failed ? "lt-error" : "lt-note"}, uiText(connectionFeedback.message)),
                     h("details", {className: "lt-settings-advanced"},
                         h("summary", null, t("settingsAdvanced")),
                         field("timeoutSeconds", t("超时秒数"), t("首次加载或 CPU 推理较慢时可增加，范围 5–600。"), "number", {min: 5, max: 600, step: 1, inputMode: "numeric"}),

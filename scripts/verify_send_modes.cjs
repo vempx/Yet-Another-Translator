@@ -131,6 +131,10 @@ async function verifySettingsLayout(React,ReactDOM) {
     const advanced=sections[2].querySelector("details");assert.equal(advanced.open,false);advanced.querySelector("summary").click();assert.equal(advanced.open,true);assert.equal(advanced.querySelector('[name="timeoutSeconds"]').value,"120");
     const provider=rootNode.querySelector('[name="providerMode"]');ReactDOM.flushSync(()=>{provider.value="local";provider.dispatchEvent(new dom.window.Event("change",{bubbles:true}));});
     assert.equal(rootNode.querySelector('[name="baseUrl"]').value,DEFAULTS.baseUrl);assert.equal(advanced.open,true);assert.equal(writes,0);
+    settingsPlugin.client.testConnection=async()=>({models:["synthetic-connection-model"],generated:false});
+    const testButton=[...sections[2].querySelectorAll("button")].find(button=>button.textContent==="Test connection");
+    ReactDOM.flushSync(()=>testButton.click());await new Promise(resolve=>setTimeout(resolve,20));
+    const feedback=sections[2].querySelector("[data-lt-connection-result]");assert.ok(feedback.textContent.includes("synthetic-connection-model"));assert.equal(feedback.getAttribute("role"),"status");assert.equal(writes,0);
     locale="ja";ReactDOM.flushSync(()=>{for(const listener of [...listeners])listener();});assert.equal(rootNode.querySelector(".lt-settings-section h3").textContent,"メッセージ翻訳");assert.equal(rootNode.querySelector('[name="baseUrl"]').value,DEFAULTS.baseUrl);
     ReactDOM.flushSync(()=>reactRoot.unmount());rootNode.remove();assert.equal(listeners.size,0);
     console.log("PASS: real settings React DOM section order, block help text, advanced disclosure, provider drafts and live localized headings.");
