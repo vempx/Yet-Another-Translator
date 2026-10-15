@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Fixed missing Debug request/response events after the first log entry: support BetterDiscord’s direct Buffer export when measuring UTF-8 log size. Added full-chain logging coverage with an existing file and an automatically resolved model.
+
 - Fixed Debug logging on BetterDiscord’s limited filesystem bridge, which has no fs.promises or appendFile. Preserve append/rotation behavior and recover filesystem error codes stripped by Electron.
 
 - Added opt-in Debug file logging with timestamps, resolved models, translation kinds, originals, exact redacted prompts, responses, usage, duration, cache and repair events. Logs rotate with three backups; write errors do not interrupt translation.

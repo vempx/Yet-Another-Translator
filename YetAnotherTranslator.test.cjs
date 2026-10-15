@@ -2487,7 +2487,7 @@ test("debug supports BetterDiscord's sync-only fs bridge, stripped error codes, 
     for(const method of ["mkdirSync","lstatSync","unlinkSync","renameSync","writeFileSync"]){
         bridge[method]=(...args)=>{calls.push({method,args});try{return fs[method](...args);}catch(error){throw Error(error.message);}};
     }
-    const Bridged=load(undefined,{require:name=>name==="fs"?bridge:require(name)});
+    const Bridged=load(undefined,{require:name=>name==="fs"?bridge:name==="buffer"?Buffer:require(name)});
     const logger=new Bridged.testing.DebugLogger(null,null,15000);
     const op=logger.operation(f.settings,{kind:"manual",originalText:"中文 bridge original"});
     op.emit("api_request",{requestBody:{messages:[{role:"user",content:"Translate 中文"}]}});await logger.flush();
@@ -2500,4 +2500,21 @@ test("debug supports BetterDiscord's sync-only fs bridge, stripped error codes, 
     const saved=bridge.writeFileSync;bridge.writeFileSync=()=>{throw Error("EACCES: permission denied");};
     op.emit("blocked");await logger.flush();assert.equal(logger.lastError,"EACCES");
     bridge.writeFileSync=saved;op.emit("recovered");await logger.flush();assert.equal(logger.lastError,null);
+});
+
+
+test("debug writes a complete manual translation on BetterDiscord fs and direct Buffer exports, including existing files", async t => {
+    const f=debugFixture(t),bridge={};
+    for(const method of ["mkdirSync","lstatSync","unlinkSync","renameSync","writeFileSync"])bridge[method]=(...args)=>fs[method](...args);
+    const Bridged=load(undefined,{require:name=>name==="fs"?bridge:name==="buffer"?Buffer:require(name)});
+    fs.writeFileSync(f.file,"Existing log header\n");
+    const client=new Bridged.testing.TranslationClient(async(url,options)=>({status:200,arrayBuffer:async()=>Buffer.from(JSON.stringify(url.endsWith("/models")?{data:[{id:"discovered-model"}]}:{choices:[{finish_reason:"stop",message:{content:"译文内容"}}],usage:{prompt_tokens:12,completion_tokens:4,total_tokens:16}}))}));
+    assert.equal(await client.translate("manual source 中文",{...f.settings,model:""},null,{areaTopic:{channelName:"test channel"}},null,{kind:"manual",channelId:"101",messageId:"202"}),"译文内容");
+    await client.debugLogger.flush();assert.equal(client.debugLogger.lastError,null);
+    const records=f.records();assert.equal(records.length,6);assert.equal(records.at(-1).event,"operation_complete");
+    assert.ok(f.read().startsWith("Existing log header"));
+    const request=records.find(event=>event.route==="/chat/completions"&&event.event==="api_request");
+    assert.equal(request.model,"discovered-model");assert.equal(request.translationType,"manual");
+    assert.equal(request.originalText,"manual source 中文");assert.ok(request.requestBody.messages.some(message=>message.content.includes("manual source 中文")));
+    assert.equal(records.at(-1).translation,"译文内容");assert.ok(records.some(event=>event.usage?.total_tokens===16));
 });

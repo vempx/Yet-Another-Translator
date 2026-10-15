@@ -438,7 +438,10 @@ class DebugLogger {
             const stat = await fs.lstat(file).catch(missing);
             if (stat && (!stat.isFile() || stat.isSymbolicLink())) throw Object.assign(new Error("Invalid log file"), {code: "INVALID_LOG_FILE"});
             if (!enabled()) return;
-            if (stat && stat.size + require("buffer").Buffer.byteLength(bytes, "utf8") > this.maxBytes) {
+            // BetterDiscord returns the Buffer constructor directly; Node returns {Buffer}.
+            const bufferModule = require("buffer"), BufferType = bufferModule.Buffer || bufferModule;
+            if (typeof BufferType.byteLength !== "function") throw Object.assign(new Error("UTF-8 byte counter unavailable"), {code: "LOG_BUFFER_UNAVAILABLE"});
+            if (stat && stat.size + BufferType.byteLength(bytes, "utf8") > this.maxBytes) {
                 // Only rotate the explicitly configured log and its three numbered backups.
                 await fs.unlink(file + ".3").catch(missing);
                 for (const index of [2, 1]) await fs.rename(file + "." + index, file + "." + (index + 1)).catch(missing);
