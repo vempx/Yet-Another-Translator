@@ -2399,7 +2399,7 @@ button.lt-rendered-mention:focus-visible { outline: 2px solid #7983f5; }
 function hasOutgoingText(text) {
     // Inspect a copy only: native sending keeps the original payload and formatting.
     const remaining = text.replace(/\|\|([\s\S]*?)\|\|/g, "$1")
-        .replace(/<https?:\/\/[^\s<>]+>|https?:\/\/[^\s<>]+|<a?:[A-Za-z0-9_~]{1,32}:\d{15,22}>|<@!?\d+>|<@&\d+>|<#\d+>/g, "")
+        .replace(/<https?:\/\/[^\s<>]+>|https?:\/\/[^\s<>]+|<a?:[A-Za-z0-9_~]{1,32}:\d{15,22}>|<@!?\d+>|<@&\d+>|<#\d+>/gi, "")
         .replace(/(?:\p{Regional_Indicator}{2}|[0-9#*]\uFE0F?\u20E3|\p{Extended_Pictographic}(?:\uFE0F|\p{Emoji_Modifier})*(?:\u200D\p{Extended_Pictographic}(?:\uFE0F|\p{Emoji_Modifier})*)*(?:[\u{E0020}-\u{E007E}]+\u{E007F})?)/gu, "");
     return Boolean(remaining.trim());
 }

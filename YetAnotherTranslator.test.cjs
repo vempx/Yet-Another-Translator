@@ -2842,7 +2842,7 @@ test("legacy namespace load failures do not write defaults over existing user da
 
 
 test("outgoing non-text filter sends emoji, links and attachment-only payloads unchanged without context or model calls",async()=>{
-    const sources=["", "  \n", "😀", "👍🏽", "👨‍👩‍👧‍👦", "🇨🇳", "1️⃣", "❤", "❤️", "🏴󠁧󠁢󠁥󠁮󠁧󠁿", "<:happy:1409648830307369061>", "<a:dance:1409649023870173377>", "https://example.test/image.png?a=1&b=2", "<https://example.test/game>", "||😀||", "😀 https://example.test", "<@123456789012345678>"];
+    const sources=["", "  \n", "😀", "👍🏽", "👨‍👩‍👧‍👦", "🇨🇳", "1️⃣", "❤", "❤️", "🏴󠁧󠁢󠁥󠁮󠁧󠁿", "<:happy:1409648830307369061>", "<a:dance:1409649023870173377>", "https://example.test/image.png?a=1&b=2", "<https://example.test/game>", "HTTPS://EXAMPLE.TEST/game", "||😀||", "😀 https://example.test", "<@123456789012345678>"];
     for(const source of sources)for(const includeOriginal of [false,true]){
         const f=outgoingFixture({source});f.plugin.settings.outgoingIncludeOriginal=includeOriginal;
         f.plugin.outgoingContext=()=>{throw Error("must skip reference lookup");};f.plugin.getGlossary=()=>{throw Error("must skip terminology lookup");};
