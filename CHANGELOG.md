@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Complete the YetAnotherTranslator registration/configuration rename, including internal menu/DOM identifiers and tooling. Import existing settings only when the new namespace has none.
+
 - Remember independent local, online and DeepSeek service profiles (endpoint, model, key, limits and thinking options). Restore each profile on switching, preserve save/cancel behavior and migrate existing active settings.
 
 ## 0.9.7 — 2026-10-15

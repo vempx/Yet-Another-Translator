@@ -6,7 +6,7 @@ for (const file of fs.readdirSync(path.join(root, "locales")).filter(file => fil
     catalogs[file.slice(0, -5)] = JSON.parse(fs.readFileSync(path.join(root, "locales", file), "utf8"));
 }
 const english = catalogs.en;
-const protectedTokens = text => [...new Set(text.match(/https?:\/\/[^\s]+|\/v1(?:\/[a-z]+)*|\b(?:Discord|BetterDiscord|LocalTranslator|llama-server|BdApi\.Net\.fetch|JSON|UTF-8)\b|\d+/g) || [])];
+const protectedTokens = text => [...new Set(text.match(/https?:\/\/[^\s]+|\/v1(?:\/[a-z]+)*|\b(?:Discord|BetterDiscord|YetAnotherTranslator|llama-server|BdApi\.Net\.fetch|JSON|UTF-8)\b|\d+/g) || [])];
 for (const [locale, messages] of Object.entries(catalogs)) {
     if (Object.keys(messages).length !== Object.keys(english).length) throw Error(`${locale}: incomplete catalog`);
     for (const [key, value] of Object.entries(english)) {
@@ -21,6 +21,6 @@ for (const [locale, messages] of Object.entries(catalogs)) {
 }
 const filename = path.join(root, "YetAnotherTranslator.plugin.js");
 const source = fs.readFileSync(filename, "utf8");
-fs.writeFileSync(filename, source.replace(/^const UI_MESSAGES = .*; \/\/ LOCAL_TRANSLATOR_LOCALES$/m,
-    () => `const UI_MESSAGES = ${JSON.stringify(catalogs)}; // LOCAL_TRANSLATOR_LOCALES`), "utf8");
+fs.writeFileSync(filename, source.replace(/^const UI_MESSAGES = .*; \/\/ YET_ANOTHER_TRANSLATOR_LOCALES$/m,
+    () => `const UI_MESSAGES = ${JSON.stringify(catalogs)}; // YET_ANOTHER_TRANSLATOR_LOCALES`), "utf8");
 console.log(`Bundled ${Object.keys(catalogs).length} catalogs, ${Object.keys(english).length} strings each.`);

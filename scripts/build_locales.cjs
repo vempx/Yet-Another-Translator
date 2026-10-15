@@ -8,7 +8,7 @@ const keys = Object.keys(english);
 const names = {"zh-TW": "Traditional Chinese (Taiwan)", ja: "Japanese", ko: "Korean", fr: "French", de: "German", es: "Spanish", pt: "Brazilian Portuguese", ru: "Russian", it: "Italian", nl: "Dutch", pl: "Polish", tr: "Turkish", uk: "Ukrainian", ar: "Arabic", hi: "Hindi", th: "Thai", vi: "Vietnamese", id: "Indonesian", da: "Danish", sv: "Swedish", no: "Norwegian", fi: "Finnish", cs: "Czech", el: "Greek", hu: "Hungarian", ro: "Romanian", bg: "Bulgarian", hr: "Croatian", lt: "Lithuanian"};
 const placeholders = text => [...text.matchAll(/\{(\w+)\}/g)].map(match => match[1]).sort().join(",");
 async function main() {
-    const configPath = path.join(process.env.APPDATA, "BetterDiscord/plugins/LocalTranslator.config.json");
+    const configPath = path.join(process.env.APPDATA, "BetterDiscord/plugins/YetAnotherTranslator.config.json");
     const settings = JSON.parse(fs.readFileSync(configPath, "utf8")).settings;
     const url = new URL(settings.baseUrl); if (!["127.0.0.1", "localhost", "[::1]"].includes(url.hostname)) throw Error("Local server required");
     url.pathname = "/v1"; url.search = ""; url.hash = "";
@@ -30,7 +30,7 @@ async function main() {
                     const response = await fetch(`${url.toString().replace(/\/$/, "")}/chat/completions`, {
                         method: "POST", headers, signal: AbortSignal.timeout(180000),
                         body: JSON.stringify({model, temperature: 0, max_tokens: 10000, chat_template_kwargs: {enable_thinking: false}, messages: [
-                            {role: "system", content: `Translate this software UI JSON into ${names[locale]}. Return only a JSON object with exactly the same numeric keys. Preserve every {placeholder} EXACTLY, every number, file/API path, identifier (en, zh, aliases, entries, version, usage), product name (Discord, BetterDiscord, LocalTranslator, llama-server) and URL. Use concise natural software UI wording. Do not translate identifiers or add explanations. This is UI localization, not chat translation. /no_think`},
+                            {role: "system", content: `Translate this software UI JSON into ${names[locale]}. Return only a JSON object with exactly the same numeric keys. Preserve every {placeholder} EXACTLY, every number, file/API path, identifier (en, zh, aliases, entries, version, usage), product name (Discord, BetterDiscord, YetAnotherTranslator, llama-server) and URL. Use concise natural software UI wording. Do not translate identifiers or add explanations. This is UI localization, not chat translation. /no_think`},
                             {role: "user", content: JSON.stringify(input)}
                         ]})
                     });

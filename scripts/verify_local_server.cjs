@@ -13,7 +13,7 @@ const {TranslationClient, DEFAULTS, validateSettings} = sandbox.module.exports.v
 
 async function main() {
     let saved = {};
-    const config = process.argv[2] || (process.env.APPDATA && path.join(process.env.APPDATA, "BetterDiscord", "plugins", "LocalTranslator.config.json"));
+    const config = process.argv[2] || (process.env.APPDATA && path.join(process.env.APPDATA, "BetterDiscord", "plugins", "YetAnotherTranslator.config.json"));
     if (config && fs.existsSync(config)) saved = JSON.parse(fs.readFileSync(config, "utf8")).settings || {};
     const settings = validateSettings({...DEFAULTS, ...saved, targetLanguage: "English", maxTokens: 512, timeoutSeconds: 60});
     const headers = settings.apiKey ? {Authorization: `Bearer ${settings.apiKey}`} : {};

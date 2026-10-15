@@ -15,7 +15,7 @@ import urllib.request
 import zipfile
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
-CACHE = pathlib.Path(tempfile.gettempdir()) / "LocalTranslator-glossary-source-cache"
+CACHE = pathlib.Path(tempfile.gettempdir()) / "YetAnotherTranslator-glossary-source-cache"
 CACHE.mkdir(exist_ok=True)
 REFRESH = "--refresh" in sys.argv
 
@@ -23,7 +23,7 @@ REFRESH = "--refresh" in sys.argv
 def download(url):
     target = CACHE / hashlib.sha256(url.encode()).hexdigest()
     if REFRESH or not target.exists():
-        request = urllib.request.Request(url, headers={"User-Agent": "LocalTranslator-GlossaryBuilder"})
+        request = urllib.request.Request(url, headers={"User-Agent": "YetAnotherTranslator-GlossaryBuilder"})
         with urllib.request.urlopen(request, timeout=60) as response:
             data = response.read(100 * 1024 * 1024 + 1)
         if len(data) > 100 * 1024 * 1024:

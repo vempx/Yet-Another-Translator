@@ -1163,10 +1163,10 @@ test("display branding uses branded filenames and glossary location while preser
     }
     const Local = load(Api), plugin = new Local(); plugin.getSettingsPanel();
     assert.equal(plugin.getName(), "Yet Another Translator");
-    assert.deepEqual(namespaces, ["LocalTranslator"]);
+    assert.deepEqual(namespaces, ["YetAnotherTranslator"]);
     assert.equal(plugin.settings.model, "existing-model"); assert.equal(plugin.settings.targetLanguage, "日本語");
     assert.ok(plugin.glossaryStore.defaultPath("wuthering-waves.json").includes("YetAnotherTranslator-glossaries"));
-    assert.match(fs.readFileSync(path.join(__dirname, "YetAnotherTranslator.plugin.js"), "utf8"), /@name LocalTranslator\b/);
+    assert.match(fs.readFileSync(path.join(__dirname, "YetAnotherTranslator.plugin.js"), "utf8"), /@name YetAnotherTranslator\b/);
 });
 
 test("cached addon description follows locale and supports BetterDiscord card search and string conversion", () => {
@@ -1183,10 +1183,10 @@ test("cached addon description follows locale and supports BetterDiscord card se
 
 test("modern BetterDiscord addon metadata localizes its description while retaining registration identity", () => {
     let locale = "zh-CN";
-    const addon = {id: "LocalTranslator", name: "LocalTranslator", description: "old", filename: "YetAnotherTranslator.plugin.js"};
+    const addon = {id: "YetAnotherTranslator", name: "YetAnotherTranslator", description: "old", filename: "YetAnotherTranslator.plugin.js"};
     const Local = load({Plugins: {get: id => id === addon.id ? addon : null}, Webpack: {getStore: () => ({getLocale: () => locale})}});
-    new Local({id: "LocalTranslator"});
-    assert.equal(addon.name, "Yet Another Translator"); assert.equal(addon.id, "LocalTranslator");
+    new Local({id: "YetAnotherTranslator"});
+    assert.equal(addon.name, "Yet Another Translator"); assert.equal(addon.id, "YetAnotherTranslator");
     assert.equal(addon.filename, "YetAnotherTranslator.plugin.js"); assert.match(addon.description, /发送前翻译/);
     locale = "en-US"; assert.equal(addon.description, "LLM-powered Discord translation with automatic, per-message, and pre-send translation.");
     assert.ok(addon.description.toLocaleLowerCase().includes("pre-send"));
@@ -1338,7 +1338,7 @@ test("focus guard protects only plugin panels at window capture and cleans up on
     plugin.installInputFocusGuard();
     plugin.installInputFocusGuard();
     assert.equal(listeners.size, 4);
-    const input = {closest: selector => selector === '[data-local-translator-panel]' ? {} : null};
+    const input = {closest: selector => selector === '[data-yet-another-translator-panel]' ? {} : null};
     const unrelated = {closest: () => null};
     let blocked = 0;
     for (const handler of listeners.values()) {
@@ -1572,7 +1572,7 @@ test("message context menu opens the selected original without requesting transl
     host.plugin.autoTranslator = chat.auto;
     const tree = {props: {navId: "message", children: []}};
     host.plugin.patchMessageMenu(tree, {message: {id: "2"}, channel: {id: "channel"}});
-    const originalItem = find(tree, node => node.props?.id === "local-translator-original");
+    const originalItem = find(tree, node => node.props?.id === "yet-another-translator-original");
     assert.equal(originalItem.props.label, "查看原文");
     originalItem.props.action();
     assert.equal(host.alerts[0].title, "消息原文");
@@ -1580,11 +1580,11 @@ test("message context menu opens the selected original without requesting transl
     assert.deepEqual(chat.calls, ["first original", "second original"]);
     const untranslated = {props: {navId: "message", children: []}};
     host.plugin.patchMessageMenu(untranslated, {message: {id: "3"}, channel: {id: "channel"}});
-    assert.equal(find(untranslated, node => node.props?.id === "local-translator-original"), undefined);
+    assert.equal(find(untranslated, node => node.props?.id === "yet-another-translator-original"), undefined);
 });
 
 function glossaryFixture(t, entries) {
-    const directory = fs.mkdtempSync(path.join(os.tmpdir(), "localtranslator-glossary-test-"));
+    const directory = fs.mkdtempSync(path.join(os.tmpdir(), "yetanothertranslator-glossary-test-"));
     const file = path.join(directory, "terms.json");
     const write = values => fs.writeFileSync(file, JSON.stringify({version: 1, name: "Test glossary", entries: values}), "utf8");
     write(entries);
@@ -1646,14 +1646,14 @@ test("area auto switches are ID-scoped, independent for forums/threads and migra
 test("area and message menus toggle the menu's area even after navigation and do not duplicate items", () => {
     const host=settingsHost();host.plugin.getSettingsPanel();const plugin=host.plugin;plugin.active=true;plugin.currentChannelId=()=>"999";
     const area={props:{navId:"channel-context",children:[]}};plugin.patchAreaMenu(area,{channel:{id:"101",type:0,name:"A"}});plugin.patchAreaMenu(area,{channel:{id:"101",type:0,name:"A"}});
-    assert.equal(area.props.children.length,1);find(area,node=>node.props?.id==="local-translator-area-auto").props.action();
+    assert.equal(area.props.children.length,1);find(area,node=>node.props?.id==="yet-another-translator-area-auto").props.action();
     assert.equal(plugin.isAreaAutoEnabled("101"),true);assert.equal(plugin.isAreaAutoEnabled("999"),false);
     const message={props:{navId:"message",children:[]}};plugin.patchMessageMenu(message,{message:{id:"1",channel_id:"202"}});
-    find(message,node=>node.props?.id==="local-translator-area-auto").props.action();assert.equal(plugin.isAreaAutoEnabled("202"),true);assert.equal(plugin.isAreaAutoEnabled("101"),true);
+    find(message,node=>node.props?.id==="yet-another-translator-area-auto").props.action();assert.equal(plugin.isAreaAutoEnabled("202"),true);assert.equal(plugin.isAreaAutoEnabled("101"),true);
     const dm={props:{navId:"gdm-context",children:[]}};plugin.patchAreaMenu(dm,{channel:{id:"303",type:3}});
-    assert.ok(find(dm,node=>node.props?.id==="local-translator-area-auto"));assert.equal(find(dm,node=>node.props?.id==="local-translator-custom-area"),undefined);
+    assert.ok(find(dm,node=>node.props?.id==="yet-another-translator-area-auto"));assert.equal(find(dm,node=>node.props?.id==="yet-another-translator-custom-area"),undefined);
     const reopened={props:{navId:"message",children:[]}};plugin.patchMessageMenu(reopened,{channel:{id:"101"},message:{id:"1"}});
-    find(reopened,node=>node.props?.id==="local-translator-area-auto").props.action();assert.equal(plugin.isAreaAutoEnabled("101"),false);assert.equal(plugin.isAreaAutoEnabled("202"),true);
+    find(reopened,node=>node.props?.id==="yet-another-translator-area-auto").props.action();assert.equal(plugin.isAreaAutoEnabled("101"),false);assert.equal(plugin.isAreaAutoEnabled("202"),true);
 });
 
 test("automatic translation isolates simultaneous areas and restores retained results without new requests", async () => {
@@ -1720,7 +1720,7 @@ test("area context menu registers a channel and settings show its editable gloss
     host.plugin.patchAreaMenu(menu, {channel});
     host.plugin.patchAreaMenu(menu, {channel});
     assert.equal(menu.props.children.length, 1);
-    const item = find(menu, node => node.props?.id === "local-translator-custom-area");
+    const item = find(menu, node => node.props?.id === "yet-another-translator-custom-area");
     assert.equal(item.props.label, "打开自定义翻译");
     item.props.action();
     assert.equal(host.plugin.settings.customAreas[channel.id].enabled, true);
@@ -2809,4 +2809,33 @@ test("restored provider requests use only that provider's endpoint, model and cr
     assert.equal(requests[1].url,"http://localhost:9911/v1/chat/completions");assert.equal(requests[1].options.headers.Authorization,"Bearer LOCAL_KEY");assert.equal(requests[1].body.model,"vision-local");
     assert.ok(!JSON.stringify(requests[1]).includes("DEEPSEEK_KEY"));assert.ok(!JSON.stringify(requests[0]).includes("LOCAL_KEY"));
     const count=host.writes.length;switchTo("online");save();assert.equal(host.writes.length,count);assert.equal(host.plugin.settings.providerMode,"local");
+});
+
+
+test("renamed namespace migrates legacy settings once without overwriting existing new settings",()=>{
+    const legacyName="LocalTranslator",name="YetAnotherTranslator",calls=[],writes=[];
+    const legacy={providerMode:"deepseek",baseUrl:"https://api.deepseek.com",model:"remembered-model",apiKey:"PRIVATE_TEST_KEY",targetLanguage:"日本語",autoTranslateAreas:{"101":{name:"game",enabled:true}},customAreas:{"101":{name:"game",enabled:true,glossaryPath:"C:/User Terms/game.json"}},providerProfiles:{local:{baseUrl:"http://localhost:9999/v1",apiKey:"LOCAL_TEST_KEY"}}};
+    const data=new Map();
+    class Api {
+        constructor(namespace){assert.equal(namespace,name);}
+        static React={createElement:(type,props)=>({type,props})};
+        static Data={load:(namespace,key)=>{calls.push({namespace,key});return namespace===legacyName?legacy:null;}};
+        Data={load:key=>data.get(key),save:(key,value)=>{writes.push(value);data.set(key,JSON.parse(JSON.stringify(value)));}};
+        DOM={addStyle(){}};
+    }
+    const Renamed=load(Api),plugin=new Renamed();plugin.getSettingsPanel();
+    assert.equal(writes.length,1);assert.equal(plugin.settings.apiKey,"PRIVATE_TEST_KEY");assert.equal(plugin.settings.providerProfiles.local.apiKey,"LOCAL_TEST_KEY");
+    assert.equal(plugin.settings.customAreas["101"].glossaryPath,"C:/User Terms/game.json");assert.equal(plugin.settings.autoTranslateAreas["101"].enabled,true);
+    const reopened=new Renamed();reopened.getSettingsPanel();assert.equal(calls.length,1);assert.equal(writes.length,1);assert.equal(reopened.settings.model,"remembered-model");
+    data.set("settings",{});new Renamed().getSettingsPanel();assert.equal(calls.length,1);assert.equal(writes.length,1);
+});
+
+test("legacy namespace load failures do not write defaults over existing user data",()=>{
+    let writes=0;
+    class Api {
+        static React={createElement:(type,props)=>({type,props})};
+        static Data={load(){throw Error("synthetic legacy read failure");}};
+        Data={load:()=>undefined,save(){writes++;}};DOM={addStyle(){}};
+    }
+    const Renamed=load(Api);assert.throws(()=>new Renamed().getSettingsPanel(),/synthetic legacy read failure/);assert.equal(writes,0);
 });

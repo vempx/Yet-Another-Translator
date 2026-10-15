@@ -34,9 +34,9 @@ async function verifyMenuTargets(){
     document.querySelector("main").append(host);const image=host.querySelector("img"),overlay=host.querySelector(".overlay_fixture");
     overlay.dispatchEvent(new dom.window.MouseEvent("mousedown",{bubbles:true,button:2}));
     let tree={props:{navId:"attachment-link",children:[]}};plugin.patchImageMenu(tree,{src:image.src});
-    assert.ok(menuItem(tree,"local-translator-image"),"right-down overlay capture should populate the menu before contextmenu");
-    const unknown={props:{navId:"native-context",children:[]}};plugin.patchImageMenu(unknown,{src:image.src});assert.ok(menuItem(unknown,"local-translator-image"));
-    const unrelated={props:{navId:"user-context",children:[]}};plugin.patchImageMenu(unrelated,{});assert.equal(menuItem(unrelated,"local-translator-image"),undefined);
+    assert.ok(menuItem(tree,"yet-another-translator-image"),"right-down overlay capture should populate the menu before contextmenu");
+    const unknown={props:{navId:"native-context",children:[]}};plugin.patchImageMenu(unknown,{src:image.src});assert.ok(menuItem(unknown,"yet-another-translator-image"));
+    const unrelated={props:{navId:"user-context",children:[]}};plugin.patchImageMenu(unrelated,{});assert.equal(menuItem(unrelated,"yet-another-translator-image"),undefined);
     translator.captured=null;
     assert.equal(translator.menuLocation({src:image.src}).messageId,"808","props-only proxy URLs must resolve to their original attachment");
     assert.equal(translator.menuLocation({event:{target:overlay}}).messageId,"808");
@@ -66,7 +66,7 @@ async function main(){
     let message=row(),images=message.querySelectorAll("img");
     images[0].dispatchEvent(new dom.window.MouseEvent("contextmenu",{bubbles:true}));
     const tree={props:{navId:"image-context",children:[]}};plugin.patchImageMenu(tree,{src:images[0].src});plugin.patchImageMenu(tree,{src:images[0].src});
-    assert.equal(tree.props.children.length,1);const item=menuItem(tree,"local-translator-image");assert.equal(item.props.label,"翻译概括图片内文字");
+    assert.equal(tree.props.children.length,1);const item=menuItem(tree,"yet-another-translator-image");assert.equal(item.props.label,"翻译概括图片内文字");
     assert.equal(translator.menuLocation({target:images[0],message:{id:"wrong-message"}}),null);
     images[1].parentElement.className="spoilerContent_fixture hidden_fixture";assert.equal(translator.location(images[1]),null);images[1].parentElement.className="";
     item.props.action();assert.equal(message.querySelector(".lt-image-language").disabled,true);item.props.action();await flush();

@@ -36,6 +36,8 @@ An LLM-powered BetterDiscord plugin for automatic message translation, individua
 
 Local, generic online and DeepSeek services remember their own endpoint, model, API key, timeout and token limits, including DeepSeek thinking options. Switching restores each profile; Save and close persists all edits, while Cancel discards them. Existing settings are retained for the active service. Unconfigured services start with defaults; previously overwritten settings must be entered again.
 
+The registration ID and configuration filename now use YetAnotherTranslator (YetAnotherTranslator.config.json). When the new namespace has no settings, existing legacy settings are imported once. Existing new settings are never overwritten, and glossary paths are preserved.
+
 ### Image text translation and summary (local)
 
 1. Run local llama-server with a vision-capable model and matching mmproj. The plugin uses your saved local API URL and model name.
