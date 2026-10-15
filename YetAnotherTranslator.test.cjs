@@ -2479,3 +2479,25 @@ test("debug caller metadata distinguishes automatic, manual refresh and outgoing
     const outgoing=outgoingFixture();await outgoing.outgoing.submit("101",[outgoing.payload,outgoing.extra],outgoing.original,outgoing.editor);
     assert.equal(outgoing.requests[0][5].kind,"outgoing");assert.equal(outgoing.requests[0][5].channelId,"101");
 });
+
+
+test("debug supports BetterDiscord's sync-only fs bridge, stripped error codes, appending and rotation", async t => {
+    const f=debugFixture(t),calls=[];
+    const bridge={};
+    for(const method of ["mkdirSync","lstatSync","unlinkSync","renameSync","writeFileSync"]){
+        bridge[method]=(...args)=>{calls.push({method,args});try{return fs[method](...args);}catch(error){throw Error(error.message);}};
+    }
+    const Bridged=load(undefined,{require:name=>name==="fs"?bridge:require(name)});
+    const logger=new Bridged.testing.DebugLogger(null,null,15000);
+    const op=logger.operation(f.settings,{kind:"manual",originalText:"中文 bridge original"});
+    op.emit("api_request",{requestBody:{messages:[{role:"user",content:"Translate 中文"}]}});await logger.flush();
+    assert.equal(logger.lastError,null);assert.equal(f.records().length,2);
+    assert.ok(f.read().includes("Translate 中文"));
+    assert.ok(calls.some(call=>call.method==="writeFileSync"&&call.args[2].flag==="a"));
+    assert.equal(fs.existsSync(f.file),true);
+    for(let i=0;i<12;i++)op.emit("sample",{padding:"x".repeat(5000),index:i});await logger.flush();
+    assert.equal(logger.lastError,null);assert.ok(fs.existsSync(f.file+".3"));assert.ok(f.read().includes('"index": 11'));
+    const saved=bridge.writeFileSync;bridge.writeFileSync=()=>{throw Error("EACCES: permission denied");};
+    op.emit("blocked");await logger.flush();assert.equal(logger.lastError,"EACCES");
+    bridge.writeFileSync=saved;op.emit("recovered");await logger.flush();assert.equal(logger.lastError,null);
+});

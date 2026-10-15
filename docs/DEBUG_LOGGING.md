@@ -43,9 +43,9 @@ Normal calls progress through start, request, response and completion events. Mo
 
 ## 文件管理 / File management
 
-当前文件约 10 MB 时轮转为 `.log.1`、`.log.2`、`.log.3`，总计最多四份；单条记录完整保留，因此单份可超过软上限。异步串行写入，待写队列最多 256 条事件，过载时丢弃日志并提示，翻译继续。目录／权限问题同样只影响日志。多实例不要共用同一个文件。
+当前文件约 10 MB 时轮转为 `.log.1`、`.log.2`、`.log.3`，总计最多四份；单条记录完整保留，因此单份可超过软上限。异步排队并串行写入；BetterDiscord 缺少 Promise 文件接口时使用其支持的同步桥接。待写队列最多 256 条事件，过载时丢弃日志并提示，翻译继续。目录／权限问题同样只影响日志。多实例不要共用同一个文件。
 
-Files rotate at approximately 10 MB into `.log.1`, `.log.2` and `.log.3`, retaining at most four files. Whole events are preserved, so a file can exceed this soft limit. Writes are asynchronous and serialized; the queue allows 256 events before dropping logs and notifying without interrupting translation. Path/permission failures only affect logging. Use separate files for multiple instances.
+Files rotate at approximately 10 MB into `.log.1`, `.log.2` and `.log.3`, retaining at most four files. Whole events are preserved, so a file can exceed this soft limit. Writes are queued asynchronously and serialized, using supported synchronous bridge calls when BetterDiscord lacks Promise filesystem APIs; the queue allows 256 events before dropping logs and notifying without interrupting translation. Path/permission failures only affect logging. Use separate files for multiple instances.
 
 仓库默认忽略 `.log` 和编号备份。Debug 不会自行发送日志、上传聊天或增加模型请求；使用现有缓存时仍遵循原缓存策略。
 

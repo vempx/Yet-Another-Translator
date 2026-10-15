@@ -411,7 +411,27 @@ class DebugLogger {
         this.pending++;
         this.queue = this.queue.then(async () => {
             if (!enabled()) return;
-            const fs = require("fs").promises, path = require("path");
+            const hostFs = require("fs"), path = require("path");
+            // BetterDiscord exposes a limited bridge without fs.promises or appendFile.
+            // Keep serialization, using native promises where available and supported sync bridges otherwise.
+            const call = async (method, fallback, ...args) => {
+                try {
+                    if (typeof hostFs.promises?.[method] === "function") return await hostFs.promises[method](...args);
+                    if (typeof hostFs[fallback] !== "function") throw Object.assign(new Error("Unsupported filesystem operation"), {code: "LOG_API_UNAVAILABLE"});
+                    return hostFs[fallback](...args);
+                } catch (error) {
+                    // Electron's bridge may preserve the message but drop Node error properties.
+                    if (!error.code) error.code = String(error.message).match(/\b(ENOENT|EACCES|EPERM|ENOTDIR|EISDIR|EEXIST|ENOSPC|EROFS|EBUSY|EMFILE)\b/)?.[1];
+                    throw error;
+                }
+            };
+            const fs = {
+                mkdir: (...args) => call("mkdir", "mkdirSync", ...args), lstat: (...args) => call("lstat", "lstatSync", ...args),
+                unlink: (...args) => call("unlink", "unlinkSync", ...args), rename: (...args) => call("rename", "renameSync", ...args),
+                appendFile: (target, text, options) => typeof hostFs.promises?.appendFile === "function"
+                    ? call("appendFile", "appendFileSync", target, text, options)
+                    : call("writeFile", "writeFileSync", target, text, {...options, flag: "a"})
+            };
             const missing = error => {if (error.code !== "ENOENT") throw error; return null;};
             const bytes = this.format(record);
             await fs.mkdir(path.dirname(file), {recursive: true, mode: 0o700});

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Fixed Debug logging on BetterDiscord’s limited filesystem bridge, which has no fs.promises or appendFile. Preserve append/rotation behavior and recover filesystem error codes stripped by Electron.
+
 - Added opt-in Debug file logging with timestamps, resolved models, translation kinds, originals, exact redacted prompts, responses, usage, duration, cache and repair events. Logs rotate with three backups; write errors do not interrupt translation.
 
 - Fixed sidebar auto-translation tags for non-link channel rows, stable list/name IDs and absolute links. Reserve space inside the name to avoid clipping, and clean up tags across remounts and row reuse.
