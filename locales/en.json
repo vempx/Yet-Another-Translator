@@ -190,5 +190,10 @@
   "areaAutoOn": "Enable automatic translation here",
   "areaAutoOff": "Disable automatic translation here",
   "areaAutoTag": "Automatic translation enabled here",
-  "areaAutoHelp": "Saved separately by area ID. Channels and threads are independent. Toggle from sidebar or message context menus for immediate saving; settings edits apply with Save and close."
+  "areaAutoHelp": "Saved separately by area ID. Channels and threads are independent. Toggle from sidebar or message context menus for immediate saving; settings edits apply with Save and close.",
+  "debugEnabled": "Enable Debug logging",
+  "debugLogPath": "Debug log file path (.log)",
+  "debugHelp": "Off by default. Logs contain original chat text, replies/context and full prompts; keep them private. API keys and reasoning text are excluded. Enter an absolute .log file path, then Save and close. Files rotate at about 10 MB with 3 backups.",
+  "debugPathInvalid": "The Debug log path must be a local absolute .log file path.",
+  "debugWriteFailed": "Debug logging failed ({code}); translation continues. Check the log path and write permissions."
 }

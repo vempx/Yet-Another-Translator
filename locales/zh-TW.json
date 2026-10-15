@@ -190,5 +190,10 @@
   "areaAutoOn": "開啟此版面自動翻譯",
   "areaAutoOff": "關閉此版面自動翻譯",
   "areaAutoTag": "此版面已開啟自動翻譯",
-  "areaAutoHelp": "按版面 ID 獨立儲存，頻道與帖子各自設定。可右鍵側欄版面或訊息切換並立即儲存；設定頁修改須儲存並關閉。"
+  "areaAutoHelp": "按版面 ID 獨立儲存，頻道與帖子各自設定。可右鍵側欄版面或訊息切換並立即儲存；設定頁修改須儲存並關閉。",
+  "debugEnabled": "啟用 Debug 日誌",
+  "debugLogPath": "Debug 日誌檔案路徑（.log）",
+  "debugHelp": "預設關閉。日誌包含聊天原文、引用／上下文及完整提示詞，請妥善保管；不記錄 API Key 或思考正文。填寫絕對 .log 檔案路徑，儲存並關閉後生效。每份約 10 MB，保留 3 份輪替備份。",
+  "debugPathInvalid": "Debug 日誌路徑須為本機絕對 .log 檔案路徑。",
+  "debugWriteFailed": "Debug 日誌寫入失敗（{code}），翻譯仍繼續；請檢查日誌路徑及寫入權限。"
 }

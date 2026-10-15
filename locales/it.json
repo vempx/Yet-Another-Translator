@@ -190,5 +190,10 @@
   "areaAutoOn": "Attiva traduzione automatica qui",
   "areaAutoOff": "Disattiva traduzione automatica qui",
   "areaAutoTag": "Traduzione automatica attiva qui",
-  "areaAutoHelp": "Salvato per ID; canali e discussioni sono indipendenti. I menu contestuali salvano subito, le impostazioni con Salva e chiudi."
+  "areaAutoHelp": "Salvato per ID; canali e discussioni sono indipendenti. I menu contestuali salvano subito, le impostazioni con Salva e chiudi.",
+  "debugEnabled": "Attiva i log Debug",
+  "debugLogPath": "Percorso del file di log Debug (.log)",
+  "debugHelp": "Disattivato per impostazione predefinita. I log contengono messaggi originali, risposte/contesto e prompt completi; conservali privatamente. Le chiavi API e il testo di ragionamento sono esclusi. Inserisci un percorso assoluto di file .log, quindi salva e chiudi. Rotazione a circa 10 MB con 3 copie di backup.",
+  "debugPathInvalid": "Il percorso del log Debug deve essere un percorso assoluto locale di file .log.",
+  "debugWriteFailed": "Scrittura del log Debug non riuscita ({code}); la traduzione continua. Controlla il percorso e i permessi di scrittura."
 }

@@ -9,11 +9,108 @@ const path = require("node:path");
 function load(BdApi, environment = {}) {
     const sandbox = {module: {exports: {}}, require, __dirname, URL, AbortController, TextDecoder, setTimeout, clearTimeout, BdApi, ...environment};
     vm.runInNewContext(fs.readFileSync(`${__dirname}/YetAnotherTranslator.plugin.js`, "utf8") +
-        "\nmodule.exports.testing = {DEFAULTS, validateSettings, TranslationClient, AutoTranslator, areaTopicFor, GlossaryStore, OutgoingTranslator, referenceContext, orderedReferences, renderMessageEmoji, I18n, t, languageLabel, UI_MESSAGES, uiError, errorForUi, uiText, outgoingMessageText, LANGUAGES, bindSettingsFooter, renderTranslatedMessage};", sandbox);
+        "\nmodule.exports.testing = {DEFAULTS, validateSettings, TranslationClient, AutoTranslator, areaTopicFor, GlossaryStore, DebugLogger, OutgoingTranslator, referenceContext, orderedReferences, renderMessageEmoji, I18n, t, languageLabel, UI_MESSAGES, uiError, errorForUi, uiText, outgoingMessageText, LANGUAGES, bindSettingsFooter, renderTranslatedMessage};", sandbox);
     return sandbox.module.exports;
 }
 const Plugin = load();
 const {DEFAULTS, validateSettings, TranslationClient, AutoTranslator, areaTopicFor, GlossaryStore} = Plugin.testing;
+
+function debugFixture(t) {
+    const directory=fs.mkdtempSync(path.join(os.tmpdir(),"yat-debug-test-"));
+    t.after(()=>{for(const file of fs.readdirSync(directory)){const target=path.join(directory,file);if(fs.statSync(target).isDirectory())fs.rmdirSync(target);else fs.unlinkSync(target);}fs.rmdirSync(directory);});
+    const file=path.join(directory,"debug.log");
+    const settings={...DEFAULTS,model:"test-model",debugEnabled:true,debugLogPath:file};
+    const read=()=>fs.existsSync(file)?fs.readFileSync(file,"utf8"):"";
+    const records=()=>[...read().matchAll(/^(`{3,})json\n([\s\S]*?)\n\1$/gm)].map(match=>JSON.parse(match[2]));
+    return {directory,file,settings,read,records};
+}
+
+test("debug is off by default, validates an absolute log filename and creates no file when disabled", async t => {
+    const f=debugFixture(t);assert.equal(DEFAULTS.debugEnabled,false);
+    for(const value of ["","relative.log",path.join(f.directory,"config.json")])assert.throws(()=>validateSettings({...f.settings,debugLogPath:value}));
+    const client=new TranslationClient(async()=>({status:200,arrayBuffer:async()=>Buffer.from(JSON.stringify({choices:[{message:{content:"ok"}}]}))}));
+    await client.translate("hello",{...f.settings,debugEnabled:false});await client.debugLogger.flush();assert.equal(fs.existsSync(f.file),false);
+});
+
+test("debug records readable exact prompts, resolved models, caller kind, response usage and correlation IDs", async t => {
+    const f=debugFixture(t),requests=[];
+    const client=new TranslationClient(async(url,options)=>{
+        if(url.endsWith("/models"))return {status:200,arrayBuffer:async()=>Buffer.from(JSON.stringify({data:[{id:"resolved-model"}]}))};
+        requests.push(JSON.parse(options.body));return {status:200,arrayBuffer:async()=>Buffer.from(JSON.stringify({choices:[{finish_reason:"stop",message:{content:"hello",reasoning_content:"NEVER_LOG_REASONING"}}],usage:{prompt_tokens:11,completion_tokens:5,total_tokens:16}}))};
+    });
+    await client.translate("你好\n```literal```",{...f.settings,model:""},undefined,{areaTopic:{channelName:"test area"}},null,{kind:"automatic",channelId:"101",messageId:"202"});
+    await client.debugLogger.flush();const records=f.records(),request=records.find(record=>record.event==="api_request"&&record.route==="/chat/completions");
+    assert.deepEqual(request.requestBody,requests[0]);assert.equal(request.model,"resolved-model");assert.equal(request.translationType,"automatic");
+    assert.equal(request.channelId,"101");assert.equal(request.messageId,"202");assert.equal(request.originalText,"你好\n```literal```");
+    assert.ok(Number.isFinite(Date.parse(request.timestamp)));assert.ok(request.localTime);assert.equal(new Set(records.map(record=>record.operationId)).size,1);
+    assert.equal(records.at(-1).event,"operation_complete");assert.equal(records.at(-1).translation,"hello");
+    assert.ok(f.read().includes("### 提示词 / Prompt [system]"));assert.ok(f.read().includes("你好\n```literal```"));assert.ok(!f.read().includes("NEVER_LOG_REASONING"));
+    assert.equal(records.find(record=>record.event==="api_response"&&record.usage).usage.prompt_tokens,11);
+});
+
+test("debug redacts API keys in text, prompts, results and errors without storing authorization", async t => {
+    const f=debugFixture(t),secret='secret-"\\-value';let fail=false;
+    const client=new TranslationClient(async()=>{if(fail)throw Error("network "+secret);return {status:200,arrayBuffer:async()=>Buffer.from(JSON.stringify({choices:[{message:{content:"result "+secret}}]}))};});
+    const settings={...f.settings,apiKey:secret};await client.translate("input "+secret,settings);fail=true;
+    await assert.rejects(client.translate("other "+secret,settings));await client.debugLogger.flush();
+    assert.ok(f.read().includes("[REDACTED]"));for(const record of f.records())assert.ok(!JSON.stringify(record).includes(secret));
+    assert.ok(!f.read().includes(JSON.stringify(secret)));assert.ok(!f.read().includes("Bearer "));
+    assert.equal(f.records().at(-1).event,"operation_error");
+});
+
+test("debug distinguishes repairs, cache hits and skips without changing model requests or cache keys", async t => {
+    const f=debugFixture(t);let calls=0;
+    const client=new TranslationClient(async()=>({status:200,arrayBuffer:async()=>{calls++;return Buffer.from(JSON.stringify({choices:[{message:{content:calls===1?"Translation: wrong":"hello"}}]}));}}));
+    await client.translate("你好",f.settings);await client.translate("你好",{...f.settings,debugEnabled:false});
+    await client.translate("你好",f.settings);await client.translate("https://example.com",f.settings);await client.debugLogger.flush();
+    assert.equal(calls,2);const records=f.records();assert.equal(records.filter(record=>record.event==="api_request").length,2);
+    assert.ok(records.some(record=>record.phase==="repair"&&record.requestBody?.messages[0].content.includes("REPAIR")));
+    assert.ok(records.some(record=>record.event==="cache_hit"&&record.modelInvoked===false));assert.ok(records.some(record=>record.event==="skipped"));
+});
+
+test("debug path changes and disabling suppress writes for old operations and support a new destination", async t => {
+    const f=debugFixture(t);let current={...f.settings};const logger=new Plugin.testing.DebugLogger(()=>current);
+    const old=logger.operation(f.settings,{kind:"manual",originalText:"old"});await logger.flush();const before=f.read();
+    current={...current,debugEnabled:false};old.emit("not_logged",{originalText:"DO_NOT_WRITE"});await logger.flush();assert.equal(f.read(),before);
+    current={...current,debugEnabled:true,debugLogPath:path.join(f.directory,"second.log")};old.emit("old_destination");
+    const next=logger.operation(current,{kind:"outgoing",originalText:"new"});next.emit("operation_complete");await logger.flush();
+    assert.equal(f.read(),before);assert.ok(fs.readFileSync(current.debugLogPath,"utf8").includes('"translationType": "outgoing"'));
+});
+
+test("debug file errors are isolated and log rotation keeps only the configured file plus three backups", async t => {
+    const f=debugFixture(t),errors=[];fs.mkdirSync(f.file);
+    const client=new TranslationClient(async()=>({status:200,arrayBuffer:async()=>Buffer.from(JSON.stringify({choices:[{message:{content:"ok"}}]}))}),null,code=>errors.push(code));
+    assert.equal(await client.translate("hello",f.settings),"ok");await client.debugLogger.flush();assert.ok(errors.includes("INVALID_LOG_FILE"));fs.rmdirSync(f.file);
+    const logger=new Plugin.testing.DebugLogger(null,null,400);const op=logger.operation(f.settings,{kind:"manual",originalText:"keep whole prompts"});
+    for(let i=0;i<8;i++)op.emit("sample",{index:i});await logger.flush();
+    assert.equal(logger.lastError,null);assert.equal(logger.pending,0);assert.equal(fs.readdirSync(f.directory).filter(name=>name.startsWith("debug.log")).length,4);
+    assert.ok(f.read().includes('"index": 7'));
+});
+
+test("debug logs cancellation and connection-test budgets independently of translation results", async t => {
+    const f=debugFixture(t);let finish;
+    const client=new TranslationClient(()=>new Promise(resolve=>finish=resolve));const controller=new AbortController();
+    const pending=client.translate("cancel me",f.settings,controller.signal,null,null,{kind:"outgoing",channelId:"101"});controller.abort();
+    await assert.rejects(pending,error=>error.name==="AbortError");finish({status:200,arrayBuffer:async()=>Buffer.from("{}")});await client.debugLogger.flush();
+    assert.ok(f.records().some(record=>record.event==="operation_cancelled"&&record.translationType==="outgoing"));
+    const testing=new TranslationClient(async()=>({status:200,arrayBuffer:async()=>Buffer.from(JSON.stringify({choices:[{finish_reason:"length",message:{content:"",reasoning_content:"hidden thoughts"}}],usage:{prompt_tokens:10,completion_tokens:128}}))}));
+    await assert.rejects(testing.testConnection({...f.settings,providerMode:"deepseek",baseUrl:"https://api.deepseek.com",deepseekThinking:true,maxTokens:128}));await testing.debugLogger.flush();
+    assert.ok(f.records().some(record=>record.translationType==="connection_test"&&record.requestBody?.max_tokens===128));assert.ok(!f.read().includes("hidden thoughts"));
+});
+
+test("debug settings are transactional and do not clear translation caches or cancel pending sends", () => {
+    const host=settingsHost(),plugin=host.plugin,panel=plugin.getSettingsPanel();let tree=host.render(panel),cancelled=0,restarted=0;
+    plugin.outgoingTranslator={cancel(){cancelled++;},scan(){}};plugin.restartAutoTranslation=()=>restarted++;
+    plugin.client.cache.set("retained",{text:"cached"});
+    find(tree,node=>node.props?.name==="debugEnabled").props.onChange({target:{checked:true}});tree=host.render(panel);
+    assert.ok(find(tree,node=>node.props?.name==="debugLogPath"));assert.equal(host.writes.length,0);
+    find(tree,node=>node.type==="button"&&node.props.children[0]==="取消").props.onClick();assert.equal(plugin.settings.debugEnabled,false);
+    tree=host.render(panel);find(tree,node=>node.props?.name==="debugEnabled").props.onChange({target:{checked:true}});tree=host.render(panel);
+    find(tree,node=>node.props?.name==="debugLogPath").props.onInput({target:{value:path.join(os.tmpdir(),"yat-config-test.log")}});tree=host.render(panel);
+    find(tree,node=>node.type==="button"&&node.props.children[0]==="保存并关闭").props.onClick();
+    assert.equal(plugin.settings.debugEnabled,true);assert.equal(cancelled,0);assert.equal(restarted,0);assert.equal(plugin.client.cache.has("retained"),true);
+});
+
 
 test("native settings footer saves before closing, blocks invalid saves and cancels while testing without saving", async () => {
     let closes=0,saves=0,cancels=0,valid=false;
@@ -2370,4 +2467,15 @@ test("permanent switch persists incoming target, resets overrides and refreshes 
     chat.auto.refresh("1", "channel", "English"); await new Promise(setImmediate);
     plugin.setAutomaticTargetLanguage("日本語"); assert.equal(chat.auto.history.size, 0);
     plugin.setAutomaticTargetLanguage("unsupported"); assert.equal(saved.targetLanguage, "日本語");
+});
+
+
+test("debug caller metadata distinguishes automatic, manual refresh and outgoing translation", async () => {
+    const chat=chatEnvironment(), requests=[];
+    chat.client.translate=async (...args)=>{requests.push(args);return "translated";};
+    chat.document.nodes=[chat.message("202","hello")];await chat.drain();
+    assert.equal(requests[0][5].kind,"automatic");assert.equal(requests[0][5].messageId,"202");
+    chat.auto.refresh("202","channel","日本語");await chat.drain();assert.equal(requests.at(-1)[5].kind,"manual");
+    const outgoing=outgoingFixture();await outgoing.outgoing.submit("101",[outgoing.payload,outgoing.extra],outgoing.original,outgoing.editor);
+    assert.equal(outgoing.requests[0][5].kind,"outgoing");assert.equal(outgoing.requests[0][5].channelId,"101");
 });

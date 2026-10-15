@@ -190,5 +190,10 @@
   "areaAutoOn": "Automatische Übersetzung hier aktivieren",
   "areaAutoOff": "Automatische Übersetzung hier deaktivieren",
   "areaAutoTag": "Automatische Übersetzung hier aktiv",
-  "areaAutoHelp": "Nach Bereichs-ID getrennt gespeichert; Kanäle und Threads sind unabhängig. Kontextmenüs speichern sofort, Einstellungen erst mit Speichern und schließen."
+  "areaAutoHelp": "Nach Bereichs-ID getrennt gespeichert; Kanäle und Threads sind unabhängig. Kontextmenüs speichern sofort, Einstellungen erst mit Speichern und schließen.",
+  "debugEnabled": "Debug-Protokoll aktivieren",
+  "debugLogPath": "Pfad der Debug-Protokolldatei (.log)",
+  "debugHelp": "Standardmäßig aus. Protokolle enthalten Originalnachrichten, Antworten/Kontext und vollständige Prompts; bewahren Sie sie vertraulich auf. API-Schlüssel und Denktexte werden nicht erfasst. Geben Sie einen absoluten .log-Dateipfad ein und speichern und schließen Sie. Rotation bei etwa 10 MB mit 3 Sicherungen.",
+  "debugPathInvalid": "Der Debug-Protokollpfad muss ein lokaler absoluter .log-Dateipfad sein.",
+  "debugWriteFailed": "Debug-Protokollierung fehlgeschlagen ({code}); die Übersetzung läuft weiter. Prüfen Sie Pfad und Schreibrechte."
 }

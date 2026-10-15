@@ -190,5 +190,10 @@
   "areaAutoOn": "Activer la traduction automatique ici",
   "areaAutoOff": "Désactiver la traduction automatique ici",
   "areaAutoTag": "Traduction automatique activée ici",
-  "areaAutoHelp": "Enregistré séparément par ID ; salons et fils sont indépendants. Les menus contextuels enregistrent immédiatement, les réglages avec Enregistrer et fermer."
+  "areaAutoHelp": "Enregistré séparément par ID ; salons et fils sont indépendants. Les menus contextuels enregistrent immédiatement, les réglages avec Enregistrer et fermer.",
+  "debugEnabled": "Activer les journaux Debug",
+  "debugLogPath": "Chemin du fichier journal Debug (.log)",
+  "debugHelp": "Désactivé par défaut. Les journaux contiennent les messages originaux, les réponses/le contexte et les prompts complets ; gardez-les confidentiels. Les clés API et le texte de raisonnement sont exclus. Saisissez un chemin absolu vers un fichier .log, puis enregistrez et fermez. Rotation à environ 10 MB avec 3 sauvegardes.",
+  "debugPathInvalid": "Le chemin du journal Debug doit être un chemin absolu local vers un fichier .log.",
+  "debugWriteFailed": "Échec du journal Debug ({code}) ; la traduction continue. Vérifiez le chemin et les droits d’écriture."
 }

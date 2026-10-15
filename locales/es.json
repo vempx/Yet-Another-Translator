@@ -190,5 +190,10 @@
   "areaAutoOn": "Activar traducción automática aquí",
   "areaAutoOff": "Desactivar traducción automática aquí",
   "areaAutoTag": "Traducción automática activada aquí",
-  "areaAutoHelp": "Se guarda por ID; canales e hilos son independientes. Los menús contextuales guardan al instante; los ajustes se aplican al guardar y cerrar."
+  "areaAutoHelp": "Se guarda por ID; canales e hilos son independientes. Los menús contextuales guardan al instante; los ajustes se aplican al guardar y cerrar.",
+  "debugEnabled": "Activar registros Debug",
+  "debugLogPath": "Ruta del archivo de registro Debug (.log)",
+  "debugHelp": "Desactivado por defecto. Los registros incluyen mensajes originales, respuestas/contexto y prompts completos; guárdelos de forma privada. Se excluyen las claves API y el texto de razonamiento. Introduzca una ruta absoluta de archivo .log, guarde y cierre. Rotación a unos 10 MB con 3 copias de seguridad.",
+  "debugPathInvalid": "La ruta del registro Debug debe ser una ruta absoluta local de archivo .log.",
+  "debugWriteFailed": "Error al escribir el registro Debug ({code}); la traducción continúa. Revise la ruta y los permisos de escritura."
 }

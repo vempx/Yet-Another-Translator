@@ -51,6 +51,12 @@ Use the supplied [glossaries](glossaries/README.md), or create your own using th
 
 The optional economical glossary mode is off by default. It reduces nearby-only terms for independent short messages, keeps matched aliases, merges duplicates and shortens notes while preserving game and character details. It may reduce supporting information; turn it off when needed. Request caches use the glossary content actually sent, so editing an unselected entry alone does not regenerate a translation. Changes to selected entries and explicit retranslation still take effect.
 
+### Debug logs
+
+Enable Debug logging in settings, enter an absolute local file path (for example `C:/Logs/YetAnotherTranslator.log`), then Save and close before reproducing a problem. Logging is off by default; disabling it stops recording.
+
+Readable Markdown and structured JSON record timestamps, models, translation types, original text, full prompts, responses, durations, usage, cache hits and errors. Files rotate at about 10 MB with 3 backups; logging failures do not interrupt translation. API keys and reasoning text are excluded, but logs contain chats and context: review private content before sharing. See [Debug log details](docs/DEBUG_LOGGING.md).
+
 ## Notes
 
 - Incoming translations are visible only to you. Translate-before-sending submits the final content to the conversation.
