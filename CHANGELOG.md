@@ -2,20 +2,31 @@
 
 ## Unreleased
 
-- Fixed T13-1: Debug model-list logging now shares the normal valid-ID filter and evaluates response diagnostics inside the logger’s exception boundary. Malformed list entries or logging projections no longer replace translation or connection-test results.
+## 0.9.6 — 2026-10-15
 
-- Reduced Debug log duplication: originals appear only at operation start, full prompts remain once in request JSON, and cache-hit events refer to the final result instead of repeating it. Version 2 entries retain request/response correlation and leave existing logs unchanged.
+## 中文
 
-- Fixed missing Debug request/response events after the first log entry: support BetterDiscord’s direct Buffer export when measuring UTF-8 log size. Added full-chain logging coverage with an existing file and an automatically resolved model.
+- **按版面自动翻译**：频道和帖子分别保存开关，可从侧栏、消息右键菜单或设置中切换；已开启的版面显示侧栏图标。永久切换目标语言不会开启其他版面的自动翻译。
+- **减少术语相关消耗**：修改未被本次请求采用的词条不再使翻译缓存失效；新增默认关闭的“术语节省用量”，精简附近术语、别名和备注，保留必要消歧信息。
+- **新增 Debug 日志**：默认关闭，开启后可查看请求提示词、模型、响应、用量及缓存／修复记录。支持日志轮转，减少重复内容，并修复 BetterDiscord 下的追加写入与完整事件记录问题。
+- **日志异常隔离**：修复开启 Debug 时，模型列表中的空条目可能导致翻译失败的问题；日志整理或写入失败不应中断翻译。
 
-- Fixed Debug logging on BetterDiscord’s limited filesystem bridge, which has no fs.promises or appendFile. Preserve append/rotation behavior and recover filesystem error codes stripped by Electron.
+**注意**：Debug 日志包含聊天原文、引用、上下文和提示词，请妥善保管。配置的 API Key 会脱敏，思考正文不写入日志。升级时保留配置与术语表；旧版全局自动翻译开启状态仅迁移到当前版面，其他版面需单独开启。
 
-- Added opt-in Debug file logging with timestamps, resolved models, translation kinds, originals, exact redacted prompts, responses, usage, duration, cache and repair events. Logs rotate with three backups; write errors do not interrupt translation.
+**验证**：已通过代码复核、162 项离线测试及 Markdown／界面模拟验证；真实 Discord 界面和实际模型服务仍需现场验收。
 
-- Fixed sidebar auto-translation tags for non-link channel rows, stable list/name IDs and absolute links. Reserve space inside the name to avoid clipping, and clean up tags across remounts and row reuse.
-- Saved automatic visible-message translation per area, with sidebar/message context-menu switches, current-area settings and sidebar icon tags. Channels and threads are independent; legacy global enabling migrates only to the current area, and permanent language switching does not enable other areas.
-- Cache translations by the glossary content actually sent rather than local file versions. Empty selections normalize to no glossary; selected changes and explicit refresh still regenerate.
-- Added optional economical glossary prompts, off by default, with smaller nearby-term budgets, short-message filtering, matched aliases, duplicate merging and bounded notes while preserving disambiguation fields.
+---
+
+## English
+
+- **Automatic translation per area**: Channels and threads now save their switches independently. Toggle them from the sidebar, message context menu, or settings; enabled areas show a sidebar icon. Permanently changing the target language does not enable translation in other areas.
+- **Lower glossary overhead**: Editing terms unused by a request no longer invalidates its translation cache. An optional glossary economy mode, off by default, trims nearby terms, aliases, and notes while retaining disambiguation information.
+- **Debug logging**: Opt-in logs record request prompts, models, responses, usage, and cache/repair events. Logs rotate and avoid redundant content. Fixes address appending and missing events in BetterDiscord.
+- **Logging error isolation**: Fixed a case where null model-list entries caused translation to fail only with Debug enabled. Log formatting or write failures should not interrupt translation.
+
+**Notes**: Debug logs contain original messages, quoted text, context, and prompts; keep them private. Configured API keys are redacted, and reasoning text is excluded. Retain your settings and glossaries when upgrading. The old global automatic-translation switch migrates to the current area only; enable other areas separately.
+
+**Validation**: Code review, all 162 offline tests, and Markdown/UI simulations passed. Live Discord UI and actual model-service acceptance testing remain outstanding.
 
 ## 0.9.5 — 2026-10-14
 

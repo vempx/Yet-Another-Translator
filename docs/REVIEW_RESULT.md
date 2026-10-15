@@ -1,5 +1,12 @@
 # Review results / 审核记录
 
+## v0.9.6
+
+第十四轮复核（2026-10-15）关闭 T13-1，本次修改范围未发现新的重要问题。审核基线为 f19fdd5。Debug 模型列表与业务模型发现共享有效 ID 过滤；日志响应字段整理在异常隔离范围内执行。术语缓存／节省用量、版面独立开关与侧栏标记、日志兼容写入及去重的既有回归通过。162 项离线测试、Markdown 渲染、发送模式／设置 React 与侧栏模拟、10 份各 197 条语言包一致性检查均通过。发布准备仅提升版本与更新文档，不修改已审核实现。真实 Discord／实际模型服务仍待现场验收。
+
+The fourteenth review on 2026-10-15 closed T13-1 with no new significant findings in scope, against commit f19fdd5. Debug model-list projection shares the normal valid-ID filter, and response diagnostics run within the logging exception boundary. Existing glossary cache/economy, per-area translation/sidebar tags, log compatibility and compact-format regressions passed. All 162 offline tests, Markdown rendering, send-mode/settings React and sidebar simulations, and consistency checks for 10 catalogs of 197 entries passed. Release preparation only updates version metadata and documentation. Live Discord and actual model services remain outside this acceptance scope.
+
+
 ## v0.9.5
 
 第十一轮复核（2026-10-14）关闭 T10-1 和 T10-2，未发现新的重要问题。基线为 `66d96a0b3aad23c321c44382baa52da31813a499`。复核覆盖连接测试预算提示、独立用量统计、三状态发送、DeepSeek 参数及设置按钮回归；137 项离线测试、实际库 DOM 渲染、真实 React 宿主模拟和语言包一致性校验均通过。发布准备只更新版本及文档，未修改已审核的实现。真实 Discord／实际在线模型尚未现场验收。
