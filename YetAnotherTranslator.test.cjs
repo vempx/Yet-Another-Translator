@@ -412,7 +412,7 @@ test("bilingual sending preserves raw original, payload and reply, using the tar
             assert.equal(context.glossary.entries[0].zh, "专武"); return translation;
         };
         await f.outgoing.submit("101", [f.payload, f.extra], f.original, f.editor);
-        assert.equal(f.sent[0][0].value, source + "\n\n" + translation + " " + marker);
+        assert.equal(f.sent[0][0].value, source + "\n" + translation + " " + marker);
         assert.equal(f.sent[0][0].attachments, f.payload.attachments); assert.equal(f.sent[0][1], f.extra);
         assert.equal(f.payload.value, source); assert.equal(requests, 1);
     }
@@ -422,9 +422,9 @@ test("AI translation markers cover all preset targets and follow target language
     const Local = load({Webpack: {getStore: () => ({getLocale: () => "en-US"})}});
     for (const [language] of Local.testing.LANGUAGES) {
         const text = Local.testing.outgoingMessageText("source", "translated", language, true);
-        assert.ok(text.startsWith("source\n\ntranslated ")); assert.match(text, /[）)]$/);
+        assert.ok(text.startsWith("source\ntranslated ")); assert.match(text, /[）)]$/);
     }
-    assert.equal(Local.testing.outgoingMessageText("source", "translated", "日本語", true), "source\n\ntranslated （AI翻訳）");
+    assert.equal(Local.testing.outgoingMessageText("source", "translated", "日本語", true), "source\ntranslated （AI翻訳）");
     assert.equal(Local.testing.outgoingMessageText("source", "translated", "日本語", false), "translated");
     assert.throws(() => Local.testing.outgoingMessageText("source", "translated", "custom unknown language", true), /supported/);
 });
@@ -442,7 +442,7 @@ test("T5 Markdown sections and the AI marker remain separate from closed code, q
     const format = Plugin.testing.outgoingMessageText;
     for (const text of ["plain", "```js\nconsole.log('hello')\n```", "> quoted", "- first\n- second", "||secret||", "`code`", "\\`literal", "```\n>>> literal ||\n```", "````js\n```\n````"]) {
         const separator = /`{3,}|^[ \t]*(?:>|[-*+]\s|\d+[.)]\s)/m.test(text) ? "\n\n" : " ";
-        assert.equal(format(text, text, "English", true), `${text}\n\n${text}${separator}(AI translation)`);
+        assert.equal(format(text, text, "English", true), `${text}\n${text}${separator}(AI translation)`);
         assert.equal(format(text, text, "English", false), text);
     }
 });
@@ -618,7 +618,7 @@ test("each outgoing mode submits its exact payload, preserving attachments and r
     f.plugin.cycleOutgoingSendMode();await f.outgoing.submit("101",[f.payload,f.extra],f.original,f.editor);
     assert.equal(f.sent[1][0].value,"I want the signature weapon");
     f.plugin.cycleOutgoingSendMode();await f.outgoing.submit("101",[f.payload,f.extra],f.original,f.editor);
-    assert.equal(f.sent[2][0].value,f.payload.value+"\n\nI want the signature weapon (AI translation)");
+    assert.equal(f.sent[2][0].value,f.payload.value+"\nI want the signature weapon (AI translation)");
     for(const args of f.sent){assert.equal(args[0].attachments,f.payload.attachments);assert.equal(args[1],f.extra);}
 });
 

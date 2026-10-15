@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Removed the extra blank line between the original and translation in bilingual sending.
+
 ## 0.9.6 — 2026-10-15
 
 ## 中文

@@ -1852,9 +1852,9 @@ function outgoingMessageText(source, translated, language, includeOriginal) {
     if (!includeOriginal) return translated;
     const marker = outgoingAiMarker(language);
     validateOutgoingSection(source); validateOutgoingSection(translated);
-    // Blank paragraphs terminate ordinary quotes/lists and leave closing fences untouched.
+    // Put the translation on the next line; separate a trailing block from the AI marker.
     const blockEnding = /`{3,}|^[ \t]*(?:>|[-*+]\s|\d+[.)]\s)/m.test(translated);
-    return `${source}\n\n${translated}${blockEnding ? "\n\n" : " "}${marker}`;
+    return `${source}\n${translated}${blockEnding ? "\n\n" : " "}${marker}`;
 }
 
 function outgoingMessageLimit() {
