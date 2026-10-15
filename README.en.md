@@ -9,10 +9,13 @@ An LLM-powered BetterDiscord plugin for automatic message translation, individua
 - **Automatic translation:** Enabled separately for each area, follows visible and new messages, and reuses cached results. Sidebar icons identify enabled areas.
 - **Per-message language selection:** Click a source-language badge to change that message's target or permanently switch the global default.
 - **Translate before sending:** Translates drafts while retaining replies and attachments. Optionally includes the original and an AI translation label in the target language.
+- **Image text translation and summaries (local):** Right-click an image to translate its text and summarize key points, with selectable target languages.
 - **Context and terminology:** Uses channel topics, nearby messages, quoted originals, and custom glossaries.
 - **Message display:** Preserves Markdown, custom emoji, mentions, and spoilers hidden until revealed.
 - **Manual translator:** Enter text, select a target language, and copy the result.
 - **Localized interface:** Follows Discord's language, falling back to English for unsupported languages.
+
+> **⚠️ Use with caution: image text translation and summarization may consume a large number of tokens.** Use it as needed, especially with large or tall images and repeated translations.
 
 ## Usage
 

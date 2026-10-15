@@ -2,9 +2,21 @@
 
 ## Unreleased
 
-- Reorganize settings into message translation, sending, model service, glossary and diagnostics sections. Put help text below each option, place connection testing beside service settings and collapse advanced token/timeout controls.
+## 0.9.9 — 2026-10-16
 
-- Add a default-on option to skip the current account’s messages during per-area automatic translation. Keep their original text in nearby/reply context and allow explicit manual translation.
+## 中文
+
+- **跳过自己的消息**：自动翻译默认保留本人原文，仍作为其他消息的上下文；可关闭，手动翻译不受影响。
+- **设置界面整理**：按功能分组，说明放在选项下方，高级参数可折叠，连接结果就近显示。
+- **文档补充**：主要功能加入图片文字翻译与概括，并提示可能大量消耗 token，请谨慎使用。
+
+---
+
+## English
+
+- **Skip your own messages:** Enabled by default for automatic translation, while retaining originals as context. Optional; manual translation is unaffected.
+- **Settings layout:** Grouped controls, help text below options, collapsible advanced parameters and inline connection feedback.
+- **Documentation:** Added image text translation and summaries to the feature list, with a warning about potentially high token usage.
 
 ## 0.9.8 — 2026-10-16
 

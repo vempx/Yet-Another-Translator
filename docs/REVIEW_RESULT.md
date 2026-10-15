@@ -1,5 +1,12 @@
 # Review results / 审核记录
 
+## v0.9.9
+
+第十八轮审核（2026-10-16）通过，基线 e6a3e52，覆盖默认跳过本人自动翻译、保留本人上下文、设置分组与连接反馈。184 项离线测试、Markdown／发送／设置／侧栏／图片 DOM 模拟及语言包一致性检查通过。发布准备仅更新版本和文档，并在双语 README 主要功能中补充图片翻译概括与 token 消耗警告。真实宿主身份数据、界面及模型效果仍需现场确认。
+
+The eighteenth review on 2026-10-16 passed against e6a3e52, covering default own-message exclusion, original context preservation, grouped settings and connection feedback. All 184 offline tests, Markdown/send/settings/sidebar/image DOM checks and locale consistency checks passed. Release preparation changes only version metadata and documentation, adding image translation/summaries and a token-usage warning to both README feature lists. Live host identity, UI and model behavior remain outside this verification.
+
+
 ## v0.9.8
 
 第十七轮审核（2026-10-16）通过，基线 56c0686。复核覆盖服务配置隔离与保存／取消、旧命名空间迁移、非文字发送过滤及图片附言请求结构。179 项离线测试、Markdown／发送／设置／侧栏／图片 DOM 模拟与 10 份各 207 条语言包一致性检查通过。发布准备仅更新版本元数据及文档；真实宿主启用状态、模型及实际发送效果仍需现场确认。
