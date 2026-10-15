@@ -383,10 +383,12 @@ class DebugLogger {
                     return value;
                 };
                 const now = new Date();
+                // Evaluate diagnostic projections inside this boundary, never in the request path.
+                const fields = typeof details === "function" ? details() : details;
                 const record = redact({schemaVersion: 2, timestamp: now.toISOString(), localTime: now.toString(), operationId: operation.id,
                     translationType: kind, translationLabel: labels[kind], event, provider: settings.providerMode, endpoint: settings.baseUrl,
                     model: operation.model, targetLanguage: settings.targetLanguage, channelId: info.channelId || null, messageId: info.messageId || null,
-                    ...(event === "operation_start" ? {originalText: info.originalText} : {}), phase: operation.phase, elapsedMs: Date.now() - started, ...details});
+                    ...(event === "operation_start" ? {originalText: info.originalText} : {}), phase: operation.phase, elapsedMs: Date.now() - started, ...fields});
                 this.write(destination, record, () => {
                     const latest = this.currentSettings?.() || settings;
                     return latest.debugEnabled === true && latest.debugLogPath === destination;
@@ -495,12 +497,14 @@ class TranslationClient {
                     apiKey: settings.apiKey, signal: controller.signal,
                     timeoutMs: Math.max(1, deadline - Date.now())
                 });
-                const usage = response?.usage;
-                debug?.emit("api_response", {requestId, route, durationMs: Date.now() - started,
-                    usage: usage ? {prompt_tokens: usage.prompt_tokens, completion_tokens: usage.completion_tokens, total_tokens: usage.total_tokens,
-                        reasoning_tokens: usage.completion_tokens_details?.reasoning_tokens} : null,
-                    finishReason: response?.choices?.[0]?.finish_reason || null, responseText: response?.choices?.[0]?.message?.content || null,
-                    models: route === "/models" ? response?.data?.map?.(item => item.id) : undefined});
+                debug?.emit("api_response", () => {
+                    const usage = response?.usage;
+                    return {requestId, route, durationMs: Date.now() - started,
+                        usage: usage ? {prompt_tokens: usage.prompt_tokens, completion_tokens: usage.completion_tokens, total_tokens: usage.total_tokens,
+                            reasoning_tokens: usage.completion_tokens_details?.reasoning_tokens} : null,
+                        finishReason: response?.choices?.[0]?.finish_reason || null, responseText: response?.choices?.[0]?.message?.content || null,
+                        models: route === "/models" ? this.modelIds(response) : undefined};
+                });
                 return response;
             } catch (error) {
                 debug?.emit("api_error", {requestId, route, durationMs: Date.now() - started, error: {name: error.name, code: error.code, message: error.message}});
@@ -567,9 +571,13 @@ class TranslationClient {
         return result;
     }
 
-    readModels(response) {
-        const models = Array.isArray(response?.data)
+    modelIds(response) {
+        return Array.isArray(response?.data)
             ? response.data.filter(item => typeof item?.id === "string" && item.id.trim()).map(item => item.id) : [];
+    }
+
+    readModels(response) {
+        const models = this.modelIds(response);
         if (!models?.length) throw uiError("服务未提供可用模型，请先加载模型或手动填写模型名称。");
         return models;
     }

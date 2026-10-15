@@ -2536,3 +2536,53 @@ test("compact debug logs retain each payload once and correlate cached operation
     assert.equal(records.find(record=>record.event==="cache_hit").translation,undefined);
     assert.ok(!f.read().includes("### 提示词 / Prompt"));assert.ok(!f.read().includes("### 原文 / Original"));
 });
+
+
+test("T13 Debug on/off preserves model discovery results and request counts for malformed list entries", async t => {
+    const f=debugFixture(t);
+    const cases=[{data:[null,{}, {id:42},{id:" "},{id:"usable-model"}]},{data:[]},{data:[null,{id:""},{id:7}]},{data:null},{data:{}},{data:"wrong type"},{}];
+    for(const body of cases){
+        for(const action of ["translate","testConnection"]){
+            const outcomes=[];
+            for(const enabled of [false,true]){
+                const calls=[];const client=new TranslationClient(async(url,options)=>{
+                    calls.push({route:new URL(url).pathname,body:options.body?JSON.parse(options.body):null});
+                    return {status:200,arrayBuffer:async()=>Buffer.from(JSON.stringify(url.endsWith("/models")?body:{choices:[{message:{content:"hello"}}]}))};
+                });
+                const settings={...f.settings,model:"",debugEnabled:enabled};let outcome;
+                try{const value=action==="translate"?await client.translate("你好",settings):await client.testConnection(settings);outcome={value:JSON.parse(JSON.stringify(value))};}
+                catch(error){outcome={error:{name:error.name,message:error.message}};}
+                await client.debugLogger.flush();assert.equal(client.debugLogger.lastError,null);
+                outcomes.push({...outcome,calls});
+            }
+            assert.deepEqual(outcomes[1],outcomes[0],action+" with "+JSON.stringify(body));
+            const valid=Array.isArray(body.data)&&body.data.some(item=>item?.id==="usable-model");
+            if(valid){assert.equal(outcomes[1].calls.length,action==="translate"?2:1);assert.ok(!outcomes[1].error);}
+            else {assert.equal(outcomes[1].calls.length,1);assert.match(outcomes[1].error.message,/服务未提供可用模型/);}
+        }
+    }
+    const responses=f.records().filter(event=>event.event==="api_response"&&event.route==="/models");
+    assert.equal(responses.length,cases.length*2);
+    for(const response of responses)assert.deepEqual(response.models,response.models.length?["usable-model"]:[]);
+    assert.ok(!f.records().some(event=>event.event==="api_error"));
+});
+
+test("T13 lazy Debug payload projection failures are isolated from translation and connection tests", async t => {
+    const f=debugFixture(t);
+    for(const action of ["translate","testConnection"]){
+        const codes=[],client=new TranslationClient(async(url)=>({status:200,arrayBuffer:async()=>Buffer.from(JSON.stringify(url.endsWith("/models")?{data:[{id:"usable-model"}]}:{choices:[{message:{content:"hello"}}]}))}),null,code=>codes.push(code));
+        const create=client.debugLogger.operation.bind(client.debugLogger);
+        client.debugLogger.operation=(...args)=>{
+            const operation=create(...args),emit=operation.emit;
+            operation.emit=(event,details)=>emit(event,event==="api_response"?()=>{throw Error("Synthetic log projection failure");}:details);
+            return operation;
+        };
+        const settings={...f.settings,model:""};
+        if(action==="translate")assert.equal(await client.translate("你好",settings),"hello");
+        else assert.deepEqual(JSON.parse(JSON.stringify(await client.testConnection(settings))),{models:["usable-model"],generated:false});
+        await client.debugLogger.flush();assert.ok(codes.includes("LOG_FORMAT_ERROR"));
+        assert.equal(client.active,0);assert.equal(client.controllers.size,0);
+    }
+    assert.equal(f.records().filter(event=>event.event==="operation_complete").length,2);
+    assert.ok(!f.records().some(event=>event.event==="api_error"||event.event==="operation_error"));
+});
