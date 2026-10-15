@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Reorganize settings into message translation, sending, model service, glossary and diagnostics sections. Put help text below each option, place connection testing beside service settings and collapse advanced token/timeout controls.
+
 - Add a default-on option to skip the current account’s messages during per-area automatic translation. Keep their original text in nearby/reply context and allow explicit manual translation.
 
 ## 0.9.8 — 2026-10-16

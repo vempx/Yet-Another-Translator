@@ -207,5 +207,10 @@
   "imageCancelled": "Tradução de imagem cancelada. Tente novamente pelo menu de contexto da imagem.",
   "imageEmpty": "O reconhecimento ou tradução retornou saída inválida, longa demais ou incompleta. Tente novamente.",
   "skipOwnMessages": "Ignorar minhas mensagens na tradução automática",
-  "skipOwnMessagesHelp": "Ativado por padrão. Suas mensagens originais continuam como contexto; a tradução manual não é afetada."
+  "skipOwnMessagesHelp": "Ativado por padrão. Suas mensagens originais continuam como contexto; a tradução manual não é afetada.",
+  "settingsMessages": "Tradução de mensagens",
+  "settingsOutgoing": "Tradução antes do envio",
+  "settingsModel": "Serviço de modelos",
+  "settingsDiagnostics": "Depuração e ferramentas",
+  "settingsAdvanced": "Parâmetros avançados"
 }

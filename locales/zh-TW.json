@@ -207,5 +207,10 @@
   "imageCancelled": "圖片翻譯已取消，可從圖片右鍵選單重試。",
   "imageEmpty": "圖片辨識或翻譯回傳的格式無效、內容過長或輸出不完整，請重試。",
   "skipOwnMessages": "自動翻譯時略過自己的訊息",
-  "skipOwnMessagesHelp": "預設開啟。自己的原文仍作為其他訊息的上下文；手動翻譯不受影響。"
+  "skipOwnMessagesHelp": "預設開啟。自己的原文仍作為其他訊息的上下文；手動翻譯不受影響。",
+  "settingsMessages": "訊息翻譯",
+  "settingsOutgoing": "傳送前翻譯",
+  "settingsModel": "模型服務",
+  "settingsDiagnostics": "偵錯與工具",
+  "settingsAdvanced": "進階參數"
 }

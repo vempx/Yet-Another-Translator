@@ -207,5 +207,10 @@
   "imageCancelled": "Bildübersetzung abgebrochen. Wiederholen Sie sie über das Bildkontextmenü.",
   "imageEmpty": "Bilderkennung oder Übersetzung lieferte ungültige, zu lange oder unvollständige Ausgabe. Versuchen Sie es erneut.",
   "skipOwnMessages": "Eigene Nachrichten bei automatischer Übersetzung überspringen",
-  "skipOwnMessagesHelp": "Standardmäßig aktiviert. Eigene Originalnachrichten bleiben Kontext für andere; manuelle Übersetzung bleibt möglich."
+  "skipOwnMessagesHelp": "Standardmäßig aktiviert. Eigene Originalnachrichten bleiben Kontext für andere; manuelle Übersetzung bleibt möglich.",
+  "settingsMessages": "Nachrichtenübersetzung",
+  "settingsOutgoing": "Übersetzung vor dem Senden",
+  "settingsModel": "Modelldienst",
+  "settingsDiagnostics": "Debugging und Werkzeuge",
+  "settingsAdvanced": "Erweiterte Parameter"
 }

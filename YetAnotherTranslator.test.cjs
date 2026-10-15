@@ -1125,10 +1125,10 @@ test("Discord UI locale changes update settings labels without remounting or alt
     let tree = host.render(panel);
     assert.equal(find(tree, node => node.type === "h2").props.children[0], "LLM message translation");
     assert.ok(find(tree, node => node.type === "button" && node.props.children[0] === "Save and close"));
-    find(tree, node => node.props.name === "baseUrl").props.onInput({currentTarget: {value: "http://localhost:9000"}});
+    find(tree, node => node.props?.name === "baseUrl").props.onInput({currentTarget: {value: "http://localhost:9000"}});
     host.setLocale("ja"); tree = host.render(panel);
-    assert.equal(find(tree, node => node.props.name === "baseUrl").props.value, "http://localhost:9000");
-    assert.equal(find(tree, node => node.props.name === "targetLanguage").props.value, "简体中文");
+    assert.equal(find(tree, node => node.props?.name === "baseUrl").props.value, "http://localhost:9000");
+    assert.equal(find(tree, node => node.props?.name === "targetLanguage").props.value, "简体中文");
     assert.ok(find(tree, node => node.type === "button" && node.props.children[0] === "保存して閉じる"));
     assert.equal(host.plugin.getSettingsPanel().type, panel.type);
     host.setLocale("zh-TW"); tree = host.render(panel);
@@ -1272,7 +1272,7 @@ test("all six settings accept edits through input events with deferred React upd
     const changes = {baseUrl: "http://localhost:9090/v1/chat/completions", model: "my-model",
         apiKey: "test-key", targetLanguage: "日本語", timeoutSeconds: "240", maxTokens: "4096"};
     for (const [key, value] of Object.entries(changes)) {
-        const input = find(tree, node => ["input", "select"].includes(node.type) && node.props.name === key);
+        const input = find(tree, node => ["input", "select"].includes(node.type) && node.props?.name === key);
         if (key === "targetLanguage") {
             assert.equal(input.type, "select");
             assert.equal(input.props.value, "简体中文");

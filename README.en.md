@@ -40,6 +40,8 @@ The registration ID and configuration filename now use YetAnotherTranslator (Yet
 
 Skip my own messages during automatic translation is enabled by default, using the current account ID. Your messages stay original and remain available as context and reply references for others. Manual translation is unaffected. Disable the option in settings and save to include your own messages.
 
+Settings are grouped into message translation, sending, model service, glossary, and debug/tools. Timeout and token limits are under Model service → Advanced parameters.
+
 ### Image text translation and summary (local)
 
 1. Run local llama-server with a vision-capable model and matching mmproj. The plugin uses your saved local API URL and model name.

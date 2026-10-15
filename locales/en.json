@@ -207,5 +207,10 @@
   "imageCancelled": "Image translation cancelled. Retry from the image context menu.",
   "imageEmpty": "Image recognition or translation returned invalid, oversized or incomplete output. Try again.",
   "skipOwnMessages": "Skip my own messages during automatic translation",
-  "skipOwnMessagesHelp": "On by default. Your original messages still provide context for others; manual translation is unaffected."
+  "skipOwnMessagesHelp": "On by default. Your original messages still provide context for others; manual translation is unaffected.",
+  "settingsMessages": "Message translation",
+  "settingsOutgoing": "Translate before sending",
+  "settingsModel": "Model service",
+  "settingsDiagnostics": "Debug and tools",
+  "settingsAdvanced": "Advanced parameters"
 }

@@ -207,5 +207,10 @@
   "imageCancelled": "이미지 번역을 취소했습니다. 이미지 우클릭 메뉴에서 다시 시도하세요.",
   "imageEmpty": "이미지 인식 또는 번역 출력이 잘못되었거나 너무 길거나 불완전합니다. 다시 시도하세요.",
   "skipOwnMessages": "자동 번역에서 내 메시지 제외",
-  "skipOwnMessagesHelp": "기본으로 켜집니다. 내 원문은 다른 메시지의 문맥으로 사용되며 수동 번역에는 영향을 주지 않습니다."
+  "skipOwnMessagesHelp": "기본으로 켜집니다. 내 원문은 다른 메시지의 문맥으로 사용되며 수동 번역에는 영향을 주지 않습니다.",
+  "settingsMessages": "메시지 번역",
+  "settingsOutgoing": "전송 전 번역",
+  "settingsModel": "모델 서비스",
+  "settingsDiagnostics": "디버그 및 도구",
+  "settingsAdvanced": "고급 매개변수"
 }

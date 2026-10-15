@@ -207,5 +207,10 @@
   "imageCancelled": "画像翻訳をキャンセルしました。画像の右クリックメニューから再試行できます。",
   "imageEmpty": "画像認識または翻訳の出力形式が無効、長すぎる、または不完全です。再試行してください。",
   "skipOwnMessages": "自動翻訳で自分のメッセージを除外",
-  "skipOwnMessagesHelp": "既定でオン。自分の原文は他のメッセージの文脈として参照されます。手動翻訳には影響しません。"
+  "skipOwnMessagesHelp": "既定でオン。自分の原文は他のメッセージの文脈として参照されます。手動翻訳には影響しません。",
+  "settingsMessages": "メッセージ翻訳",
+  "settingsOutgoing": "送信前の翻訳",
+  "settingsModel": "モデルサービス",
+  "settingsDiagnostics": "デバッグとツール",
+  "settingsAdvanced": "詳細パラメーター"
 }

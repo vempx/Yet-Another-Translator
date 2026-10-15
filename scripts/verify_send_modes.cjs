@@ -105,5 +105,34 @@ async function verifyFooter() {
         ReactDOM.flushSync(()=>reactRoot.unmount());rootNode.remove();
     }
     console.log("PASS: actual React host save/cancel closes and unmounts without footer DOM ownership errors.");
+    await verifySettingsLayout(React,ReactDOM);
+}
+async function verifySettingsLayout(React,ReactDOM) {
+    let locale="en-US",writes=0;const listeners=new Set();
+    const saved={...DEFAULTS,providerMode:"deepseek",baseUrl:"https://api.deepseek.com",model:"deepseek-flash",customAreas:{"101":{name:"Game area",enabled:true,glossaryPath:"C:/Terms/game.json"}}};
+    class SettingsApi {
+        static React=React;
+        static Webpack={getStore:name=>name==="LocaleStore"?{getLocale:()=>locale,addChangeListener:listener=>listeners.add(listener),removeChangeListener:listener=>listeners.delete(listener)}:null};
+        Data={load:()=>saved,save(){writes++;}};DOM={addStyle(){}};
+    }
+    const settingsSandbox={...sandbox,module:{exports:{}},BdApi:SettingsApi};
+    vm.runInNewContext(fs.readFileSync(filename,"utf8"),settingsSandbox);
+    const SettingsPlugin=settingsSandbox.module.exports;
+    const settingsPlugin=new SettingsPlugin();settingsPlugin.active=true;settingsPlugin.currentChannelId=()=>"101";settingsPlugin.areaName=()=>"Game area";
+    const rootNode=document.createElement("div");document.body.append(rootNode);const reactRoot=ReactDOM.createRoot(rootNode);
+    ReactDOM.flushSync(()=>reactRoot.render(settingsPlugin.getSettingsPanel()));
+    const sections=[...rootNode.querySelectorAll("[data-lt-settings-section]")];
+    assert.deepEqual(sections.map(node=>node.getAttribute("data-lt-settings-section")),["messages","outgoing","model","glossary","diagnostics"]);
+    for(const name of ["debugEnabled","autoTranslateCurrentArea","skipOwnMessages","outgoingIncludeOriginal","glossaryEconomy"]){
+        const input=rootNode.querySelector('input[name="'+name+'"]'),label=input.closest("label"),note=label.querySelector(":scope > .lt-note");
+        assert.ok(note,name+" has separate help text");assert.equal(dom.window.getComputedStyle(note).display,"block");assert.equal(dom.window.getComputedStyle(note).fontSize,"12px");assert.equal(dom.window.getComputedStyle(note).fontWeight,"normal");
+    }
+    assert.ok(sections[0].querySelector('[name="targetLanguage"]'));assert.ok(sections[1].querySelector('[name="outgoingLanguage"]'));assert.ok(sections[2].querySelector('[name="apiKey"]'));assert.ok(sections[3].querySelector('[name="glossary-101"]'));assert.ok(sections[4].querySelector('[name="debugEnabled"]'));
+    const advanced=sections[2].querySelector("details");assert.equal(advanced.open,false);advanced.querySelector("summary").click();assert.equal(advanced.open,true);assert.equal(advanced.querySelector('[name="timeoutSeconds"]').value,"120");
+    const provider=rootNode.querySelector('[name="providerMode"]');ReactDOM.flushSync(()=>{provider.value="local";provider.dispatchEvent(new dom.window.Event("change",{bubbles:true}));});
+    assert.equal(rootNode.querySelector('[name="baseUrl"]').value,DEFAULTS.baseUrl);assert.equal(advanced.open,true);assert.equal(writes,0);
+    locale="ja";ReactDOM.flushSync(()=>{for(const listener of [...listeners])listener();});assert.equal(rootNode.querySelector(".lt-settings-section h3").textContent,"メッセージ翻訳");assert.equal(rootNode.querySelector('[name="baseUrl"]').value,DEFAULTS.baseUrl);
+    ReactDOM.flushSync(()=>reactRoot.unmount());rootNode.remove();assert.equal(listeners.size,0);
+    console.log("PASS: real settings React DOM section order, block help text, advanced disclosure, provider drafts and live localized headings.");
 }
 verifyFooter().catch(error=>{console.error(error);process.exitCode=1;});
