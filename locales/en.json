@@ -199,11 +199,10 @@
   "imageTranslate": "Translate and summarize image text",
   "imageLoading": "Recognizing and translating image…",
   "imageNoText": "No readable text was recognized in this image.",
-  "imageLocalOnly": "Image translation supports local llama-server only. Select a local model service first.",
   "imageInvalid": "Unable to read this image. Use a Discord image attachment or preview in a message.",
   "imageTooLarge": "The image exceeds 8 MB or has excessive dimensions. Crop it and try again.",
   "imageFormat": "Unsupported image format. Use PNG, JPEG, GIF or WebP.",
-  "imageModelError": "Image processing failed. Confirm that llama-server has a vision model and matching mmproj loaded, and check the output budget.",
+  "imageModelError": "Ensure the model supports images, the image is readable and the output budget is sufficient.",
   "imageCancelled": "Image translation cancelled. Retry from the image context menu.",
   "imageEmpty": "Image recognition or translation returned invalid, oversized or incomplete output. Try again.",
   "skipOwnMessages": "Skip my own messages during automatic translation",
@@ -212,5 +211,8 @@
   "settingsOutgoing": "Translate before sending",
   "settingsModel": "Model service",
   "settingsDiagnostics": "Debug and tools",
-  "settingsAdvanced": "Advanced parameters"
+  "settingsAdvanced": "Advanced parameters",
+  "imageProviderUnsupported": "Image translation supports local llama-server and DeepSeek. Select one of these services.",
+  "imageDeepseekModel": "DeepSeek image translation requires deepseek-flash. Select it in model settings.",
+  "deepseekVisionHelp": "Image translation requires deepseek-flash. Images and reference context are sent to the configured DeepSeek service and may incur charges and high token usage."
 }

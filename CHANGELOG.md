@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Add DeepSeek Flash image translation and summaries through the existing image menu, with thinking options, model compatibility checks and a reserved visual input budget. Preserve image-only targeting, context/glossaries, caching, cancellation and Debug redaction.
+
 ## 0.9.9 — 2026-10-16
 
 ## 中文

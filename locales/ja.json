@@ -199,11 +199,10 @@
   "imageTranslate": "画像内の文字を翻訳・要約",
   "imageLoading": "画像の文字を認識・翻訳中…",
   "imageNoText": "画像から読み取れる文字は見つかりませんでした。",
-  "imageLocalOnly": "画像翻訳はローカルの llama-server のみ対応しています。ローカルモデルサービスを選択してください。",
   "imageInvalid": "画像を読み込めません。メッセージ内の Discord 画像添付またはプレビューを使用してください。",
   "imageTooLarge": "画像が 8 MB を超えるか、寸法が大きすぎます。切り抜いて再試行してください。",
   "imageFormat": "未対応の画像形式です。PNG、JPEG、GIF または WebP を使用してください。",
-  "imageModelError": "画像処理に失敗しました。llama-server に視覚モデルと対応する mmproj が読み込まれているか、出力上限を確認してください。",
+  "imageModelError": "画像対応モデル、読み取れる画像、十分な出力枠を確認してください。",
   "imageCancelled": "画像翻訳をキャンセルしました。画像の右クリックメニューから再試行できます。",
   "imageEmpty": "画像認識または翻訳の出力形式が無効、長すぎる、または不完全です。再試行してください。",
   "skipOwnMessages": "自動翻訳で自分のメッセージを除外",
@@ -212,5 +211,8 @@
   "settingsOutgoing": "送信前の翻訳",
   "settingsModel": "モデルサービス",
   "settingsDiagnostics": "デバッグとツール",
-  "settingsAdvanced": "詳細パラメーター"
+  "settingsAdvanced": "詳細パラメーター",
+  "imageProviderUnsupported": "画像翻訳はローカル llama-server と DeepSeek に対応しています。対応するサービスを選択してください。",
+  "imageDeepseekModel": "DeepSeek の画像翻訳には deepseek-flash が必要です。モデル設定で選択してください。",
+  "deepseekVisionHelp": "画像翻訳には deepseek-flash を使用します。画像と参考文脈は設定済みの DeepSeek に送信され、料金や多くのトークンが発生する場合があります。"
 }

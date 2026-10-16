@@ -128,6 +128,7 @@ async function verifySettingsLayout(React,ReactDOM) {
         assert.ok(note,name+" has separate help text");assert.equal(dom.window.getComputedStyle(note).display,"block");assert.equal(dom.window.getComputedStyle(note).fontSize,"12px");assert.equal(dom.window.getComputedStyle(note).fontWeight,"normal");
     }
     assert.ok(sections[0].querySelector('[name="targetLanguage"]'));assert.ok(sections[1].querySelector('[name="outgoingLanguage"]'));assert.ok(sections[2].querySelector('[name="apiKey"]'));assert.ok(sections[3].querySelector('[name="glossary-101"]'));assert.ok(sections[4].querySelector('[name="debugEnabled"]'));
+    assert.ok(sections[2].textContent.includes("Images and reference context are sent to the configured DeepSeek service"));
     const advanced=sections[2].querySelector("details");assert.equal(advanced.open,false);advanced.querySelector("summary").click();assert.equal(advanced.open,true);assert.equal(advanced.querySelector('[name="timeoutSeconds"]').value,"120");
     const provider=rootNode.querySelector('[name="providerMode"]');ReactDOM.flushSync(()=>{provider.value="local";provider.dispatchEvent(new dom.window.Event("change",{bubbles:true}));});
     assert.equal(rootNode.querySelector('[name="baseUrl"]').value,DEFAULTS.baseUrl);assert.equal(advanced.open,true);assert.equal(writes,0);

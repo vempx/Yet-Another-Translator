@@ -2604,7 +2604,7 @@ test("image downloads allow Discord media only and never send model credentials"
     const Bridged=load(undefined,{require:name=>name==="buffer"?Buffer:require(name)}).testing.TranslationClient;
     const bridged=new Bridged(async()=>({status:200,arrayBuffer:async()=>png.buffer}));
     assert.equal((await bridged.downloadImage("https://cdn.discordapp.com/attachments/1/2/a.png",DEFAULTS)).dataUrl,image.dataUrl);
-    for(const providerMode of ["online","deepseek"]){await assert.rejects(client.downloadImage("https://cdn.discordapp.com/attachments/1/2/a.png",{...DEFAULTS,providerMode,baseUrl:"https://api.example.com/v1"}));}
+    for(const providerMode of ["online"]){await assert.rejects(client.downloadImage("https://cdn.discordapp.com/attachments/1/2/a.png",{...DEFAULTS,providerMode,baseUrl:"https://api.example.com/v1"}));}
 });
 
 test("image downloads reject oversized, redirected and non-image content and cancel promptly", async () => {
@@ -2642,7 +2642,7 @@ test("single local vision call includes image, topic, replies and terms, with re
 
 test("vision tasks reject online mode, invalid JSON, truncation and contradictory empty output without retries", async () => {
     const image=imageFixture();
-    for(const providerMode of ["online","deepseek"]){let calls=0;const client=new TranslationClient(async()=>{calls++;});await assert.rejects(client.translateImage(image,{...DEFAULTS,providerMode,baseUrl:"https://api.example.com/v1"}));assert.equal(calls,0);}
+    for(const providerMode of ["online"]){let calls=0;const client=new TranslationClient(async()=>{calls++;});await assert.rejects(client.translateImage(image,{...DEFAULTS,providerMode,baseUrl:"https://api.example.com/v1"}));assert.equal(calls,0);}
     const good={translation:"text",summary:"summary",sourceLanguage:"ENG",hasText:true};
     for(const choice of [{finish_reason:"length",message:{content:JSON.stringify(good)}},{message:{content:JSON.stringify({...good,translation:42})}},{message:{content:JSON.stringify({...good,translation:"x".repeat(24001)})}},{message:{content:"not json"}},{message:{content:JSON.stringify({...good,hasText:false})}}]){
         let calls=0;const client=new TranslationClient(async url=>{if(url.endsWith("/input_tokens"))return {status:200,arrayBuffer:async()=>Buffer.from(JSON.stringify({input_tokens:512}))};calls++;return {status:200,arrayBuffer:async()=>Buffer.from(JSON.stringify({choices:[choice]}))};});
@@ -2927,4 +2927,46 @@ test("current user identity uses UserStore dynamically and unknown identities ne
     const unavailable=load({Webpack:{getStore(){throw Error("store unavailable");}}});assert.equal(new unavailable().currentUserId(),null);
     const chat=ownMessageChat();chat.setAccount(null);chat.document.nodes=[chat.add(1,"mine","self"),chat.add(2,"unknown","unknown")];await chat.drain();assert.deepEqual(chat.calls,["mine","unknown"]);
     chat.setAccount("self");chat.auto.sources.currentUserId=()=>{throw Error("identity unavailable");};assert.equal(chat.auto.skipsOwnMessage({speaker:"self"}),false);
+});
+
+
+test("DeepSeek vision uses one authenticated image generation, honors thinking controls and redacts Debug",async t=>{
+    const f=debugFixture(t),image=imageFixture();
+    for(const thinking of [false,true])for(const effort of ["low","high","max"]){
+        const calls=[],client=new TranslationClient(async(url,options)=>{calls.push({url,options,body:JSON.parse(options.body)});return {status:200,arrayBuffer:async()=>Buffer.from(JSON.stringify({choices:[{finish_reason:"stop",message:{content:JSON.stringify({hasText:true,translation:"游戏启动错误",summary:"请使用官方启动器。",sourceLanguage:"ENG"}),reasoning_content:"PRIVATE_REASONING"}}],usage:{prompt_tokens:1000,completion_tokens:120,total_tokens:1120,completion_tokens_details:{reasoning_tokens:20}}}))};});
+        const settings={...f.settings,providerMode:"deepseek",baseUrl:"https://api.deepseek.com/v1/chat/completions",model:"deepseek-flash",apiKey:"DS_VISION_SECRET",deepseekThinking:thinking,deepseekReasoningEffort:effort};
+        const result=await client.translateImage(image,settings,null,{areaTopic:{threadTitle:"game",imageCaption:"yup"},reply:{id:"1",text:"reply context"},glossary:{name:"game",entries:[{en:"launcher",zh:"启动器"}]}});await client.debugLogger.flush();
+        assert.equal(result.sourceLanguage,"ENG");assert.equal(calls.length,1);const request=calls[0];assert.equal(request.url,"https://api.deepseek.com/v1/chat/completions");assert.equal(request.options.headers.Authorization,"Bearer DS_VISION_SECRET");
+        assert.equal(request.body.model,"deepseek-flash");assert.equal(request.body.response_format.type,"json_object");assert.equal(request.body.thinking.type,thinking?"enabled":"disabled");assert.equal(request.body.reasoning_effort,thinking?effort:"none");assert.equal(request.body.temperature,thinking?undefined:0.1);assert.equal(request.body.stream,false);assert.equal(request.body.max_tokens,settings.maxTokens);
+        const user=request.body.messages.at(-1);assert.equal(user.role,"user");assert.equal(user.content[1].image_url.url,image.dataUrl);assert.equal(user.content[1].image_url.detail,"original");assert.ok(!user.content[0].text.includes("yup"));assert.ok(JSON.stringify(request.body).includes("reply context"));
+        assert.equal(client.stats.generations,1);assert.equal(client.stats.promptTokens,1000);assert.equal(client.stats.completionTokens,120);assert.equal(client.stats.repairs,0);
+    }
+    assert.ok(f.records().some(record=>record.event==="image_budget"&&record.mode==="documented_image_reserve"&&record.imageTokensReserved===1024));
+    assert.ok(!f.records().some(record=>record.route?.endsWith("/input_tokens")));assert.ok(!f.read().includes(TINY_PNG));assert.ok(!f.read().includes("DS_VISION_SECRET"));assert.ok(!f.read().includes("PRIVATE_REASONING"));
+});
+
+test("DeepSeek images download without API credentials and reject unsupported models before downloading",async()=>{
+    const image=imageFixture(),bytes=Buffer.from(TINY_PNG,"base64");let calls=0,downloadOptions;
+    const client=new TranslationClient(async(url,options)=>{calls++;downloadOptions=options;return {status:200,arrayBuffer:async()=>bytes};});
+    const settings={...DEFAULTS,providerMode:"deepseek",baseUrl:"https://api.deepseek.com",model:"deepseek-flash",apiKey:"API_KEY_NOT_FOR_CDN"};
+    const downloaded=await client.downloadImage("https://cdn.discordapp.com/attachments/1/2/a.png",settings);assert.equal(downloaded.dataUrl,image.dataUrl);assert.equal(downloadOptions.headers.Authorization,undefined);assert.equal(downloadOptions.credentials,"omit");
+    for(const model of ["deepseek-v4-pro","deepseek-chat","unverified-model"]){const before=calls;await assert.rejects(client.downloadImage("https://cdn.discordapp.com/attachments/1/2/a.png",{...settings,model}),error=>error.uiMessage?.key==="imageDeepseekModel");await assert.rejects(client.translateImage(image,{...settings,model}),error=>error.uiMessage?.key==="imageDeepseekModel");assert.equal(calls,before);}
+});
+
+test("DeepSeek vision reserves visual input capacity before billing and supports native WebP",async()=>{
+    const settings={...DEFAULTS,providerMode:"deepseek",baseUrl:"https://api.deepseek.com",model:"deepseek-flash"},image=imageFixture();let calls=0;
+    const client=new TranslationClient(async(url,options)=>{calls++;const body=JSON.parse(options.body);assert.equal(body.messages.at(-1).content[1].image_url.url,image.dataUrl);return {status:200,arrayBuffer:async()=>Buffer.from(JSON.stringify({choices:[{message:{content:JSON.stringify({hasText:false,translation:"",summary:"",sourceLanguage:"UNK"})}}]}))};});
+    assert.throws(()=>client.translateImage(image,{...settings,contextTokens:2048,maxTokens:1024}),error=>error.uiMessage?.key.includes("输入预算"));assert.equal(calls,0);
+    assert.equal((await client.translateImage(image,settings)).hasText,false);assert.equal(calls,1);
+    const webp=sizedImage("image/webp",1,1),translator=new Plugin.testing.ImageTranslator({},{});assert.equal((await translator.prepare(webp,new AbortController().signal,"deepseek")).mime,"image/webp");
+    const native=new TranslationClient(async(url,options)=>{const body=JSON.parse(options.body);assert.equal(body.messages.at(-1).content[1].image_url.url,webp.dataUrl);return {status:200,arrayBuffer:async()=>Buffer.from(JSON.stringify({choices:[{message:{content:JSON.stringify({hasText:false,translation:"",summary:"",sourceLanguage:"UNK"})}}]}))};});
+    await native.translateImage(webp,{...settings,model:"deepseek-v4-flash-vision-exp"});assert.equal(native.stats.generations,1);
+});
+
+
+test("DeepSeek vision failures and cancellation do not retry, expose reasoning or leak request slots",async()=>{
+    const settings={...DEFAULTS,providerMode:"deepseek",baseUrl:"https://api.deepseek.com",model:"deepseek-flash",deepseekThinking:true},image=imageFixture();
+    const cases=[{status:401,data:{error:{message:"invalid key"}}},{status:429,data:{error:{message:"rate limit"}}},{status:200,data:{choices:[{message:{content:"",reasoning_content:"not a translation"}}]}},{status:200,data:{choices:[{finish_reason:"length",message:{content:'{"translation":"partial"}'}}]}}];
+    for(const response of cases){let calls=0;const client=new TranslationClient(async()=>{calls++;return {status:response.status,arrayBuffer:async()=>Buffer.from(JSON.stringify(response.data))};});await assert.rejects(client.translateImage(image,settings));assert.equal(calls,1);assert.equal(client.stats.generations,1);assert.equal(client.stats.repairs,0);assert.equal(client.active,0);assert.equal(client.controllers.size,0);}
+    let started;const ready=new Promise(resolve=>started=resolve),controller=new AbortController();const client=new TranslationClient(async()=>{started();return new Promise(()=>{});});const pending=client.translateImage(image,settings,controller.signal);await ready;controller.abort();await assert.rejects(pending,error=>error.name==="AbortError");assert.equal(client.active,0);assert.equal(client.controllers.size,0);assert.equal(client.stats.generations,1);
 });

@@ -9,7 +9,7 @@ An LLM-powered BetterDiscord plugin for automatic message translation, individua
 - **Automatic translation:** Enabled separately for each area, follows visible and new messages, and reuses cached results. Sidebar icons identify enabled areas.
 - **Per-message language selection:** Click a source-language badge to change that message's target or permanently switch the global default.
 - **Translate before sending:** Translates drafts while retaining replies and attachments. Optionally includes the original and an AI translation label in the target language.
-- **Image text translation and summaries (local):** Right-click an image to translate its text and summarize key points, with selectable target languages.
+- **Image text translation and summaries:** Right-click an image to translate its text and summarize key points, with selectable target languages.
 - **Context and terminology:** Uses channel topics, nearby messages, quoted originals, and custom glossaries.
 - **Message display:** Preserves Markdown, custom emoji, mentions, and spoilers hidden until revealed.
 - **Manual translator:** Enter text, select a target language, and copy the result.
@@ -45,15 +45,15 @@ Skip my own messages during automatic translation is enabled by default, using t
 
 Settings are grouped into message translation, sending, model service, glossary, and debug/tools. Timeout and token limits are under Model service → Advanced parameters.
 
-### Image text translation and summary (local)
+### Image text translation and summary
 
-1. Run local llama-server with a vision-capable model and matching mmproj. The plugin uses your saved local API URL and model name.
+1. Use local llama-server with a vision model and matching mmproj, or select DeepSeek with `deepseek-flash` and configure its API URL and key.
 2. Right-click an image in a message and choose Translate and summarize image text. Smaller muted text appears below that image, preserving the original.
 3. The initial target follows the shared default used by automatic translation in that area. Click the ENG/JPN source-language badge to change this image’s target without changing global settings.
 
-One local vision API generation reads, translates and summarizes the image, with no separate OCR. References include area names, captions, nearby messages, replies and terms matched before the request; terms visible only in the image cannot be matched in advance. A token-count preflight is separate from generation; automatic model discovery also queries the model list. Target changes reuse image data, while completed language results and remounted messages restore without generation. Choosing the image action again refreshes context and terminology and retranslates. Images are processed only on manual request. Online/DeepSeek image processing is not enabled.
+One vision API generation reads, translates and summarizes the image, with no separate OCR. References include area names, captions, nearby messages, replies and terms matched before the request; terms visible only in the image cannot be matched in advance. Local mode performs token-count preflight and optional model discovery; DeepSeek generates directly, uses the configured thinking options and reserves 1024 input tokens for the image. Target changes reuse image data, while completed language results and remounted messages restore without generation. Choosing the image action again refreshes context and terminology and retranslates. Images are processed only on manual request. Generic online image processing remains unsupported. DeepSeek requires `deepseek-flash` or its compatible legacy vision alias. Images and reference context are sent to the configured service; DeepSeek calls may incur charges.
 
-Discord image attachments and Discord-proxied previews are supported, up to 8 MB, 8192 pixels per side and 16,777,216 total pixels per image. All supported formats are checked before decoding; WebP is converted to PNG before sending. Results are visible only to you and are cleared on disable or translation-configuration changes. See [image translation details](docs/IMAGE_TRANSLATION.md).
+Discord image attachments and Discord-proxied previews are supported, up to 8 MB, 8192 pixels per side and 16,777,216 total pixels per image. All supported formats are checked before decoding. Local WebP is converted to PNG; DeepSeek receives native WebP. Results are visible only to you and are cleared on disable or translation-configuration changes. See [image translation details](docs/IMAGE_TRANSLATION.md).
 
 ### Translate before sending
 

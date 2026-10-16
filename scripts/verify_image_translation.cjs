@@ -112,7 +112,12 @@ async function main(){
     visionImpl=async()=>({translation:"",summary:"",sourceLanguage:"UNK",hasText:false});let before=calls.vision.length;
     await translator.translate(translator.location(images[0]));assert.equal(calls.vision.length,before+1);assert.ok(message.textContent.includes("未识别到可读文字"));
     plugin.settings={...plugin.settings,providerMode:"online",baseUrl:"https://api.example.com/v1"};before=calls.download.length;
-    await translator.translate(translator.location(images[1]));assert.equal(calls.download.length,before);assert.ok(message.textContent.includes("仅支持本地"));
+    await translator.translate(translator.location(images[1]));assert.equal(calls.download.length,before);assert.ok(message.textContent.includes("本地 llama-server 和 DeepSeek"));
+    translator.clear();plugin.settings={...plugin.settings,providerMode:"deepseek",baseUrl:"https://api.deepseek.com",model:"deepseek-v4-pro"};
+    before=calls.download.length;await translator.translate(translator.location(images[1]));assert.equal(calls.download.length,before);assert.ok(message.textContent.includes("deepseek-flash"));
+    translator.clear();plugin.settings={...plugin.settings,model:"deepseek-flash"};visionImpl=null;
+    before=calls.vision.length;await translator.translate(translator.location(images[1]));assert.equal(calls.vision.length,before+1);assert.equal(calls.vision.at(-1).settings.providerMode,"deepseek");
+    assert.equal(message.querySelector(".lt-image-language").textContent,"ENG");
     plugin.settings={...plugin.settings,providerMode:"local",baseUrl:DEFAULTS.baseUrl};
     translator.clear();message.remove();message=row("303","404");images=message.querySelectorAll("img");let resolveVision;visionImpl=()=>new Promise(resolve=>{resolveVision=resolve;});
     const cancelled=translator.translate(translator.location(images[0]));await flush();message.remove();translator.scan();resolveVision({translation:"late",summary:"late",sourceLanguage:"ENG",hasText:true});await cancelled;

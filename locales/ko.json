@@ -199,11 +199,10 @@
   "imageTranslate": "이미지 텍스트 번역 및 요약",
   "imageLoading": "이미지를 인식하고 번역하는 중…",
   "imageNoText": "이미지에서 읽을 수 있는 텍스트를 찾지 못했습니다.",
-  "imageLocalOnly": "이미지 번역은 로컬 llama-server만 지원합니다. 먼저 로컬 모델 서비스를 선택하세요.",
   "imageInvalid": "이미지를 읽을 수 없습니다. 메시지의 Discord 이미지 첨부 또는 미리보기를 사용하세요.",
   "imageTooLarge": "이미지가 8 MB를 초과하거나 크기가 너무 큽니다. 자른 후 다시 시도하세요.",
   "imageFormat": "지원하지 않는 이미지 형식입니다. PNG, JPEG, GIF 또는 WebP를 사용하세요.",
-  "imageModelError": "이미지 처리에 실패했습니다. llama-server에 시각 모델과 맞는 mmproj가 로드되었는지, 출력 한도를 확인하세요.",
+  "imageModelError": "이미지 지원 모델, 선명한 이미지 및 충분한 출력 한도를 확인하세요.",
   "imageCancelled": "이미지 번역을 취소했습니다. 이미지 우클릭 메뉴에서 다시 시도하세요.",
   "imageEmpty": "이미지 인식 또는 번역 출력이 잘못되었거나 너무 길거나 불완전합니다. 다시 시도하세요.",
   "skipOwnMessages": "자동 번역에서 내 메시지 제외",
@@ -212,5 +211,8 @@
   "settingsOutgoing": "전송 전 번역",
   "settingsModel": "모델 서비스",
   "settingsDiagnostics": "디버그 및 도구",
-  "settingsAdvanced": "고급 매개변수"
+  "settingsAdvanced": "고급 매개변수",
+  "imageProviderUnsupported": "이미지 번역은 로컬 llama-server와 DeepSeek를 지원합니다. 해당 서비스를 선택하세요.",
+  "imageDeepseekModel": "DeepSeek 이미지 번역에는 deepseek-flash가 필요합니다. 모델 설정에서 선택하세요.",
+  "deepseekVisionHelp": "이미지 번역에는 deepseek-flash가 필요합니다. 이미지와 참고 문맥이 설정된 DeepSeek 서비스로 전송되며 비용과 많은 토큰이 발생할 수 있습니다."
 }
