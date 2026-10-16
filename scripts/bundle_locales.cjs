@@ -21,6 +21,9 @@ for (const [locale, messages] of Object.entries(catalogs)) {
 }
 const filename = path.join(root, "YetAnotherTranslator.plugin.js");
 const source = fs.readFileSync(filename, "utf8");
-fs.writeFileSync(filename, source.replace(/^const UI_MESSAGES = .*; \/\/ YET_ANOTHER_TRANSLATOR_LOCALES$/m,
-    () => `const UI_MESSAGES = ${JSON.stringify(catalogs)}; // YET_ANOTHER_TRANSLATOR_LOCALES`), "utf8");
+const bundled = source.replace(/^const UI_MESSAGES = .*; \/\/ YET_ANOTHER_TRANSLATOR_LOCALES$/m,
+    () => `const UI_MESSAGES = ${JSON.stringify(catalogs)}; // YET_ANOTHER_TRANSLATOR_LOCALES`);
+if (process.argv.includes("--check")) {
+    if (bundled !== source) throw Error("Bundled locale catalogs are out of date");
+} else fs.writeFileSync(filename, bundled, "utf8");
 console.log(`Bundled ${Object.keys(catalogs).length} catalogs, ${Object.keys(english).length} strings each.`);

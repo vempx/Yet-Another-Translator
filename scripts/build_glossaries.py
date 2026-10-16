@@ -3,6 +3,7 @@
 Uses only the Python standard library. Downloaded source data is cached in the OS
 temporary directory; only short name pairs are written into the glossaries.
 """
+import datetime
 import collections
 import hashlib
 import io
@@ -18,6 +19,7 @@ ROOT = pathlib.Path(__file__).resolve().parents[1]
 CACHE = pathlib.Path(tempfile.gettempdir()) / "YetAnotherTranslator-glossary-source-cache"
 CACHE.mkdir(exist_ok=True)
 REFRESH = "--refresh" in sys.argv
+GENERATED_AT = datetime.datetime.now(datetime.timezone.utc).date().isoformat()
 
 
 def download(url):
@@ -156,7 +158,7 @@ def endfield_glossary():
         url = f"{base}/table/{table}/all"
         data = get_json(url)
         locales = {lang: get_json(f"{base}/i18n/dict/{lang}/table/{table}/all") for lang in ["CN", "EN"]}
-        sources.append({"url": url, "capturedAt": "2026-10-13", "sha256": hashlib.sha256(download(url)).hexdigest()})
+        sources.append({"url": url, "capturedAt": datetime.datetime.fromtimestamp((CACHE / hashlib.sha256(url.encode()).hexdigest()).stat().st_mtime, datetime.timezone.utc).date().isoformat(), "sha256": hashlib.sha256(download(url)).hexdigest()})
         def pair(value):
             key = str(value.get("id", "")) if isinstance(value, dict) else ""
             return locales["EN"].get(key), locales["CN"].get(key)
@@ -192,7 +194,7 @@ def write_glossary(filename, name, patterns, entries, sources):
         key = (row["game"], row["category"], row["en"].lower(), row["zh"], row.get("character", ""))
         unique[key] = row
     entries = sorted(unique.values(), key=lambda row: (row["game"], ["character", "skill", "resource", "weapon", "term", "chat"].index(row["category"]), row["en"].lower()))
-    result = {"version": 1, "name": name, "updatedAt": "2026-10-13", "areaNames": patterns,
+    result = {"version": 1, "name": name, "updatedAt": GENERATED_AT, "areaNames": patterns,
               "editingGuide": "可直接增加 entries 条目：en/zh 必填，game/category 可选分类，aliases 是可选简称数组，character/note 可选。不支持注释或末尾多余逗号。",
               "sources": sources, "entries": entries}
     target = ROOT / "glossaries" / "generated" / filename

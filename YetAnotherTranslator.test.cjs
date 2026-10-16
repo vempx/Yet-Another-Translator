@@ -90,7 +90,7 @@ test("debug file errors are isolated and log rotation keeps only the configured 
 test("debug logs cancellation and connection-test budgets independently of translation results", async t => {
     const f=debugFixture(t);let finish;
     const client=new TranslationClient(()=>new Promise(resolve=>finish=resolve));const controller=new AbortController();
-    const pending=client.translate("cancel me",f.settings,controller.signal,null,null,{kind:"outgoing",channelId:"101"});controller.abort();
+    const pending=client.translate("cancel me",f.settings,controller.signal,null,null,{kind:"outgoing",channelId:"101"});await new Promise(setImmediate);controller.abort();
     await assert.rejects(pending,error=>error.name==="AbortError");finish({status:200,arrayBuffer:async()=>Buffer.from("{}")});await client.debugLogger.flush();
     assert.ok(f.records().some(record=>record.event==="operation_cancelled"&&record.translationType==="outgoing"));
     const testing=new TranslationClient(async()=>({status:200,arrayBuffer:async()=>Buffer.from(JSON.stringify({choices:[{finish_reason:"length",message:{content:"",reasoning_content:"hidden thoughts"}}],usage:{prompt_tokens:10,completion_tokens:128}}))}));
@@ -2340,7 +2340,7 @@ test("clickable badge changes only its message target and retains original conte
     assert.equal(requests.length, 3);
     assert.equal(requests[2].text, "This is the original message");
     assert.equal(requests[2].target, "日本語");
-    assert.equal(requests[2].context.refresh, true);
+    assert.equal(requests[2].context.refresh, undefined);
     assert.equal(requests[2].context.reply.text, "quoted original");
     assert.equal(requests[2].context.areaTopic.threadTitle, "Wuthering Waves");
     assert.equal(requests[2].context.glossary.entries[0].en, "Rover");
@@ -2855,7 +2855,10 @@ test("outgoing non-text filter sends emoji, links and attachment-only payloads u
 
 test("outgoing filter keeps real words, digits and captions eligible for translation",async()=>{
     for(const source of ["hello 😀","请看 https://example.test","1","#","*",":)","[guide](https://example.test)","||需要翻译||","文字 <:happy:1409648830307369061>"]){
-        const f=outgoingFixture({source});await f.outgoing.submit("101",[f.payload,f.extra],f.original,f.editor);assert.equal(f.requests.length,1,source);assert.equal(f.sent.length,1);assert.equal(f.sent[0][0].value,"I want the signature weapon");
+        const f=outgoingFixture({source});
+        const translated=source.startsWith("||")?"||I want the signature weapon||":"I want the signature weapon";
+        f.plugin.client.translate=async(...args)=>{f.requests.push(args);return translated;};
+        await f.outgoing.submit("101",[f.payload,f.extra],f.original,f.editor);assert.equal(f.requests.length,1,source);assert.equal(f.sent.length,1);assert.equal(f.sent[0][0].value,translated);
     }
 });
 
@@ -2969,4 +2972,221 @@ test("DeepSeek vision failures and cancellation do not retry, expose reasoning o
     const cases=[{status:401,data:{error:{message:"invalid key"}}},{status:429,data:{error:{message:"rate limit"}}},{status:200,data:{choices:[{message:{content:"",reasoning_content:"not a translation"}}]}},{status:200,data:{choices:[{finish_reason:"length",message:{content:'{"translation":"partial"}'}}]}}];
     for(const response of cases){let calls=0;const client=new TranslationClient(async()=>{calls++;return {status:response.status,arrayBuffer:async()=>Buffer.from(JSON.stringify(response.data))};});await assert.rejects(client.translateImage(image,settings));assert.equal(calls,1);assert.equal(client.stats.generations,1);assert.equal(client.stats.repairs,0);assert.equal(client.active,0);assert.equal(client.controllers.size,0);}
     let started;const ready=new Promise(resolve=>started=resolve),controller=new AbortController();const client=new TranslationClient(async()=>{started();return new Promise(()=>{});});const pending=client.translateImage(image,settings,controller.signal);await ready;controller.abort();await assert.rejects(pending,error=>error.name==="AbortError");assert.equal(client.active,0);assert.equal(client.controllers.size,0);assert.equal(client.stats.generations,1);
+});
+
+
+// Audit regressions: verify the final request and observable behavior, not only size limits.
+test("A20 translated-only sends reject lost spoiler protection", async () => {
+    const f=outgoingFixture({source:"||秘密||"});
+    f.plugin.client.translate=async()=>"secret";
+    const result=await f.outgoing.submit("101",[f.payload],f.original,f.editor);
+    assert.equal(result.shouldClear,false);assert.equal(f.sent.length,0);
+});
+
+test("A20 cached settings components restore CSS after stop", () => {
+    const host=settingsHost(),calls=[];host.plugin.getSettingsPanel();
+    host.plugin.api.DOM={addStyle:()=>calls.push("add"),removeStyle:()=>calls.push("remove")};
+    host.plugin.getSettingsPanel();host.plugin.stop();host.plugin.getSettingsPanel();
+    assert.deepEqual(calls,["add","remove","add"]);
+});
+
+test("A20 repeated shared skill names preserve character and context in final requests", async () => {
+    const store=new GlossaryStore(),file=path.join(__dirname,"glossaries","wuthering-waves.json");
+    for(const glossaryEconomy of [false,true]) {
+        const f=recordingClient([JSON.stringify({translation:"尤诺的巧手烹调",sourceLanguage:"ENG"})]);
+        const text="Iuno Skillful Cooking",context={before:[{text:"We are talking about Iuno, not other characters."}],after:[]};
+        const glossary=await store.select(file,text,context);
+        await f.client.translate(text,{...f.settings,glossaryEconomy},undefined,{...context,glossary,detectLanguage:true});
+        const body=f.requests[0].messages.map(x=>x.content).join("\n");
+        assert.ok(body.includes('"en":"Iuno"'));assert.ok(body.includes("We are talking about Iuno"));
+        assert.equal((body.match(/"en":"Skillful Cooking"/g)||[]).length,1);
+    }
+});
+
+test("A20 lookup matches simplified and traditional input without rewriting originals", async () => {
+    const store=new GlossaryStore(),file=path.join(__dirname,"glossaries","wuthering-waves.json");
+    for(const text of ["尤诺的专武","尤諾的專武"]) {
+        const glossary=await store.select(file,text);assert.ok(glossary.entries.some(e=>e.en==="Iuno"));
+        assert.ok(glossary.entries.some(e=>e.en==="signature weapon"));
+        const f=recordingClient();await f.client.translate(text,f.settings,undefined,{glossary});
+        assert.equal(f.requests[0].messages.at(-1).content,text);
+    }
+});
+
+test("A20 long references retain their concluding subject", () => {
+    const client=new TranslationClient(),reply={text:"前面的介绍。".repeat(100)+"我说的是尤诺的专武，不是共鸣链。"};
+    const selected=client.budget("值得吗？",DEFAULTS,{reply,before:[],after:[]},null,null,true);
+    assert.ok(selected.context.reply.text.includes("尤诺的专武"));
+    assert.ok(client.estimate(client.messages("值得吗？",DEFAULTS,selected.context,null,null,true,true))<=DEFAULTS.contextTokens-DEFAULTS.maxTokens);
+});
+
+test("A20 recent references remain searchable after a long quote", async () => {
+    const store=new GlossaryStore(),file=path.join(__dirname,"glossaries","wuthering-waves.json");
+    const context={reply:{text:"r".repeat(3000)},before:Array.from({length:6},(_,i)=>({text:i===5?"Iuno signature weapon "+"z".repeat(978):"x".repeat(1000)}))};
+    const selected=await store.select(file,"Worth it?",context);
+    assert.ok(selected.entries.some(e=>e.en==="Iuno"));assert.ok(selected.entries.some(e=>e.en==="signature weapon"));
+});
+
+test("A20 oversized candidates do not exclude later small exact matches", async t => {
+    const entries=Array.from({length:24},(_,i)=>({en:"LongTerm"+i+"x".repeat(180),zh:"长".repeat(180),
+        aliases:["needle"],note:"n".repeat(240)}));
+    entries.push({en:"needle",zh:"针"});const f=glossaryFixture(t,entries);
+    const result=await new GlossaryStore().select(f.file,"needle");assert.ok(result.entries.some(e=>e.en==="needle"));
+    assert.ok(result.entries.reduce((n,e)=>n+JSON.stringify(e).length,0)<=12000);
+    assert.ok(result.entries.length<entries.length);
+});
+
+test("A20 large optional glossary fields cannot crowd out the core translation", async t => {
+    const f=glossaryFixture(t,[{en:"Iuno",zh:"尤诺",aliases:Array.from({length:30},(_,i)=>"Alias"+i+"x".repeat(90)),note:"n".repeat(240)}]);
+    const g=await new GlossaryStore().select(f.file,"Iuno"),client=new TranslationClient();
+    const selected=client.budget("Iuno",DEFAULTS,null,null,g);
+    assert.equal(selected.glossary.entries.length,1);assert.equal(selected.glossary.entries[0].zh,"尤诺");
+});
+
+test("A20 Unicode-only emoji skip inference while captions still translate", async () => {
+    const f=recordingClient();for(const text of ["😀","👍","👨‍👩‍👧‍👦","🇨🇳","||😀||"])assert.equal(await f.client.translate(text,f.settings),text);
+    assert.equal(f.requests.length,0);await f.client.translate("hello 😀",f.settings);assert.equal(f.requests.length,1);
+});
+
+test("A20 transport-only settings preserve cached translations and update next timeout", () => {
+    const host=settingsHost();host.plugin.getSettingsPanel();let cancelled=0,restarted=0;
+    host.plugin.client.cache.set("kept",{});host.plugin.client.cancelAll=()=>cancelled++;
+    host.plugin.restartAutoTranslation=()=>restarted++;host.plugin.autoTranslator={settings:{},syncAutoTranslation(){}};
+    host.plugin.saveSettings({...host.plugin.settings,timeoutSeconds:121});
+    assert.equal(cancelled,0);assert.equal(restarted,0);assert.ok(host.plugin.client.cache.has("kept"));
+    assert.equal(host.plugin.autoTranslator.settings.timeoutSeconds,121);
+});
+
+test("A20 concurrent identical requests share generation and preserve independent cancellation", async () => {
+    let release,calls=0,transportSignal;
+    const client=new TranslationClient(async(url,options)=>{calls++;transportSignal=options.signal;await new Promise(r=>release=r);
+        return {status:200,arrayBuffer:async()=>Buffer.from(JSON.stringify({choices:[{message:{content:"hello"}}]}))};});
+    const settings={...DEFAULTS,model:"mock"},one=new AbortController(),two=new AbortController();
+    const a=client.translate("你好",settings,one.signal),b=client.translate("你好",settings,two.signal);
+    const rejected=assert.rejects(a,e=>e.name==="AbortError");await new Promise(setImmediate);assert.equal(calls,1);
+    one.abort();await rejected;assert.equal(transportSignal.aborted,false);release();assert.equal(await b,"hello");
+    assert.equal(client.active,0);assert.equal(client.inflight.size,0);assert.equal(client.generationTasks.size,0);
+});
+
+test("A20 global cancellation blocks queued shared and explicit refresh requests", async () => {
+    let calls=0;const client=new TranslationClient(async()=>{calls++;throw Error("must not start");});const settings={...DEFAULTS,model:"mock"};
+    const a=client.translate("one",settings),b=client.translate("two",settings,undefined,{refresh:true});
+    client.cancelAll();await Promise.all([assert.rejects(a,e=>e.name==="AbortError"),assert.rejects(b,e=>e.name==="AbortError")]);
+    assert.equal(calls,0);assert.equal(client.cache.size,0);assert.equal(client.generationTasks.size,0);
+});
+
+test("A20 shared generation still applies each caller's output validation", async () => {
+    const f=recordingClient(["hello"]);
+    const a=f.client.translate("你好",f.settings,undefined,null,()=>{throw Error("policy rejected");});
+    const b=f.client.translate("你好",f.settings);
+    await assert.rejects(a,/policy rejected/);assert.equal(await b,"hello");assert.equal(f.requests.length,1);
+    assert.equal(await f.client.translate("你好",f.settings),"hello");assert.equal(f.requests.length,1);
+});
+
+test("A20 changing a single target back reuses cache; explicit refresh still generates", async () => {
+    const chat=chatEnvironment(),f=recordingClient([JSON.stringify({translation:"译文",sourceLanguage:"ENG"})]);
+    chat.auto.client=f.client;chat.auto.settings.model=f.settings.model;
+    chat.document.nodes=[chat.message("1","This is a sentence")];await chat.drain();
+    chat.auto.refresh("1","channel","日本語");await chat.drain();chat.auto.refresh("1","channel","简体中文");await chat.drain();
+    assert.equal(f.requests.length,2);assert.equal(f.client.stats.cacheHits,1);
+    chat.auto.refresh("1","channel");await chat.drain();assert.equal(f.requests.length,3);chat.auto.stop();
+});
+
+test("A20 brief page hiding retains in-flight work, extended hiding and stop cancel", async () => {
+    const chat=chatEnvironment();let signal;
+    chat.client.translate=async(text,settings,inputSignal)=>{signal=inputSignal;return new Promise(()=>{});};
+    chat.document.nodes=[chat.message("1","hello")];chat.auto.scan();await new Promise(setImmediate);
+    chat.document.hidden=true;chat.auto.scan();assert.equal(signal.aborted,false);
+    chat.document.hidden=false;chat.auto.scan();assert.equal(signal.aborted,false);
+    chat.document.hidden=true;chat.auto.scan();chat.auto.pending.invisibleSince=Date.now()-1001;chat.auto.scan();assert.equal(signal.aborted,true);
+    chat.auto.stop();
+});
+
+
+test("A20 cancelling every shared subscriber aborts transport and permits a fresh retry", async () => {
+    let calls=0,signal;const client=new TranslationClient(async(url,options)=>{calls++;signal=options.signal;
+        if(calls===1)return new Promise((resolve,reject)=>signal.addEventListener("abort",()=>reject(Object.assign(Error("cancel"),{name:"AbortError"})),{once:true}));
+        return {status:200,arrayBuffer:async()=>Buffer.from(JSON.stringify({choices:[{message:{content:"ok"}}]}))};});
+    const settings={...DEFAULTS,model:"mock"},one=new AbortController(),two=new AbortController();
+    const a=client.translate("hello",settings,one.signal),b=client.translate("hello",settings,two.signal);
+    const assertions=Promise.all([assert.rejects(a,e=>e.name==="AbortError"),assert.rejects(b,e=>e.name==="AbortError")]);
+    await new Promise(setImmediate);one.abort();two.abort();await assertions;assert.equal(signal.aborted,true);
+    assert.equal(await client.translate("hello",settings),"ok");assert.equal(calls,2);assert.equal(client.active,0);
+});
+
+test("A20 cancellation during final validation cannot repopulate cleared caches", async () => {
+    const f=recordingClient();await assert.rejects(f.client.translate("hello",f.settings,undefined,null,()=>f.client.cancelAll()),e=>e.name==="AbortError");
+    assert.equal(f.client.cache.size,0);
+});
+
+
+test("A20 duplicate terms cannot exhaust the shortlist before independent entities", async t => {
+    const entries=Array.from({length:100},(_,i)=>({en:"Skillful Cooking",zh:"巧手烹调",game:"Game",category:"skill",character:"Person "+i}));
+    entries.push({en:"Iuno",zh:"尤诺",game:"Game",category:"character"});
+    const f=glossaryFixture(t,entries),selected=await new GlossaryStore().select(f.file,"Iuno Skillful Cooking");
+    assert.equal(selected.entries.length,2);assert.ok(selected.entries.some(e=>e.en==="Iuno"));
+});
+
+
+test("A20 glossary compaction treats punctuation in aliases literally", async t => {
+    const f=glossaryFixture(t,[{en:"Language",zh:"语言",aliases:["C++","a.b"]}]),store=new GlossaryStore();
+    const good=await store.select(f.file,"C++ and a.b");assert.equal(good.entries.length,1);
+    assert.deepEqual(Array.from(good.entries[0].aliases),["C++","a.b"]);
+    assert.equal((await store.select(f.file,"axb and C")).entries.length,0);
+});
+
+test("A21 real glossary recalls informal character names as tentative references", async () => {
+    const store=new GlossaryStore(),file=path.join(__dirname,"glossaries","arknights-endfield.json");
+    for(const [text,en,zh] of [["embers weapon is good","Ember","余烬"],["Pog is my main","Pogranichnik","骏卫"],["POG!","Pogranichnik","骏卫"]]) {
+        const glossary=await store.select(file,text),entry=glossary.entries.find(e=>e.en===en);
+        assert.equal(entry.zh,zh);assert.ok(entry.possibleMatch);
+        for(const glossaryEconomy of [false,true]) {
+            const f=recordingClient();
+            await f.client.translate(text,{...f.settings,glossaryEconomy},undefined,{glossary});
+            const request=f.requests[0];
+            const payload=JSON.stringify(request);
+            assert.ok(payload.includes(en));assert.ok(payload.includes("possibleMatch"));
+            assert.ok(payload.includes("NOT a confirmed alias"));
+            assert.equal(request.messages.at(-1).content,text);assert.equal(f.requests.length,1);
+        }
+    }
+});
+
+test("A21 informal matching keeps exact names and aliases authoritative", async t => {
+    const fixture=glossaryFixture(t,[{en:"Pogranichnik",zh:"骏卫",category:"character"},{en:"Ember",zh:"余烬",category:"character",aliases:["Pog"]}]);
+    const store=new GlossaryStore();
+    for(const text of ["Ember's weapon","Ember’s weapon","Pog"]) {
+        const result=await store.select(fixture.file,text);
+        assert.equal(result.entries.length,1);assert.equal(result.entries[0].en,"Ember");assert.equal(result.entries[0].possibleMatch,undefined);
+    }
+});
+
+test("A21 guesses exclude arbitrary substrings, short prefixes, skills and nearby-only slang", async t => {
+    const fixture=glossaryFixture(t,[{en:"Pogranichnik",zh:"骏卫",category:"character"},{en:"Ember",zh:"余烬",category:"character"},{en:"Cooking",zh:"烹饪",category:"skill"}]);
+    const store=new GlossaryStore();
+    for(const text of ["Po","members","Poggers","cooks","x_pog","pog123"]) assert.equal((await store.select(fixture.file,text)).entries.length,0,text);
+    assert.equal((await store.select(fixture.file,"hello",{before:[{text:"Pog"}]})).entries.length,0);
+});
+
+test("A21 ambiguous prefixes and candidate budgets stay bounded", async t => {
+    const entries=["Pogranichnik","Pogalpha","Pogbravo","Pogdelta"].map(en=>({en,zh:en,category:"character"}));
+    for(let i=0;i<12;i++) entries.push({en:"Hero"+String.fromCharCode(97+i)+"long",zh:"角色"+i,category:"character"});
+    const fixture=glossaryFixture(t,entries),store=new GlossaryStore();
+    assert.equal((await store.select(fixture.file,"pog")).entries.length,0);
+    const text=entries.slice(4).map(e=>e.en+"s").join(" "),glossary=await store.select(fixture.file,text);
+    assert.ok(glossary.entries.length>0 && glossary.entries.length<=6);
+    const client=new TranslationClient(),selected=client.budget(text,{...DEFAULTS,model:"mock"},null,null,glossary).glossary;
+    assert.ok(selected.entries.length>0 && selected.entries.length<=4);
+    assert.ok(selected.entries.every(e=>e.possibleMatch));
+});
+
+test("A21 conflicting candidate translations and disambiguating reply survive into prompt", async t => {
+    const fixture=glossaryFixture(t,[{en:"Pogranichnik",zh:"骏卫",category:"character",game:"one"},{en:"Pogranichnik",zh:"另一译名",category:"character",game:"two"}]);
+    const context={reply:{text:"Which character should I build next?"}},text="Pog",store=new GlossaryStore();
+    const glossary=await store.select(fixture.file,text,context);
+    assert.equal(glossary.entries.length,2);
+    const f=recordingClient();await f.client.translate(text,f.settings,undefined,{...context,glossary});
+    const payload=JSON.stringify(f.requests[0]);
+    assert.ok(payload.includes("骏卫"));assert.ok(payload.includes("另一译名"));
+    assert.ok(payload.includes(context.reply.text));
 });
