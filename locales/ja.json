@@ -165,10 +165,10 @@
   "onlineContextHelp": "提供元のモデルのコンテキスト容量を入力してください。入力と出力の予約分を含みます。本文を切らずに参照を減らして保守的に見積もります。",
   "saveAndClose": "保存して閉じる",
   "settingsChangesHelp": "このページの変更は「保存して閉じる」で適用されます。キャンセルやウィンドウを閉じる操作で破棄します。",
-  "outgoingOriginalMode": "原文を送信。クリックで訳文のみへ",
-  "outgoingTranslatedMode": "訳文のみを送信。クリックで原文と訳文へ",
-  "outgoingBilingualMode": "原文と訳文を送信。クリックで原文のみへ",
-  "outgoingSwitchBusy": "送信前に翻訳中。クリックで中止して送信モードを切り替え",
+  "outgoingOriginalMode": "原文を送信",
+  "outgoingTranslatedMode": "訳文を送信",
+  "outgoingBilingualMode": "原文と訳文を送信",
+  "outgoingSwitchBusy": "送信前に翻訳中",
   "deepseekProvider": "DeepSeek",
   "deepseekThinking": "思考モードを有効にする",
   "deepseekEffort": "思考の強度",
@@ -216,5 +216,6 @@
   "imageDeepseekModel": "DeepSeek の画像翻訳には deepseek-flash が必要です。モデル設定で選択してください。",
   "deepseekVisionHelp": "画像翻訳には deepseek-flash を使用します。画像と参考文脈は設定済みの DeepSeek に送信され、料金や多くのトークンが発生する場合があります。",
   "outgoingReferencesChanged": "訳文に原文にないメンションまたはリンクが追加されました。下書きを保持しました。確認して再試行してください。",
-  "settingsRecovered": "無効な非機密設定をメモリ上で修復しました。確認して保存してください。接続先、キー、保存済み設定は自動上書きしていません。"
+  "settingsRecovered": "無効な非機密設定をメモリ上で修復しました。確認して保存してください。接続先、キー、保存済み設定は自動上書きしていません。",
+  "messageToggleTranslation": "原文/訳文を切り替え"
 }

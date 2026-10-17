@@ -1370,7 +1370,7 @@ function chatEnvironment() {
         createTextNode: text => ({nodeType: 3, textContent: text}),
         createElement() {
             return {isConnected: false, parentElement: null, children: [], setAttribute() {},
-                append(...children) {this.children.push(...children);}, remove() {this.isConnected = false;},
+                append(...children) {this.children.push(...children);}, prepend(...children) {this.children.unshift(...children);}, remove() {this.isConnected = false;},
                 getClientRects: () => [bounds], getBoundingClientRect: () => bounds, getAttribute: () => null};
         }
     };
@@ -2266,7 +2266,7 @@ test("source language metadata is returned by the same generation, budgeted and 
     await assert.rejects(invalid.client.translate("hello", invalid.settings, undefined, {detectLanguage: true}), /未返回有效/);
 });
 
-test("language badges live beside the sender header, avoid duplicates and disappear with translation", async () => {
+test("language badges precede message content even with a sender header, avoid duplicates and disappear with translation", async () => {
     const chat = chatEnvironment();
     const node = chat.message("1", "This is the original message");
     const header = chat.document.createElement("h3");
@@ -2275,9 +2275,9 @@ test("language badges live beside the sender header, avoid duplicates and disapp
     chat.auto.sources.sourceLanguage = () => "ENG";
     await chat.drain();
     const entry = chat.auto.entries.get(node);
-    assert.equal(entry.languageBadge.textContent, "ENG"); assert.equal(entry.languageAnchor, header);
-    assert.equal(header.children.length, 1);
-    await chat.drain(); assert.equal(header.children.length, 1);
+    assert.equal(entry.languageBadge.textContent, "ENG"); assert.equal(entry.languageAnchor, entry.output);
+    assert.equal(header.children.length, 0);assert.equal(entry.output.children[0],entry.languageBadge);
+    await chat.drain(); assert.equal(header.children.length, 0);assert.equal(entry.output.children.filter(child=>child===entry.languageBadge).length,1);
     chat.auto.setAutoTranslation(false); assert.equal(entry.languageBadge, null);
 });
 

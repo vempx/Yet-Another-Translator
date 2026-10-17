@@ -165,10 +165,10 @@
   "onlineContextHelp": "Use the model context capacity documented by the provider, including input and reserved output. Conservative estimates reduce references when needed without truncating the message.",
   "saveAndClose": "Save and close",
   "settingsChangesHelp": "Changes on this page apply only with Save and close. Cancel or closing the window discards them.",
-  "outgoingOriginalMode": "Send original; click for translation only",
-  "outgoingTranslatedMode": "Send translation only; click for original and translation",
-  "outgoingBilingualMode": "Send original and translation; click for original only",
-  "outgoingSwitchBusy": "Translating before sending; click to cancel and switch send mode",
+  "outgoingOriginalMode": "Send original",
+  "outgoingTranslatedMode": "Send translation",
+  "outgoingBilingualMode": "Send original and translation",
+  "outgoingSwitchBusy": "Translating before sending",
   "deepseekProvider": "DeepSeek",
   "deepseekThinking": "Enable thinking mode",
   "deepseekEffort": "Thinking effort",
@@ -216,5 +216,6 @@
   "imageDeepseekModel": "DeepSeek image translation requires deepseek-flash. Select it in model settings.",
   "deepseekVisionHelp": "Image translation requires deepseek-flash. Images and reference context are sent to the configured DeepSeek service and may incur charges and high token usage.",
   "outgoingReferencesChanged": "The translation added mentions or links not present in the original. Your draft was kept; check it before retrying.",
-  "settingsRecovered": "Invalid non-sensitive settings were repaired in memory. Review and save them; the endpoint, key and saved configuration were not automatically overwritten."
+  "settingsRecovered": "Invalid non-sensitive settings were repaired in memory. Review and save them; the endpoint, key and saved configuration were not automatically overwritten.",
+  "messageToggleTranslation": "Switch original/translation"
 }

@@ -165,10 +165,10 @@
   "onlineContextHelp": "Usa la capacità del contesto del modello, inclusi input e output riservato. La stima riduce i riferimenti senza troncare il messaggio.",
   "saveAndClose": "Salva e chiudi",
   "settingsChangesHelp": "Le modifiche si applicano con Salva e chiudi. Annulla o chiudere la finestra le scarta.",
-  "outgoingOriginalMode": "Invia originale; clic per inviare solo la traduzione",
-  "outgoingTranslatedMode": "Invia solo traduzione; clic per originale e traduzione",
-  "outgoingBilingualMode": "Invia originale e traduzione; clic per inviare solo originale",
-  "outgoingSwitchBusy": "Traduzione prima dell’invio; clic per annullare e cambiare modalità",
+  "outgoingOriginalMode": "Invia originale",
+  "outgoingTranslatedMode": "Invia traduzione",
+  "outgoingBilingualMode": "Invia originale e traduzione",
+  "outgoingSwitchBusy": "Traduzione prima dell’invio in corso",
   "deepseekProvider": "DeepSeek",
   "deepseekThinking": "Attiva modalità ragionamento",
   "deepseekEffort": "Intensità del ragionamento",
@@ -216,5 +216,6 @@
   "imageDeepseekModel": "La traduzione di immagini DeepSeek richiede deepseek-flash. Selezionalo nelle impostazioni.",
   "deepseekVisionHelp": "Le immagini richiedono deepseek-flash. Immagini e contesto sono inviati al servizio DeepSeek configurato e possono comportare costi e un elevato consumo di token.",
   "outgoingReferencesChanged": "La traduzione ha aggiunto menzioni o link assenti nell’originale. La bozza è stata conservata; controllala prima di riprovare.",
-  "settingsRecovered": "Le impostazioni non sensibili non valide sono state corrette in memoria. Controlla e salva. Indirizzo, chiave e configurazione salvata non sono stati sovrascritti automaticamente."
+  "settingsRecovered": "Le impostazioni non sensibili non valide sono state corrette in memoria. Controlla e salva. Indirizzo, chiave e configurazione salvata non sono stati sovrascritti automaticamente.",
+  "messageToggleTranslation": "Alterna originale/traduzione"
 }

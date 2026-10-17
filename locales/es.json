@@ -165,10 +165,10 @@
   "onlineContextHelp": "Usa la capacidad de contexto del modelo, incluida la entrada y la salida reservada. La estimación reduce referencias sin truncar el mensaje.",
   "saveAndClose": "Guardar y cerrar",
   "settingsChangesHelp": "Los cambios se aplican con Guardar y cerrar. Cancelar o cerrar la ventana los descarta.",
-  "outgoingOriginalMode": "Enviar original; clic para enviar solo traducción",
-  "outgoingTranslatedMode": "Enviar solo traducción; clic para enviar original y traducción",
-  "outgoingBilingualMode": "Enviar original y traducción; clic para enviar solo original",
-  "outgoingSwitchBusy": "Traduciendo antes de enviar; clic para cancelar y cambiar el modo",
+  "outgoingOriginalMode": "Enviar original",
+  "outgoingTranslatedMode": "Enviar traducción",
+  "outgoingBilingualMode": "Enviar original y traducción",
+  "outgoingSwitchBusy": "Traduciendo antes de enviar",
   "deepseekProvider": "DeepSeek",
   "deepseekThinking": "Activar modo de razonamiento",
   "deepseekEffort": "Intensidad de razonamiento",
@@ -216,5 +216,6 @@
   "imageDeepseekModel": "La traducción de imágenes con DeepSeek requiere deepseek-flash. Selecciónalo en los ajustes.",
   "deepseekVisionHelp": "Las imágenes requieren deepseek-flash. La imagen y el contexto se envían al servicio DeepSeek configurado y pueden generar costes y un alto consumo de tokens.",
   "outgoingReferencesChanged": "La traducción añadió menciones o enlaces que no estaban en el original. Se conservó el borrador; revísalo antes de reintentar.",
-  "settingsRecovered": "Se corrigieron en memoria ajustes no sensibles inválidos. Revísalos y guarda. No se sobrescribieron automáticamente la dirección, la clave ni la configuración guardada."
+  "settingsRecovered": "Se corrigieron en memoria ajustes no sensibles inválidos. Revísalos y guarda. No se sobrescribieron automáticamente la dirección, la clave ni la configuración guardada.",
+  "messageToggleTranslation": "Alternar original/traducción"
 }

@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+## 0.10.3 — 2026-10-17
+
+- Place source-language badges consistently at the start of translated message rows, and use a single localized original/translation toggle tooltip.
+
+- Shorten outgoing translation tooltips to show only the current send mode or translation status.
+
+- Replace the per-message translation toolbar text with a shared 文/A switching icon in all UI languages; retain localized tooltips and accessibility labels.
+
 ## 0.10.2 — 2026-10-17
 
 - Keep mass-mention authorization case-sensitive and retain settings styles/focus protection when the plugin stops before mounted panels close.

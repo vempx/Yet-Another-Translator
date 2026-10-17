@@ -16,11 +16,12 @@ outgoing.submission=()=>({instance:owner,key:"onSubmit",channelId:"101"});plugin
 outgoing.scan();
 const toggle=document.querySelector(".lt-compose-controls button"),language=document.querySelector(".lt-compose-controls select");
 assert.ok(toggle.querySelector("svg"));assert.equal(toggle.getAttribute("data-send-mode"),"original");
-assert.equal(toggle.getAttribute("role"),null);assert.equal(toggle.getAttribute("aria-pressed"),"false");
+assert.equal(toggle.getAttribute("role"),null);assert.equal(toggle.getAttribute("aria-pressed"),"false");assert.equal(toggle.title,"发送原文");
 toggle.click();assert.equal(toggle.getAttribute("data-send-mode"),"translated");assert.equal(plugin.settings.outgoingIncludeOriginal,false);
+assert.equal(toggle.title,"发送译文");
 const translationColor=dom.window.getComputedStyle(toggle).color;
 toggle.click();assert.equal(toggle.getAttribute("data-send-mode"),"bilingual");assert.equal(plugin.settings.outgoingIncludeOriginal,true);
-assert.equal(toggle.getAttribute("aria-pressed"),"mixed");assert.match(toggle.title,/原文及译文/);
+assert.equal(toggle.getAttribute("aria-pressed"),"mixed");assert.equal(toggle.title,"发送原文及译文");
 assert.notEqual(dom.window.getComputedStyle(toggle).color,translationColor);
 language.value="日本語";language.dispatchEvent(new dom.window.Event("change"));
 assert.equal(toggle.getAttribute("data-send-mode"),"bilingual");assert.equal(plugin.settings.outgoingLanguage,"日本語");
@@ -190,3 +191,33 @@ async function verifySettingsResourceLifetime(React,ReactDOM) {
     console.log("PASS: settings resources survive stop while panels remain mounted and release only after the final React unmount.");
     console.log("PASS: disabled settings mount/unmount releases styles and focus listeners; enabled plugin retains shared resources until stop.");
 }
+
+function verifyMessageToggleIcon() {
+    let locale="zh-CN",shown=false,toggles=0;
+    const api={Webpack:{getStore:name=>name==="LocaleStore"?{getLocale:()=>locale}:null}};
+    const context={...sandbox,module:{exports:{}},BdApi:api};
+    vm.runInNewContext(fs.readFileSync(filename,"utf8")+'\nmodule.exports.verify={MessageButtons,I18n};',context);
+    const row=document.createElement("div");row.id="chat-messages-101-202";
+    row.innerHTML='<div id="message-content-202">hello</div><div role="toolbar"><button>react</button><button>more</button></div>';
+    document.body.append(row);
+    const buttons=new context.module.exports.verify.MessageButtons(()=>{shown=!shown;toggles++;},()=>shown,{document,clearTimeout});
+    buttons.running=true;buttons.scan();
+    const button=row.querySelector(".lt-message-button"),svg=button.querySelector("svg");
+    assert.ok(svg);assert.equal(button.textContent,"");assert.equal(svg.getAttribute("aria-hidden"),"true");assert.equal(svg.getAttribute("focusable"),"false");
+    const originalMarkup=svg.outerHTML,titles=new Set();
+    for(const language of ["zh-CN","en-US","ja","zh-TW","de","es","fr","it","ko","pt-BR","ru"]) {
+        locale=language;buttons.scan();titles.add(button.title);
+        assert.equal(button.querySelector("svg"),svg);assert.equal(svg.outerHTML,originalMarkup);assert.equal(button.textContent,"");
+        assert.ok(button.getAttribute("aria-label"));assert.equal(button.getAttribute("aria-checked"),"false");
+        const hint=button.title;
+        assert.equal(hint,context.module.exports.verify.I18n.translate("messageToggleTranslation"));
+        button.click();assert.equal(button.getAttribute("aria-checked"),"true");assert.equal(button.querySelector("svg"),svg);assert.equal(button.title,hint);
+        button.click();assert.equal(button.getAttribute("aria-checked"),"false");assert.equal(button.title,hint);
+    }
+    assert.equal(toggles,22);assert.ok(titles.size>1);
+    assert.equal(dom.window.getComputedStyle(svg).width,"24px");assert.equal(dom.window.getComputedStyle(button).width,"32px");
+    buttons.scan();assert.equal(row.querySelectorAll(".lt-message-button").length,1);
+    buttons.stop();assert.equal(row.querySelector(".lt-message-button"),null);row.remove();
+    console.log("PASS: message toggle keeps the same SVG across all UI locales, preserves localized hints, toggles state and cleans up.");
+}
+verifyMessageToggleIcon();

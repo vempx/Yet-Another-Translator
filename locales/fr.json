@@ -165,10 +165,10 @@
   "onlineContextHelp": "Utilisez la capacité de contexte du modèle, entrée et sortie réservée comprises. L’estimation réduit les références sans tronquer le message.",
   "saveAndClose": "Enregistrer et fermer",
   "settingsChangesHelp": "Les changements sont appliqués avec Enregistrer et fermer. Annuler ou fermer la fenêtre les abandonne.",
-  "outgoingOriginalMode": "Envoyer le texte original ; cliquer pour la traduction seule",
-  "outgoingTranslatedMode": "Envoyer la traduction seule ; cliquer pour le texte original et la traduction",
-  "outgoingBilingualMode": "Envoyer le texte original et la traduction ; cliquer pour le texte original seul",
-  "outgoingSwitchBusy": "Traduction avant envoi ; cliquer pour annuler et changer de mode",
+  "outgoingOriginalMode": "Envoyer l’original",
+  "outgoingTranslatedMode": "Envoyer la traduction",
+  "outgoingBilingualMode": "Envoyer l’original et la traduction",
+  "outgoingSwitchBusy": "Traduction avant envoi en cours",
   "deepseekProvider": "DeepSeek",
   "deepseekThinking": "Activer le mode réflexion",
   "deepseekEffort": "Intensité de réflexion",
@@ -216,5 +216,6 @@
   "imageDeepseekModel": "La traduction d’images DeepSeek nécessite deepseek-flash. Sélectionnez-le dans les paramètres du modèle.",
   "deepseekVisionHelp": "Les images nécessitent deepseek-flash. Images et contexte sont envoyés au service DeepSeek configuré, avec des frais et une consommation de tokens possibles.",
   "outgoingReferencesChanged": "La traduction a ajouté des mentions ou liens absents du texte original. Le brouillon est conservé ; vérifiez-le avant de réessayer.",
-  "settingsRecovered": "Les paramètres non sensibles invalides ont été corrigés en mémoire. Vérifiez puis enregistrez. L’adresse, la clé et la configuration enregistrée n’ont pas été écrasées automatiquement."
+  "settingsRecovered": "Les paramètres non sensibles invalides ont été corrigés en mémoire. Vérifiez puis enregistrez. L’adresse, la clé et la configuration enregistrée n’ont pas été écrasées automatiquement.",
+  "messageToggleTranslation": "Basculer original/traduction"
 }

@@ -13,7 +13,7 @@ const BdApi = {React, ReactDOM, Webpack: {
     getStore: name => name === "UserStore" ? {getUser: () => ({username: "Alice"})} : null
 }};
 const sandbox = {module: {exports: {}}, require, __dirname: path.dirname(filename), URL, AbortController, TextDecoder, setTimeout, clearTimeout, BdApi};
-vm.runInNewContext(fs.readFileSync(filename, "utf8") + "\nmodule.exports.verify = {renderTranslatedMessage};", sandbox);
+vm.runInNewContext(fs.readFileSync(filename, "utf8") + "\nmodule.exports.verify = {renderTranslatedMessage, AutoTranslator, DEFAULTS, CSS};", sandbox);
 const render = (text, check, sourceText = text) => {
     const container = document.createElement("div"); document.body.append(container); let cleanup;
     try {
@@ -62,3 +62,26 @@ assert.equal(nativeCalls, 1);
 native = {parseTopic() {}, parse() {throw Error("changed host interface");}};
 render("# Heading\nbody", node => {assert.equal(node.querySelector("h1").textContent, "Heading");});
 console.log("PASS: real Markdown/React DOM headings, subtext, multiline quotes, emoji/spoilers, safety, cleanup and message-parser priority. Live Discord remains a separate verification.");
+
+// Badges are siblings of the React root: a Markdown commit must not remove them.
+{
+    const {AutoTranslator,DEFAULTS,CSS,renderTranslatedMessage}=sandbox.module.exports.verify;
+    const style=document.createElement("style");style.textContent=CSS;document.head.append(style);
+    const auto=new AutoTranslator({},DEFAULTS,{document});auto.running=true;
+    for(const hasHeader of [true,false]) {
+        const row=document.createElement("div");row.id="chat-messages-101-202";
+        row.innerHTML=(hasHeader?"<h3>Sender</h3>":"")+'<div id="message-content-202">original</div>';
+        const output=document.createElement("div");output.className="lt-message-text";
+        const content=document.createElement("div");content.className="lt-translation-content";output.append(content);row.append(output);document.body.append(row);
+        const entry={state:"done",sourceLanguage:"ENG",text:"original",node:row.querySelector('[id="message-content-202"]'),output};
+        auto.renderLanguageBadge(entry);const badge=entry.languageBadge;
+        let cleanup;ReactDOM.flushSync(()=>{cleanup=renderTranslatedMessage(content,"**translated** text",entry,document);});
+        assert.equal(output.firstElementChild,badge);assert.equal(badge.nextElementSibling,content);assert.equal(content.contains(badge),false);
+        assert.equal(row.querySelector("h3 .lt-source-language"),null);assert.equal(content.querySelector("strong").textContent,"translated");
+        assert.equal(dom.window.getComputedStyle(output).display,"flex");assert.equal(dom.window.getComputedStyle(content).minWidth,"0");
+        auto.renderLanguageBadge(entry);assert.equal(output.querySelectorAll(".lt-source-language").length,1);
+        ReactDOM.flushSync(cleanup);assert.equal(output.firstElementChild,badge);badge.remove();row.remove();
+    }
+    style.remove();
+    console.log("PASS: first and grouped message badges precede translated content outside React roots and survive Markdown commits.");
+}

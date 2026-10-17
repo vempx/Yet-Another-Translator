@@ -165,10 +165,10 @@
   "onlineContextHelp": "Use a capacidade de contexto do modelo, incluindo entrada e saída reservada. A estimativa reduz referências sem truncar a mensagem.",
   "saveAndClose": "Salvar e fechar",
   "settingsChangesHelp": "As alterações só são aplicadas com Salvar e fechar. Cancelar ou fechar a janela as descarta.",
-  "outgoingOriginalMode": "Enviar original; clique para enviar só a tradução",
-  "outgoingTranslatedMode": "Enviar só a tradução; clique para enviar original e tradução",
-  "outgoingBilingualMode": "Enviar original e tradução; clique para enviar só o original",
-  "outgoingSwitchBusy": "Traduzindo antes do envio; clique para cancelar e mudar o modo",
+  "outgoingOriginalMode": "Enviar original",
+  "outgoingTranslatedMode": "Enviar tradução",
+  "outgoingBilingualMode": "Enviar original e tradução",
+  "outgoingSwitchBusy": "Traduzindo antes de enviar",
   "deepseekProvider": "DeepSeek",
   "deepseekThinking": "Ativar modo de raciocínio",
   "deepseekEffort": "Intensidade do raciocínio",
@@ -216,5 +216,6 @@
   "imageDeepseekModel": "A tradução de imagens DeepSeek exige deepseek-flash. Selecione-o nas configurações.",
   "deepseekVisionHelp": "Imagens exigem deepseek-flash. A imagem e o contexto são enviados ao DeepSeek configurado e podem gerar custos e alto consumo de tokens.",
   "outgoingReferencesChanged": "A tradução adicionou menções ou links ausentes no original. O rascunho foi preservado; confira antes de tentar novamente.",
-  "settingsRecovered": "Configurações não confidenciais inválidas foram corrigidas na memória. Confira e salve. O endereço, a chave e a configuração salva não foram sobrescritos automaticamente."
+  "settingsRecovered": "Configurações não confidenciais inválidas foram corrigidas na memória. Confira e salve. O endereço, a chave e a configuração salva não foram sobrescritos automaticamente.",
+  "messageToggleTranslation": "Alternar original/tradução"
 }

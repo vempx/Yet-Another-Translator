@@ -7,6 +7,7 @@ An LLM-powered BetterDiscord plugin for automatic message translation, individua
 ## Features
 
 - **Automatic translation:** Enabled separately for each area, follows visible and new messages, and reuses cached results. Sidebar icons identify enabled areas.
+- **Quick original/translation toggle:** Click the 文/A icon in a message’s hover toolbar to show or hide its translation. The same icon is used in every interface language.
 - **Per-message language selection:** Click a source-language badge to change that message's target or permanently switch the global default.
 - **Translate before sending:** Translates drafts while retaining replies and attachments. Optionally includes the original and an AI translation label in the target language.
 - **Image text translation and summaries:** Right-click an image to translate its text and summarize key points, with selectable target languages.
@@ -59,7 +60,7 @@ Discord image attachments and Discord-proxied previews are supported, up to 8 MB
 
 Before-send translation skips emoji-only, link-only and text-free image/attachment messages. They are sent unchanged without glossary lookup or model calls, including in bilingual mode. Messages with text captions are still translated.
 
-1. Click the paper-plane icon with an A next to the message box to cycle through three modes: unlit sends the original, blue-violet sends only the translation, and teal sends both. Hover for the current mode and next action.
+1. Click the paper-plane icon with an A next to the message box to cycle through three modes: unlit sends the original, blue-violet sends only the translation, and teal sends both. Hover to see the current send mode.
 2. Select the outgoing target language beside it. This is independent of the default language for incoming messages.
 3. Type your message and press Enter or click Send. The plugin submits it using the selected mode.
 4. Bilingual mode is linked to the include-original setting: button changes save immediately, while settings edits require Save and close. Bilingual messages include an AI translation label; its smaller gray styling applies only locally.

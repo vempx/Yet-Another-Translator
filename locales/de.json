@@ -165,10 +165,10 @@
   "onlineContextHelp": "Kontextkapazität des Anbietermodells einschließlich Eingabe und reservierter Ausgabe verwenden. Konservative Schätzungen reduzieren Referenzen, ohne den Text abzuschneiden.",
   "saveAndClose": "Speichern und schließen",
   "settingsChangesHelp": "Änderungen werden erst mit Speichern und schließen angewendet. Abbrechen oder Schließen verwirft sie.",
-  "outgoingOriginalMode": "Original senden; klicken für nur Übersetzung",
-  "outgoingTranslatedMode": "Nur Übersetzung senden; klicken für Original und Übersetzung",
-  "outgoingBilingualMode": "Original und Übersetzung senden; klicken für nur Original",
-  "outgoingSwitchBusy": "Übersetzung vor dem Senden; klicken zum Abbrechen und Moduswechsel",
+  "outgoingOriginalMode": "Original senden",
+  "outgoingTranslatedMode": "Übersetzung senden",
+  "outgoingBilingualMode": "Original und Übersetzung senden",
+  "outgoingSwitchBusy": "Übersetzung vor dem Senden läuft",
   "deepseekProvider": "DeepSeek",
   "deepseekThinking": "Denkmodus aktivieren",
   "deepseekEffort": "Denkaufwand",
@@ -216,5 +216,6 @@
   "imageDeepseekModel": "DeepSeek-Bildübersetzung benötigt deepseek-flash. Wähle es in den Modelleinstellungen.",
   "deepseekVisionHelp": "Bildübersetzung benötigt deepseek-flash. Bilder und Referenzkontext werden an den konfigurierten DeepSeek-Dienst gesendet und können Kosten sowie hohen Tokenverbrauch verursachen.",
   "outgoingReferencesChanged": "Die Übersetzung enthält zusätzliche Erwähnungen oder Links. Der Entwurf bleibt erhalten. Bitte vor einem erneuten Versuch prüfen.",
-  "settingsRecovered": "Ungültige nicht vertrauliche Einstellungen wurden im Speicher korrigiert. Bitte prüfen und speichern. Endpunkt, Schlüssel und gespeicherte Konfiguration wurden nicht automatisch überschrieben."
+  "settingsRecovered": "Ungültige nicht vertrauliche Einstellungen wurden im Speicher korrigiert. Bitte prüfen und speichern. Endpunkt, Schlüssel und gespeicherte Konfiguration wurden nicht automatisch überschrieben.",
+  "messageToggleTranslation": "Original/Übersetzung umschalten"
 }

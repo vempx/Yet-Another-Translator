@@ -165,10 +165,10 @@
   "onlineContextHelp": "按服務商模型的實際上下文容量填寫，包含輸入與預留輸出。保守估算會減少參考內容，不截斷正文。",
   "saveAndClose": "儲存並關閉",
   "settingsChangesHelp": "本頁修改在點擊「儲存並關閉」後生效；取消或直接關閉視窗會捨棄修改。",
-  "outgoingOriginalMode": "傳送原文；點擊切換為僅傳送譯文",
-  "outgoingTranslatedMode": "僅傳送譯文；點擊切換為傳送原文及譯文",
-  "outgoingBilingualMode": "傳送原文及譯文；點擊切換為傳送原文",
-  "outgoingSwitchBusy": "正在翻譯，完成後傳送；點擊可取消並切換傳送模式",
+  "outgoingOriginalMode": "傳送原文",
+  "outgoingTranslatedMode": "傳送譯文",
+  "outgoingBilingualMode": "傳送原文及譯文",
+  "outgoingSwitchBusy": "正在翻譯，完成後傳送",
   "deepseekProvider": "DeepSeek",
   "deepseekThinking": "開啟思考模式",
   "deepseekEffort": "思考強度",
@@ -216,5 +216,6 @@
   "imageDeepseekModel": "DeepSeek 圖片翻譯需要 deepseek-flash，請在模型服務中選擇此模型。",
   "deepseekVisionHelp": "圖片翻譯需使用 deepseek-flash。處理圖片時會將圖片及參考上下文傳送至目前的 DeepSeek 服務，可能產生費用並消耗較多 token。",
   "outgoingReferencesChanged": "譯文新增了原文沒有的提及或連結，已保留草稿，請檢查後重試。",
-  "settingsRecovered": "已在記憶體中修復無效的非敏感設定。請檢查後儲存；服務位址、金鑰及原設定檔未被自動覆寫。"
+  "settingsRecovered": "已在記憶體中修復無效的非敏感設定。請檢查後儲存；服務位址、金鑰及原設定檔未被自動覆寫。",
+  "messageToggleTranslation": "切換原文/譯文"
 }
