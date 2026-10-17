@@ -8,8 +8,8 @@ const path = require("node:path");
 
 function load(BdApi, environment = {}) {
     const sandbox = {module: {exports: {}}, require, __dirname, URL, AbortController, TextDecoder, setTimeout, clearTimeout, BdApi, ...environment};
-    vm.runInNewContext(fs.readFileSync(`${__dirname}/YetAnotherTranslator.plugin.js`, "utf8") +
-        "\nmodule.exports.testing = {DEFAULTS, validateSettings, TranslationClient, AutoTranslator, areaTopicFor, GlossaryStore, DebugLogger, ImageTranslator, rememberProviderSettings, switchProviderSettings, discordImageUrl, imageIdentity, imageMime, inspectImage, imageDimensions, IMAGE_MAX_BYTES, OutgoingTranslator, referenceContext, orderedReferences, renderMessageEmoji, I18n, t, languageLabel, UI_MESSAGES, uiError, errorForUi, uiText, outgoingMessageText, hasOutgoingText, LANGUAGES, bindSettingsFooter, renderTranslatedMessage};", sandbox);
+    vm.runInNewContext(fs.readFileSync(`${__dirname}/YetAnotherTranslator.plugin.js`, "utf8").replace("const {AutoTranslator, MessageButtons}", "const {AutoTranslator, MessageButtons, visible}") +
+        "\nmodule.exports.testing = {DEFAULTS, validateSettings, TranslationClient, AutoTranslator, areaTopicFor, GlossaryStore, DebugLogger, ImageTranslator, rememberProviderSettings, switchProviderSettings, discordImageUrl, imageIdentity, imageMime, inspectImage, imageDimensions, IMAGE_MAX_BYTES, OutgoingTranslator, referenceContext, orderedReferences, renderMessageEmoji, I18n, t, languageLabel, UI_MESSAGES, uiError, errorForUi, uiText, outgoingMessageText, hasOutgoingText, visible, messageLinks, messageMentions, validateOutgoingReferences, LANGUAGES, bindSettingsFooter, renderTranslatedMessage};", sandbox);
     return sandbox.module.exports;
 }
 const Plugin = load();
@@ -2214,8 +2214,8 @@ test("emoji-only messages skip inference and auto rendering preserves originals 
     chat.client.translate = async text => text;
     await chat.drain();
     const entry = chat.auto.entries.get(chat.document.nodes[0]);
-    assert.ok(entry.output.children[0].children.some(node => node.src?.includes("/emojis/1409648830307369061.webp")));
-    assert.equal(entry.sourceHidden, true);
+    assert.equal(entry.output, null);
+    assert.equal(entry.sourceHidden, false);
     chat.auto.setAutoTranslation(false);
     assert.equal(entry.sourceHidden, false); assert.equal(entry.output, null);
 });
@@ -2983,11 +2983,11 @@ test("A20 translated-only sends reject lost spoiler protection", async () => {
     assert.equal(result.shouldClear,false);assert.equal(f.sent.length,0);
 });
 
-test("A20 cached settings components restore CSS after stop", () => {
+test("A22 preparing settings without mounting allocates no global resources", () => {
     const host=settingsHost(),calls=[];host.plugin.getSettingsPanel();
     host.plugin.api.DOM={addStyle:()=>calls.push("add"),removeStyle:()=>calls.push("remove")};
     host.plugin.getSettingsPanel();host.plugin.stop();host.plugin.getSettingsPanel();
-    assert.deepEqual(calls,["add","remove","add"]);
+    assert.deepEqual(calls,["remove"]);assert.equal(host.plugin.inputFocusGuard,undefined);
 });
 
 test("A20 repeated shared skill names preserve character and context in final requests", async () => {
@@ -3189,4 +3189,166 @@ test("A21 conflicting candidate translations and disambiguating reply survive in
     const payload=JSON.stringify(f.requests[0]);
     assert.ok(payload.includes("骏卫"));assert.ok(payload.includes("另一译名"));
     assert.ok(payload.includes(context.reply.text));
+});
+
+test("A22 outgoing rejects new mentions and destinations while retaining drafts in both send modes", async () => {
+    for (const includeOriginal of [false,true]) for (const output of ["@everyone hello", "@here hello", "hello <@123>", "hello <@&123>", "hello <#123>", "hello https://evil.example/x", "hello [safe](https://evil.example/x)", "hello discord.gg/abc", "hello www.example.com"]) {
+        const f=outgoingFixture({source:"hello"});f.plugin.settings.outgoingIncludeOriginal=includeOriginal;
+        f.plugin.client.translate=async()=>output;
+        const result=await f.outgoing.submit("101",[f.payload],f.original,f.editor);
+        assert.equal(result.shouldClear,false,output);assert.equal(f.sent.length,0,output);
+        assert.equal(f.payload.value,"hello");assert.equal(f.outgoing.pending.size,0);
+    }
+});
+
+test("A22 reference checks preserve original URLs and normalized mention identities but reject amplification", () => {
+    const validate=Plugin.testing.validateOutgoingReferences;
+    assert.doesNotThrow(()=>validate("hello <@!123> <@&456> <#789> @here https://example.com/a", "你好 <@123> <@&456> <#789> @here [网站](https://example.com/a)"));
+    for(const source of ["hello", "\\@everyone hello", "`@everyone` hello", "```\n@everyone\n``` hello"]) assert.throws(()=>validate(source,"@everyone hello"));
+    assert.throws(()=>validate("hello <@123>","hello <@123> <@123>"));
+    assert.throws(()=>validate("hello https://example.com/a","hello https://example.com/b"));
+    assert.throws(()=>validate("hello https://example.com/a","hello [site](https://example.com.evil/a)"));
+});
+
+test("A22 cached unsafe output still fails the final outgoing check", async () => {
+    const settings={...DEFAULTS,model:"mock"},client=new TranslationClient(async()=>({status:200,arrayBuffer:async()=>Buffer.from(JSON.stringify({choices:[{message:{content:"@everyone hello https://evil.example"}}]}))}));
+    await client.translate("hello",settings);
+    await assert.rejects(client.translate("hello",settings,undefined,null,value=>Plugin.testing.validateOutgoingReferences("hello",value),{kind:"outgoing"}));
+    assert.equal(client.active,0);assert.equal(client.cache.size,0);
+});
+
+test("A22 pure native messages keep the original Discord node and generate no translation", async () => {
+    for(const text of ["😀", "<:happy:1409648830307369061>", "https://example.com", "<https://example.com>", "<@123> <#456>"]) {
+        const chat=chatEnvironment(),node=chat.message("1",text);chat.document.nodes=[node];
+        chat.client.translate=async value=>value;
+        await chat.drain();const entry=chat.auto.entries.get(node);
+        assert.equal(entry.output,null,text);assert.equal(Boolean(entry.sourceHidden),false,text);assert.equal(node.textContent,text);
+    }
+});
+
+test("A22 sends wait for capacity and take the next slot without exceeding concurrency", async () => {
+    const client=new TranslationClient(async()=>({status:200,arrayBuffer:async()=>Buffer.from(JSON.stringify({choices:[{message:{content:"translated"}}]}))}));
+    const settings={...DEFAULTS,model:"mock"},release=[];
+    const busy=()=>client.run(settings,undefined,()=>new Promise(resolve=>release.push(resolve)));
+    const a=busy(),b=busy();assert.equal(client.active,2);
+    const send=client.translate("hello",settings,undefined,null,null,{kind:"outgoing"});
+    await new Promise(setImmediate);assert.equal(client.sendWaiters.length,1);assert.equal(client.active,2);
+    release[0]("a");await a;assert.equal(await send,"translated");assert.equal(client.active,1);
+    release[1]("b");await b;assert.equal(client.active,0);assert.equal(client.sendWaiters.length,0);
+});
+
+test("A22 queued sends cancel independently and global cancellation drains queued work", async () => {
+    const client=new TranslationClient(),settings={...DEFAULTS,model:"mock"},release=[];
+    const a=client.run(settings,undefined,()=>new Promise(resolve=>release.push(resolve)));
+    const b=client.run(settings,undefined,()=>new Promise(resolve=>release.push(resolve)));
+    const controller=new AbortController();
+    const send=client.translate("hello",settings,controller.signal,null,null,{kind:"outgoing"});
+    await new Promise(setImmediate);const rejected=assert.rejects(send,error=>error.name==="AbortError");controller.abort();await rejected;
+    await new Promise(setImmediate);assert.equal(client.sendWaiters.length,0);assert.equal(client.active,2);
+    const second=client.translate("another",settings,undefined,null,null,{kind:"outgoing"});
+    await new Promise(setImmediate);
+    const ra=assert.rejects(a,error=>error.name==="AbortError"),rb=assert.rejects(b,error=>error.name==="AbortError"),rs=assert.rejects(second,error=>error.name==="AbortError");
+    client.cancelAll();release.forEach(resolve=>resolve("done"));await Promise.all([ra,rb,rs]);
+    assert.equal(client.sendWaiters.length,0);assert.equal(client.active,0);assert.equal(client.cache.size,0);
+});
+
+test("A22 send wait queue is bounded and releases timed-out waiters", async () => {
+    const client=new TranslationClient(),controllers=Array.from({length:8},()=>new AbortController());
+    const pending=controllers.map(controller=>client.waitForSendSlot(controller.signal,1000));
+    const cancellations=pending.map(p=>assert.rejects(p,error=>error.name==="AbortError"));
+    await assert.rejects(client.waitForSendSlot(undefined,1000));assert.equal(client.sendWaiters.length,8);
+    controllers.forEach(controller=>controller.abort());await Promise.all(cancellations);
+    await assert.rejects(client.waitForSendSlot(undefined,1));assert.equal(client.sendWaiters.length,0);assert.equal(client.active,0);
+});
+
+test("A22 draft changes while queued prevent any outgoing generation or send", async () => {
+    const f=outgoingFixture({source:"hello"}),client=f.plugin.client;let calls=0;const release=[];
+    client.fetchImpl=async()=>{calls++;throw Error("must not run");};client.translate=TranslationClient.prototype.translate;
+    f.plugin.settings.model="mock";
+    const settings={...DEFAULTS,model:"mock"};
+    const a=client.run(settings,undefined,()=>new Promise(resolve=>release.push(resolve))),b=client.run(settings,undefined,()=>new Promise(resolve=>release.push(resolve)));
+    const pending=f.outgoing.submit("101",[f.payload],f.original,f.editor);await new Promise(setImmediate);
+    assert.equal(client.sendWaiters.length,1);f.editor.textContent="changed";f.outgoing.checkPending();
+    const result=await pending;assert.equal(result.shouldClear,false);assert.equal(f.sent.length,0);assert.equal(calls,0);
+    release.forEach(resolve=>resolve());await Promise.all([a,b]);assert.equal(client.active,0);
+});
+
+test("A22 load repairs malformed non-sensitive settings without overwriting service credentials or disk", () => {
+    const saved={providerMode:"online",baseUrl:"https://provider.example/v1",model:"my-model",apiKey:"keep-key",timeoutSeconds:"bad",maxTokens:-1,contextTokens:0,targetLanguage:"",outgoingLanguage:[],customAreas:{"101":{name:"Keep",enabled:true,glossaryPath:"/my/terms.json"},bad:{}},autoTranslateAreas:[]};
+    const host=settingsHost(saved);host.plugin.getSettingsPanel();
+    assert.equal(host.plugin.settings.timeoutSeconds,DEFAULTS.timeoutSeconds);assert.equal(host.plugin.settings.maxTokens,DEFAULTS.maxTokens);
+    assert.equal(host.plugin.settings.contextTokens,DEFAULTS.contextTokens);assert.equal(host.plugin.settings.baseUrl,saved.baseUrl);
+    assert.equal(host.plugin.settings.apiKey,"keep-key");assert.equal(host.plugin.settings.model,"my-model");
+    assert.equal(host.plugin.settings.customAreas["101"].glossaryPath,"/my/terms.json");assert.equal(host.plugin.settings.customAreas.bad,undefined);
+    assert.equal(host.writes.length,0);assert.equal(saved.timeoutSeconds,"bad");assert.equal(host.plugin.settingsLoadWarning,true);assert.equal(host.plugin.settingsLoadError,null);
+});
+
+test("A22 invalid saved endpoints remain editable and report an error rather than resetting credentials", () => {
+    const saved={providerMode:"online",baseUrl:"http://remote.example",apiKey:"keep",model:"custom"};const host=settingsHost(saved);host.plugin.getSettingsPanel();
+    assert.equal(host.plugin.settings.baseUrl,saved.baseUrl);assert.equal(host.plugin.settings.apiKey,"keep");assert.ok(host.plugin.settingsLoadError);assert.equal(host.writes.length,0);
+});
+
+test("A22 per-scan snapshot reuse never masks later message edits", async () => {
+    const chat=chatEnvironment(),node=chat.message("1","hello");chat.document.nodes=[node];chat.client.translate=async text=>text;
+    await chat.drain();const entry=chat.auto.entries.get(node),snapshot=chat.auto.snapshot(node),original=chat.auto.snapshot;
+    chat.auto.snapshot=()=>{throw Error("a supplied snapshot must be reused");};assert.equal(chat.auto.matches(entry,snapshot),true);
+    chat.auto.snapshot=original;node.innerText="edited";assert.equal(chat.auto.matches(entry),false);
+});
+
+
+test("A22 reference matching preserves balanced URL parentheses and rejects changed destinations", () => {
+    const validate=Plugin.testing.validateOutgoingReferences;
+    assert.doesNotThrow(()=>validate("see https://example.com/wiki/Foo_(bar)", "参见 [页面](https://example.com/wiki/Foo_(bar))"));
+    assert.throws(()=>validate("see https://example.com/wiki/Foo_(bar)", "see https://example.com/wiki/Foo_(bar"));
+    assert.throws(()=>validate("see https://example.com/wiki/Foo_(bar)", "see https://evil.example/wiki/Foo_(bar)"));
+});
+
+test("A22 cancelled waiting sends cannot start network work or leak capacity", async () => {
+    const client=new TranslationClient(),settings={...DEFAULTS,model:"mock"},release=[];let started=0;
+    const a=client.run(settings,undefined,()=>new Promise(resolve=>release.push(resolve))),b=client.run(settings,undefined,()=>new Promise(resolve=>release.push(resolve)));
+    const controller=new AbortController();
+    const send=client.run(settings,controller.signal,async()=>{started++;return "done";},null,true);
+    const rejected=assert.rejects(send,error=>error.name==="AbortError");
+    release[0]();controller.abort();await a;await rejected;release[1]();await b;
+    assert.equal(started,0);assert.equal(client.active,0);assert.equal(client.sendWaiters.length,0);
+});
+
+test("A22 per-scan visibility cache shares ancestor reads but refreshes on the next scan", () => {
+    const rect={top:1,bottom:10,left:1,right:10},reads=new Map();
+    const parent={parentElement:null,getBoundingClientRect:()=>rect,getAttribute:()=>null};
+    const make=()=>({isConnected:true,parentElement:parent,getClientRects:()=>[rect],getBoundingClientRect:()=>rect,getAttribute:()=>null});
+    const one=make(),two=make(),window={innerHeight:100,innerWidth:100,getComputedStyle:node=>{reads.set(node,(reads.get(node)||0)+1);return {overflowY:"auto",overflowX:"visible"};}},document={hidden:false};
+    const cache=new Map();assert.equal(Plugin.testing.visible(one,document,window,cache),true);assert.equal(Plugin.testing.visible(two,document,window,cache),true);
+    assert.equal(reads.get(parent),1);Plugin.testing.visible(one,document,window,new Map());assert.equal(reads.get(parent),2);
+});
+
+test("R23-1 uppercase mass-mention text cannot authorize lowercase notification tokens", () => {
+    const validate=Plugin.testing.validateOutgoingReferences;
+    for(const [source,target] of [["@EVERYONE","@everyone"],["@HERE","@here"],["@Everyone","@everyone"],["@Here","@here"]]) {
+        assert.throws(()=>validate("hello "+source,"你好 "+target));
+        assert.doesNotThrow(()=>validate("hello "+source,"你好 "+source));
+    }
+    assert.doesNotThrow(()=>validate("hello @everyone @here <@!123>","你好 @everyone @here <@123>"));
+    assert.throws(()=>validate("hello @everyone @EVERYONE","你好 @everyone @everyone"));
+});
+
+test("R23-1 outgoing sends retain drafts when uppercase text becomes an active mass mention", async () => {
+    for(const includeOriginal of [false,true]) for(const [source,translated] of [["hello @EVERYONE","你好 @everyone"],["hello @HERE","你好 @here"]]) {
+        const f=outgoingFixture({source});f.plugin.settings.outgoingIncludeOriginal=includeOriginal;
+        f.plugin.client.translate=async()=>translated;
+        const result=await f.outgoing.submit("101",[f.payload],f.original,f.editor);
+        assert.equal(result.shouldClear,false);assert.equal(f.sent.length,0);assert.equal(f.payload.value,source);
+    }
+});
+
+test("R23-2 stopping while settings are mounted retains resources until the last panel closes", () => {
+    const plugin=new Plugin(),guard=()=>{};let removedListeners=0,removedStyles=0;
+    plugin.active=true;plugin.settingsMounts=2;plugin.inputFocusGuard=guard;
+    plugin.inputFocusTarget={removeEventListener(){removedListeners++;}};
+    plugin.api={DOM:{removeStyle(){removedStyles++;}}};
+    plugin.stop();assert.equal(plugin.active,false);assert.equal(plugin.inputFocusGuard,guard);
+    assert.equal(removedListeners,0);assert.equal(removedStyles,0);
+    plugin.settingsMounts=1;plugin.releaseSettingsResources();assert.equal(plugin.inputFocusGuard,guard);assert.equal(removedStyles,0);
+    plugin.settingsMounts=0;plugin.releaseSettingsResources();assert.equal(plugin.inputFocusGuard,null);
+    assert.equal(removedListeners,4);assert.equal(removedStyles,1);
 });

@@ -214,5 +214,7 @@
   "settingsAdvanced": "Paramètres avancés",
   "imageProviderUnsupported": "La traduction d’images prend en charge llama-server local et DeepSeek. Sélectionnez un de ces services.",
   "imageDeepseekModel": "La traduction d’images DeepSeek nécessite deepseek-flash. Sélectionnez-le dans les paramètres du modèle.",
-  "deepseekVisionHelp": "Les images nécessitent deepseek-flash. Images et contexte sont envoyés au service DeepSeek configuré, avec des frais et une consommation de tokens possibles."
+  "deepseekVisionHelp": "Les images nécessitent deepseek-flash. Images et contexte sont envoyés au service DeepSeek configuré, avec des frais et une consommation de tokens possibles.",
+  "outgoingReferencesChanged": "La traduction a ajouté des mentions ou liens absents du texte original. Le brouillon est conservé ; vérifiez-le avant de réessayer.",
+  "settingsRecovered": "Les paramètres non sensibles invalides ont été corrigés en mémoire. Vérifiez puis enregistrez. L’adresse, la clé et la configuration enregistrée n’ont pas été écrasées automatiquement."
 }

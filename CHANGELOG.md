@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+## 0.10.2 — 2026-10-17
+
+- Keep mass-mention authorization case-sensitive and retain settings styles/focus protection when the plugin stops before mounted panels close.
+
+- Reject newly introduced mentions and link destinations before translated sends; retain drafts on failure. Render model-added links as plain text.
+- Keep Discord's original display for emoji-, link- and mention-only messages.
+- Let outgoing translations wait for the next request slot, with cancellation, timeout and bounded queue safeguards.
+- Release disabled settings-panel resources on unmount; validate saved settings and repair malformed non-sensitive fields in memory without silently replacing service credentials.
+- Reuse message snapshots and ancestor visibility measurements within each automatic translation scan.
+
 ## 0.10.1 — 2026-10-16
 
 ## 中文

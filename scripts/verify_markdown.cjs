@@ -14,10 +14,10 @@ const BdApi = {React, ReactDOM, Webpack: {
 }};
 const sandbox = {module: {exports: {}}, require, __dirname: path.dirname(filename), URL, AbortController, TextDecoder, setTimeout, clearTimeout, BdApi};
 vm.runInNewContext(fs.readFileSync(filename, "utf8") + "\nmodule.exports.verify = {renderTranslatedMessage};", sandbox);
-const render = (text, check) => {
+const render = (text, check, sourceText = text) => {
     const container = document.createElement("div"); document.body.append(container); let cleanup;
     try {
-        ReactDOM.flushSync(() => {cleanup = sandbox.module.exports.verify.renderTranslatedMessage(container, text, {text}, document);});
+        ReactDOM.flushSync(() => {cleanup = sandbox.module.exports.verify.renderTranslatedMessage(container, text, {text: sourceText}, document);});
         assert.equal(container.textContent.includes("\uE000"), false, "display placeholders must not leak");
         check(container);
     } finally {if (cleanup) ReactDOM.flushSync(cleanup); assert.equal(container.childNodes.length, 0); container.remove();}
@@ -47,6 +47,14 @@ render("\\# literal\n\\-# literal\n\\>>> literal", node => {assert.equal(node.qu
 render("[unsafe](javascript:alert(1)) <script>bad</script> ![remote](https://example.com/pixel)", node => {
     assert.equal(node.querySelector('script,img,a[href^="javascript:"]'), null);
 });
+render("[trusted](https://example.com/path) [invented](https://evil.example/path)", node => {
+    assert.ok(node.querySelector('a[href="https://example.com/path"]'));
+    assert.equal(node.querySelector('a[href="https://evil.example/path"]'),null);
+    assert.ok(node.textContent.includes("invented"));
+}, "original https://example.com/path");
+render("[prefix](https://example.com/path) [suffix](https://example.com/path.evil)", node => {
+    assert.equal(node.querySelectorAll("a").length,1);
+}, "original https://example.com/path");
 // Branch probe: real DOM, both modules available. This is not a live Discord parser.
 native = {parseTopic() {}, parse(text, inline, state) {nativeCalls++; assert.equal(inline, true); assert.equal(state.allowHeading, true); assert.equal(state.allowList, true); return React.createElement("div", {"data-native-probe": true}, text);}};
 render("# Heading\nbody", node => {assert.equal(node.getAttribute("data-lt-markdown-engine"), "discord-message"); assert.ok(node.querySelector("[data-native-probe]")); assert.equal(node.querySelector("h1"), null);});

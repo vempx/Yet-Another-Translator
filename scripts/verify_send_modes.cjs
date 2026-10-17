@@ -106,6 +106,7 @@ async function verifyFooter() {
     }
     console.log("PASS: actual React host save/cancel closes and unmounts without footer DOM ownership errors.");
     await verifySettingsLayout(React,ReactDOM);
+    await verifySettingsResourceLifetime(React,ReactDOM);
 }
 async function verifySettingsLayout(React,ReactDOM) {
     let locale="en-US",writes=0;const listeners=new Set();
@@ -141,3 +142,51 @@ async function verifySettingsLayout(React,ReactDOM) {
     console.log("PASS: real settings React DOM section order, block help text, advanced disclosure, provider drafts and live localized headings.");
 }
 verifyFooter().catch(error=>{console.error(error);process.exitCode=1;});
+
+async function verifySettingsResourceLifetime(React,ReactDOM) {
+    let adds=0,removes=0;
+    class SettingsApi {
+        static React=React;
+        Data={load:()=>({...DEFAULTS}),save(){}};
+        DOM={addStyle(){adds++;},removeStyle(){removes++;}};
+    }
+    const context={...sandbox,module:{exports:{}},BdApi:SettingsApi};
+    vm.runInNewContext(fs.readFileSync(filename,"utf8"),context);
+    const settingsPlugin=new context.module.exports();
+    for(const active of [false,true,false]) {
+        settingsPlugin.active=active;
+        const rootNode=document.createElement("div");document.body.append(rootNode);
+        const reactRoot=ReactDOM.createRoot(rootNode),beforeAdd=adds,beforeRemove=removes;
+        const panel=settingsPlugin.getSettingsPanel();assert.equal(adds,beforeAdd);
+        assert.equal(Boolean(settingsPlugin.inputFocusGuard),false);
+        ReactDOM.flushSync(()=>reactRoot.render(panel));
+        assert.equal(adds,beforeAdd+1);assert.equal(settingsPlugin.settingsMounts,1);assert.equal(typeof settingsPlugin.inputFocusGuard,"function");
+        ReactDOM.flushSync(()=>reactRoot.unmount());rootNode.remove();assert.equal(settingsPlugin.settingsMounts,0);
+        if(!active){assert.equal(settingsPlugin.inputFocusGuard,null);assert.equal(removes,beforeRemove+1);}
+        else {assert.equal(typeof settingsPlugin.inputFocusGuard,"function");assert.equal(removes,beforeRemove);settingsPlugin.stop();assert.equal(settingsPlugin.inputFocusGuard,null);}
+    }
+    // The reverse order matters: stop first, then close mounted panels.
+    settingsPlugin.active=true;
+    const panels=Array.from({length:2},()=>{
+        const node=document.createElement("div");document.body.append(node);
+        const root=ReactDOM.createRoot(node);ReactDOM.flushSync(()=>root.render(settingsPlugin.getSettingsPanel()));
+        return {node,root};
+    });
+    const guard=settingsPlugin.inputFocusGuard,beforeStopRemove=removes;
+    assert.equal(settingsPlugin.settingsMounts,2);assert.equal(typeof guard,"function");
+    settingsPlugin.stop();
+    assert.equal(settingsPlugin.active,false);assert.equal(settingsPlugin.inputFocusGuard,guard);assert.equal(removes,beforeStopRemove);
+    for(let index=0;index<panels.length;index++) {
+        const {node,root}=panels[index];
+        const input=node.querySelector('[name="baseUrl"]');assert.ok(input);
+        let escapedFocus=0;const onFocus=()=>{escapedFocus++;};document.addEventListener("focusin",onFocus,true);
+        input.dispatchEvent(new dom.window.FocusEvent("focusin",{bubbles:true}));
+        document.removeEventListener("focusin",onFocus,true);assert.equal(escapedFocus,0);
+        ReactDOM.flushSync(()=>root.unmount());node.remove();
+        assert.equal(settingsPlugin.settingsMounts,panels.length-index-1);
+        if(index===0){assert.equal(settingsPlugin.inputFocusGuard,guard);assert.equal(removes,beforeStopRemove);}
+    }
+    assert.equal(settingsPlugin.inputFocusGuard,null);assert.equal(settingsPlugin.inputFocusTarget,null);assert.equal(removes,beforeStopRemove+1);
+    console.log("PASS: settings resources survive stop while panels remain mounted and release only after the final React unmount.");
+    console.log("PASS: disabled settings mount/unmount releases styles and focus listeners; enabled plugin retains shared resources until stop.");
+}

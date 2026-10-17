@@ -214,5 +214,7 @@
   "settingsAdvanced": "Advanced parameters",
   "imageProviderUnsupported": "Image translation supports local llama-server and DeepSeek. Select one of these services.",
   "imageDeepseekModel": "DeepSeek image translation requires deepseek-flash. Select it in model settings.",
-  "deepseekVisionHelp": "Image translation requires deepseek-flash. Images and reference context are sent to the configured DeepSeek service and may incur charges and high token usage."
+  "deepseekVisionHelp": "Image translation requires deepseek-flash. Images and reference context are sent to the configured DeepSeek service and may incur charges and high token usage.",
+  "outgoingReferencesChanged": "The translation added mentions or links not present in the original. Your draft was kept; check it before retrying.",
+  "settingsRecovered": "Invalid non-sensitive settings were repaired in memory. Review and save them; the endpoint, key and saved configuration were not automatically overwritten."
 }

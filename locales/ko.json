@@ -214,5 +214,7 @@
   "settingsAdvanced": "고급 매개변수",
   "imageProviderUnsupported": "이미지 번역은 로컬 llama-server와 DeepSeek를 지원합니다. 해당 서비스를 선택하세요.",
   "imageDeepseekModel": "DeepSeek 이미지 번역에는 deepseek-flash가 필요합니다. 모델 설정에서 선택하세요.",
-  "deepseekVisionHelp": "이미지 번역에는 deepseek-flash가 필요합니다. 이미지와 참고 문맥이 설정된 DeepSeek 서비스로 전송되며 비용과 많은 토큰이 발생할 수 있습니다."
+  "deepseekVisionHelp": "이미지 번역에는 deepseek-flash가 필요합니다. 이미지와 참고 문맥이 설정된 DeepSeek 서비스로 전송되며 비용과 많은 토큰이 발생할 수 있습니다.",
+  "outgoingReferencesChanged": "번역에 원문에 없는 멘션이나 링크가 추가되었습니다. 초안을 보존했으니 확인 후 다시 시도하세요.",
+  "settingsRecovered": "잘못된 비민감 설정을 메모리에서 복구했습니다. 확인 후 저장하세요. 주소, 키 및 저장된 설정은 자동으로 덮어쓰지 않았습니다."
 }
