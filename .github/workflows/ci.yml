@@ -23,6 +23,8 @@ jobs:
         run: |
           node scripts/bundle_locales.cjs
           git diff --exit-code -- YetAnotherTranslator.plugin.js
+      - name: Check bundled domain roots
+        run: node scripts/bundle_domain_roots.cjs --check
       - name: Verify Markdown rendering with React DOM
         run: |
           npm install --prefix .local/markdown-verify --ignore-scripts --no-audit --no-fund react@18.3.1 react-dom@18.3.1 jsdom@26.1.0 simple-markdown@0.7.3

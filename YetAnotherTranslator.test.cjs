@@ -3352,3 +3352,146 @@ test("R23-2 stopping while settings are mounted retains resources until the last
     plugin.settingsMounts=0;plugin.releaseSettingsResources();assert.equal(plugin.inputFocusGuard,null);
     assert.equal(removedListeners,4);assert.equal(removedStyles,1);
 });
+
+test("filename references are not new link destinations after translation", () => {
+    const {messageLinks,validateOutgoingReferences}=Plugin.testing;
+    for(const filename of ["winhttp.dll","WINHTTP.DLL","d3d11.dll","Discord.exe","driver.sys","symbols.pdb","config.ini","settings.cfg","data.json","config.yaml","config.yml","config.toml","notes.txt"]) {
+        const source="文件名改成"+filename,translated="Rename the file to "+filename;
+        assert.equal(messageLinks(source).size,0,source);assert.equal(messageLinks(translated).size,0,translated);
+        assert.doesNotThrow(()=>validateOutgoingReferences(source,translated),filename);
+    }
+});
+
+test("rename winhttp.dll sends successfully in translated-only and bilingual modes", async () => {
+    for(const includeOriginal of [false,true]) {
+        const source='文件名改成winhttp.dll"',translated='Rename the file to winhttp.dll';
+        const f=outgoingFixture({source});f.plugin.settings.outgoingIncludeOriginal=includeOriginal;
+        f.plugin.client.translate=async()=>translated;
+        const result=await f.outgoing.submit("101",[f.payload],f.original,f.editor);
+        assert.equal(result.shouldClear,true);assert.equal(f.sent.length,1);assert.equal(f.errors.length,0);
+        assert.ok(f.sent[0][0].value.includes(translated));
+        if(includeOriginal) assert.ok(f.sent[0][0].value.includes(source));
+        else assert.equal(f.sent[0][0].value,translated);
+    }
+});
+
+test("file-name exemption never authorizes explicit URLs or ambiguous domain suffixes", () => {
+    const {validateOutgoingReferences:validate,messageLinks}=Plugin.testing;
+    for(const target of ["https://winhttp.dll","http://winhttp.dll","https://evil.example/winhttp.dll","[download](https://evil.example/winhttp.dll)","winhttp.dll.evil.com","example.com","archive.zip","clip.mov","helper.app","run.sh","script.py","www.example.dll"]) {
+        assert.throws(()=>validate("文件名改成winhttp.dll","Rename it to winhttp.dll "+target),target);
+    }
+    assert.equal(messageLinks("https://example.com/winhttp.dll").size,1);
+    assert.doesNotThrow(()=>validate("下载 https://example.com/winhttp.dll","Download https://example.com/winhttp.dll"));
+});
+
+test("T22 dotted filenames share stable boundaries with or without adjacent Chinese", () => {
+    const {messageLinks,validateOutgoingReferences:validate,hasOutgoingText}=Plugin.testing;
+    for(const filename of ["debug.log","index.js","style.css","index.html","bundle.min.js.map","libfoo.so.1","file.customunknownextension","archive.zip","client.app"]) {
+        for(const space of [""," "]) for(const [source,target] of [["文件名改成"+space+filename,"Rename the file to "+filename],[filename+space+"需要改名",filename+" needs renaming"]]) {
+            assert.equal(hasOutgoingText(source),true,source);assert.doesNotThrow(()=>validate(source,target),source);
+        }
+    }
+    for(const name of ["debug.log","index.js","style.css","index.html","file.customunknownextension"]) assert.equal(messageLinks("文件名改成"+name).size,0);
+});
+
+test("T22 reviewed filenames translate successfully in both send modes without adding a separator", async () => {
+    for(const filename of ["debug.log","index.js","style.css","index.html"])for(const includeOriginal of [false,true]) {
+        const source="文件名改成"+filename,translated="Rename the file to "+filename;
+        const f=outgoingFixture({source});f.plugin.settings.outgoingIncludeOriginal=includeOriginal;
+        f.plugin.client.translate=async(...args)=>{f.requests.push(args);return translated;};
+        const result=await f.outgoing.submit("101",[f.payload],f.original,f.editor);
+        assert.equal(result.shouldClear,true);assert.equal(f.requests.length,1);assert.equal(f.requests[0][0],source);assert.equal(f.sent.length,1);assert.equal(f.errors.length,0);
+    }
+});
+
+test("T22 standalone file names and URLs bypass outgoing context, terminology and generation", async () => {
+    for(const source of ["winhttp.dll","debug.log","index.js","style.css","index.html","bundle.min.js.map","libfoo.so.1","file.customunknownextension","archive.zip","client.app",".env","https://example.com/path","www.example.com","example.com","C:\\mods\\winhttp.dll","./client.app","/tmp/client.app","`index.js`","<https://例子.中国/路径>"])for(const includeOriginal of [false,true]) {
+        const f=outgoingFixture({source});f.plugin.settings.outgoingIncludeOriginal=includeOriginal;
+        f.plugin.outgoingContext=()=>{throw Error("pure references must not gather context");};f.plugin.getGlossary=()=>{throw Error("pure references must not load a glossary");};
+        const result=await f.outgoing.submit("101",[f.payload,f.extra],f.original,f.editor);
+        assert.equal(result.shouldClear,true,source);assert.equal(f.requests.length,0,source);assert.equal(f.sent.length,1,source);assert.equal(f.sent[0][0],f.payload);assert.equal(f.sent[0][0].value,source);
+    }
+});
+
+test("T22 Chinese prose surrounding URLs remains translatable and does not change destinations", async () => {
+    const {hasOutgoingText,validateOutgoingReferences:validate}=Plugin.testing;
+    for(const [source,target] of [["https://example.com请看一下","https://example.com please take a look"],["请看https://example.com然后回复","Please check https://example.com and reply"],["example.com请看一下","example.com please take a look"],["请看www.example.com然后回复","Please check www.example.com and reply"],["请看<https://例子.中国/路径>然后回复","Please check <https://例子.中国/路径> and reply"]]) {
+        assert.equal(hasOutgoingText(source),true,source);assert.doesNotThrow(()=>validate(source,target),source);
+        const f=recordingClient([target]);assert.equal(await f.client.translate(source,f.settings),target);assert.equal(f.requests.length,1,source);assert.equal(f.requests[0].messages.at(-1).content,source);
+    }
+});
+
+test("T22 positive host classification protects network syntax, public roots and Unicode hosts", () => {
+    const {messageLinks,validateOutgoingReferences:validate}=Plugin.testing;
+    for(const target of ["https://download.invalidtype/file.dll","www.example.invalidtype","host.invalidtype:8443","host.invalidtype/path","example.com","archive.zip","client.app","clip.mov","run.sh","script.py","127.0.0.1","例子.中国","xn--fsqu00a.xn--fiqs8s"]) {
+        assert.equal(messageLinks(target).size,1,target);assert.throws(()=>validate("文件名改成debug.log","Rename the file to debug.log "+target),target);
+    }
+    assert.throws(()=>validate("文件名改成index.js","Rename index.js and visit https://evil.example/index.js"));
+    assert.throws(()=>validate("文件名改成index.js","Rename index.js 请访问evil.com然后回复"));
+    assert.doesNotThrow(()=>validate("请看https://example.com/index.js","Check https://example.com/index.js"));
+});
+
+test("T22 local paths are opaque data but neighboring prose still needs translation", () => {
+    const {messageLinks,hasOutgoingText}=Plugin.testing;
+    for(const source of ["C:\\mods\\client.app","./client.app","../config.json","/tmp/client.app"]) assert.equal(messageLinks(source).size,0,source);
+    assert.equal(hasOutgoingText("C:\\mods\\client.app please rename it"),true);
+    assert.equal(hasOutgoingText("https://example.com请改一下"),true);
+    assert.equal(hasOutgoingText("index.js请改一下"),true);
+});
+
+
+test("T22 Unicode authority continuations cannot impersonate an approved ASCII URL", () => {
+    const validate=Plugin.testing.validateOutgoingReferences;
+    for(const target of ["https://example.com悪意.net","https://example.com中文.evil.example","www.example.com悪意.net"]) {
+        assert.throws(()=>validate("请看https://example.com和www.example.com",target),target);
+    }
+    assert.doesNotThrow(()=>validate("请看https://example.com然后回复","Please check https://example.com and reply"));
+});
+
+test("T23 explicit Unicode path and query changes cannot pass as the same ASCII prefix", () => {
+    const validate=Plugin.testing.validateOutgoingReferences;
+    for(const [source,target] of [["https://example.com/caf","https://example.com/café"],["https://example.com/?q=caf","https://example.com/?q=café"],["https://example.com/путь","https://example.com/путя"],["https://example.com/路径","https://example.com/另一个路径"],["https://example.com/?q=中文","https://example.com/?q=英文"]]) {
+        assert.throws(()=>validate("Please visit "+source,"请访问 "+target),target);
+    }
+});
+
+test("T23 complete Unicode URLs retain their full path and accept percent-encoded equivalents", () => {
+    const {validateOutgoingReferences:validate,messageLinks}=Plugin.testing;
+    for(const raw of ["https://example.com/café","https://example.com/cafe\u0301","https://example.com/путь","https://example.com/路径","https://example.com/?q=café&next=中文","https://café.example/文件?值=é"]) {
+        const canonical=new URL(raw).href;
+        assert.equal(messageLinks(raw).size,1,raw);assert.ok(messageLinks(raw).has(canonical),raw);
+        assert.doesNotThrow(()=>validate("Visit "+raw,"请访问 "+canonical),raw);
+        assert.doesNotThrow(()=>validate("Visit "+raw,"请访问 "+canonical.replace(/%[0-9A-F]{2}/g,value=>value.toLowerCase())),raw);
+    }
+});
+
+test("T23 Unicode-only URLs bypass generation but surrounding prose still translates", async () => {
+    for(const raw of ["https://example.com/café","https://example.com/路径","https://example.com/?q=café&next=中文"]) {
+        const f=recordingClient();assert.equal(await f.client.translate(raw,f.settings),raw);assert.equal(f.requests.length,0,raw);
+        const mixed=recordingClient(["Please visit "+raw]);
+        assert.equal(await mixed.client.translate("请访问 "+raw,mixed.settings),"Please visit "+raw);assert.equal(mixed.requests.length,1,raw);
+    }
+});
+
+test("T23 sends retain the draft when a model appends a Unicode URL component", async () => {
+    for(const includeOriginal of [false,true]) {
+        const f=outgoingFixture({source:"Please visit https://example.com/caf"});f.plugin.settings.outgoingIncludeOriginal=includeOriginal;
+        f.plugin.client.translate=async()=>"请访问 https://example.com/café";
+        const result=await f.outgoing.submit("101",[f.payload],f.original,f.editor);
+        assert.equal(result.shouldClear,false);assert.equal(f.sent.length,0);assert.equal(f.payload.value,"Please visit https://example.com/caf");
+    }
+});
+
+
+test("T23 Unicode boundaries preserve apostrophes, reserved escapes and explicitly delimited Han targets", () => {
+    const {messageLinks,validateOutgoingReferences:validate}=Plugin.testing;
+    const apostrophe="https://example.com/O'Connor/café";
+    assert.ok(messageLinks(apostrophe).has(new URL(apostrophe).href));
+    assert.doesNotThrow(()=>validate("Visit "+apostrophe,"请访问 "+new URL(apostrophe).href));
+    assert.throws(()=>validate("Visit https://example.com/a%2Fb","请访问 https://example.com/a/b"));
+    assert.throws(()=>validate("Visit https://example.com/?q=中文","请访问 https://example.com/?q=中文变更"));
+    const literal="https://example.com/caf然后回复";
+    assert.ok(messageLinks("<"+literal+">").has(new URL(literal).href));
+    assert.ok(messageLinks("[literal]("+literal+")").has(new URL(literal).href));
+    assert.doesNotThrow(()=>validate("Visit <"+literal+">","请访问 <"+new URL(literal).href+">"));
+});

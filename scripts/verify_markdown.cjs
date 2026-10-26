@@ -55,6 +55,26 @@ render("[trusted](https://example.com/path) [invented](https://evil.example/path
 render("[prefix](https://example.com/path) [suffix](https://example.com/path.evil)", node => {
     assert.equal(node.querySelectorAll("a").length,1);
 }, "original https://example.com/path");
+// The same classifier must protect click targets while accepting Chinese-adjacent originals.
+render("[docs](https://example.com/index.js)", node => {
+    assert.ok(node.querySelector('a[href="https://example.com/index.js"]'));
+}, "请看https://example.com/index.js然后回复");
+for(const file of ["debug.log","index.js","style.css","index.html"]) render("[download](https://"+file+")", node => {
+    assert.equal(node.querySelector("a"),null);assert.ok(node.textContent.includes("download"));
+}, "文件名改成"+file);
+render("[网页](https://例子.中国/路径)", node => {
+    assert.ok(node.querySelector("a"));
+}, "请看<https://例子.中国/路径>然后回复");
+// Unicode destinations must be complete and use the same canonical form as sends.
+render("[changed](https://example.com/café)", node => {
+    assert.equal(node.querySelector("a"),null);
+}, "Visit https://example.com/caf");
+render("[equivalent](https://example.com/caf%c3%a9)", node => {
+    assert.ok(node.querySelector("a"));
+}, "Visit https://example.com/café");
+render("[changed](https://example.com/?q=cafè)", node => {
+    assert.equal(node.querySelector("a"),null);
+}, "Visit https://example.com/?q=café");
 // Branch probe: real DOM, both modules available. This is not a live Discord parser.
 native = {parseTopic() {}, parse(text, inline, state) {nativeCalls++; assert.equal(inline, true); assert.equal(state.allowHeading, true); assert.equal(state.allowList, true); return React.createElement("div", {"data-native-probe": true}, text);}};
 render("# Heading\nbody", node => {assert.equal(node.getAttribute("data-lt-markdown-engine"), "discord-message"); assert.ok(node.querySelector("[data-native-probe]")); assert.equal(node.querySelector("h1"), null);});

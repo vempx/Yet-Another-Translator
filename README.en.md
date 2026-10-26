@@ -58,7 +58,7 @@ Discord image attachments and Discord-proxied previews are supported, up to 8 MB
 
 ### Translate before sending
 
-Before-send translation skips emoji-only, link-only and text-free image/attachment messages. They are sent unchanged without glossary lookup or model calls, including in bilingual mode. Messages with text captions are still translated.
+Before-send translation skips emoji-only, URL-only, filename-only and text-free image/attachment messages. They are sent unchanged without glossary lookup or model calls, including in bilingual mode. Surrounding prose is still translated, including Chinese directly adjacent to a URL or filename; no extra spaces are required.
 
 1. Click the paper-plane icon with an A next to the message box to cycle through three modes: unlit sends the original, blue-violet sends only the translation, and teal sends both. Hover to see the current send mode.
 2. Select the outgoing target language beside it. This is independent of the default language for incoming messages.

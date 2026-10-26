@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+## 0.10.4 — 2026-10-26
+
+- Preserve complete Unicode URL paths and queries during destination checks; accept equivalent percent-escape hex casing without decoding reserved delimiters.
+
+- Share URL/file lexical boundaries between translation filtering and link checks so adjacent Chinese is translated consistently. Skip model calls for filename-only and URL-only content.
+- Replace extension exclusions with network syntax and bundled IANA root-domain evidence; retain destination checks for explicit URLs, bare public hosts, ports and network paths.
+
 ## 0.10.3 — 2026-10-17
 
 - Place source-language badges consistently at the start of translated message rows, and use a single localized original/translation toggle tooltip.
