@@ -136,7 +136,7 @@
   "请求缓存最多 100 条、有效期 5 分钟；自动翻译按频道保留译文，返回频道时直接恢复，不受相邻消息上下文变化影响。最多保留最近 20 个频道，每个频道 500 条消息；修改翻译配置或停用插件后清空。": "Las solicitudes se almacenan en caché durante 5 minutos, hasta 100 entradas. Las traducciones automáticas se retienen por canal y se restauran al volver. Se conservan hasta 20 canales con 500 mensajes cada uno. Cambiar la configuración de traducción o deshabilitar el plugin los borra.",
   "pluginDescription": "Traducción de Discord con LLM: automática, por mensaje y antes del envío.",
   "settingsHeading": "Traducción de mensajes con LLM",
-  "settingsIntro": "Admite traducción automática, por mensaje y antes del envío. La traducción automática muestra solo el texto traducido; haz clic derecho para ver el original. Haz clic en una etiqueta de idioma para cambiar el destino de un mensaje, o usa las flechas circulares para cambiar el idioma automático predeterminado. El interruptor del avión de papel junto al cuadro de texto controla la traducción antes del envío. Las traducciones pueden usar el tema del canal, el contexto, las respuestas originales y los glosarios personalizados.",
+  "settingsIntro": "Admite traducción automática, por mensaje y antes del envío. Por defecto, la traducción automática muestra solo el texto traducido; haz clic derecho para ver el original. Haz clic en una etiqueta de idioma para cambiar el destino de un mensaje, o usa las flechas circulares para cambiar el idioma automático predeterminado. El interruptor del avión de papel junto al cuadro de texto controla la traducción antes del envío. Las traducciones pueden usar el tema del canal, el contexto, las respuestas originales y los glosarios personalizados.",
   "defaultLanguageHelp": "El idioma se guarda y aplica inmediatamente, restableciendo los idiomas por mensaje y las traducciones. No hace falta pulsar Guardar abajo. La traducción automática mantiene su estado; el idioma de envío es independiente.",
   "applyDefaultLanguage": "Aplicar idioma predeterminado y restablecer idiomas por mensaje",
   "unknownUser": "Usuario desconocido",
@@ -217,5 +217,7 @@
   "deepseekVisionHelp": "Las imágenes requieren deepseek-flash. La imagen y el contexto se envían al servicio DeepSeek configurado y pueden generar costes y un alto consumo de tokens.",
   "outgoingReferencesChanged": "La traducción añadió menciones o enlaces que no estaban en el original. Se conservó el borrador; revísalo antes de reintentar.",
   "settingsRecovered": "Se corrigieron en memoria ajustes no sensibles inválidos. Revísalos y guarda. No se sobrescribieron automáticamente la dirección, la clave ni la configuración guardada.",
-  "messageToggleTranslation": "Alternar original/traducción"
+  "messageToggleTranslation": "Alternar original/traducción",
+  "autoTranslateShowOriginal": "Mostrar el original en la traducción automática",
+  "autoTranslateShowOriginalHelp": "Desactivado por defecto: solo se muestra la traducción. Actívalo para conservar el original encima. Se aplica al guardar sin volver a traducir."
 }

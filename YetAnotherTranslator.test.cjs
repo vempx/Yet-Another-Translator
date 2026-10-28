@@ -3495,3 +3495,53 @@ test("T23 Unicode boundaries preserve apostrophes, reserved escapes and explicit
     assert.ok(messageLinks("[literal]("+literal+")").has(new URL(literal).href));
     assert.doesNotThrow(()=>validate("Visit <"+literal+">","请访问 <"+new URL(literal).href+">"));
 });
+
+
+test("automatic original visibility saves transactionally without regenerating or cancelling translations", async () => {
+    const host = settingsHost(), panel = host.plugin.getSettingsPanel();
+    const chat = chatEnvironment(), node = chat.message("1", "original message");
+    chat.document.nodes = [node]; await chat.drain();
+    host.plugin.autoTranslator = chat.auto;
+    host.plugin.restartAutoTranslation = () => {throw Error("display changes must preserve translations");};
+    host.plugin.outgoingTranslator = {cancel() {throw Error("display changes must not cancel sends");}, scan() {}};
+    const entry = chat.auto.entries.get(node), result = entry.result, requests = chat.calls.length;
+    assert.equal(DEFAULTS.autoTranslateShowOriginal, false);
+    assert.equal(entry.sourceHidden, true);
+    let tree = host.render(panel);
+    const change = value => {
+        find(tree, item => item.props?.name === "autoTranslateShowOriginal").props.onChange({target: {checked: value}});
+        tree = host.render(panel);
+    };
+    const action = label => {
+        find(tree, item => item.type === "button" && item.props.children[0] === label).props.onClick();
+        tree = host.render(panel);
+    };
+    change(true);
+    assert.equal(entry.sourceHidden, true, "unsaved edits do not affect live messages");
+    action("取消");
+    assert.equal(host.writes.length, 0);
+    assert.equal(find(tree, item => item.props?.name === "autoTranslateShowOriginal").props.checked, false);
+    change(true); action("保存并关闭"); await chat.drain();
+    assert.equal(entry.sourceHidden, false);
+    assert.equal(node.classList.contains("lt-original-hidden"), false);
+    assert.ok(entry.output); assert.equal(entry.result, result); assert.equal(chat.calls.length, requests);
+    const reopened = settingsHost(host.writes.at(-1).value);
+    reopened.plugin.getSettingsPanel(); assert.equal(reopened.plugin.settings.autoTranslateShowOriginal, true);
+    change(false); action("保存并关闭"); await chat.drain();
+    assert.equal(entry.sourceHidden, true); assert.equal(chat.calls.length, requests);
+    chat.auto.stop(); assert.equal(node.classList.contains("lt-original-hidden"), false);
+});
+
+test("original visibility only changes automatic areas and normalizes boolean values", async () => {
+    assert.equal(validateSettings({...DEFAULTS, autoTranslateShowOriginal: "true"}).autoTranslateShowOriginal, false);
+    assert.equal(validateSettings({...DEFAULTS, autoTranslateShowOriginal: true}).autoTranslateShowOriginal, true);
+    const chat = chatEnvironment(), node = chat.message("1", "manual original");
+    chat.auto.settings.autoTranslate = false;
+    chat.document.nodes = [node]; chat.auto.toggle(node); await chat.drain();
+    const entry = chat.auto.entries.get(node), requests = chat.calls.length;
+    for (const value of [true, false]) {
+        chat.auto.settings.autoTranslateShowOriginal = value; chat.auto.syncAutoTranslation(); await chat.drain();
+        assert.equal(entry.sourceHidden, false); assert.ok(entry.output); assert.equal(chat.calls.length, requests);
+    }
+    chat.auto.stop();
+});

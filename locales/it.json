@@ -136,7 +136,7 @@
   "请求缓存最多 100 条、有效期 5 分钟；自动翻译按频道保留译文，返回频道时直接恢复，不受相邻消息上下文变化影响。最多保留最近 20 个频道，每个频道 500 条消息；修改翻译配置或停用插件后清空。": "Le richieste sono in cache per 5 minuti, fino a 100 voci. Le traduzioni automatiche sono mantenute per canale e ripristinate al ritorno. Vengono mantenuti fino a 20 canali con 500 messaggi ciascuno. La modifica delle impostazioni di traduzione o la disabilitazione del plugin le cancella.",
   "pluginDescription": "Traduzione di Discord con LLM: automatica, per messaggio e prima dell’invio.",
   "settingsHeading": "Traduzione di messaggi con LLM",
-  "settingsIntro": "Supporta la traduzione automatica, per messaggio e prima dell’invio. La traduzione automatica mostra solo il testo tradotto; fai clic destro per vedere l’originale. Fai clic sull’etichetta della lingua per cambiare la lingua di un messaggio, oppure sulle frecce circolari per cambiare la lingua automatica predefinita. L’interruttore con l’aeroplanino accanto al campo di testo controlla la traduzione prima dell’invio. Le traduzioni possono usare l’argomento del canale, il contesto, le risposte originali e i glossari personalizzati.",
+  "settingsIntro": "Supporta la traduzione automatica, per messaggio e prima dell’invio. Per impostazione predefinita, la traduzione automatica mostra solo il testo tradotto; fai clic destro per vedere l’originale. Fai clic sull’etichetta della lingua per cambiare la lingua di un messaggio, oppure sulle frecce circolari per cambiare la lingua automatica predefinita. L’interruttore con l’aeroplanino accanto al campo di testo controlla la traduzione prima dell’invio. Le traduzioni possono usare l’argomento del canale, il contesto, le risposte originali e i glossari personalizzati.",
   "defaultLanguageHelp": "La lingua viene salvata e applicata subito, reimpostando le lingue dei messaggi e le traduzioni. Il pulsante Salva in fondo non è necessario. La traduzione automatica mantiene il suo stato; la lingua di invio è indipendente.",
   "applyDefaultLanguage": "Applica lingua predefinita e reimposta le lingue dei messaggi",
   "unknownUser": "Utente sconosciuto",
@@ -217,5 +217,7 @@
   "deepseekVisionHelp": "Le immagini richiedono deepseek-flash. Immagini e contesto sono inviati al servizio DeepSeek configurato e possono comportare costi e un elevato consumo di token.",
   "outgoingReferencesChanged": "La traduzione ha aggiunto menzioni o link assenti nell’originale. La bozza è stata conservata; controllala prima di riprovare.",
   "settingsRecovered": "Le impostazioni non sensibili non valide sono state corrette in memoria. Controlla e salva. Indirizzo, chiave e configurazione salvata non sono stati sovrascritti automaticamente.",
-  "messageToggleTranslation": "Alterna originale/traduzione"
+  "messageToggleTranslation": "Alterna originale/traduzione",
+  "autoTranslateShowOriginal": "Mostra l’originale durante la traduzione automatica",
+  "autoTranslateShowOriginalHelp": "Per impostazione predefinita viene mostrata solo la traduzione. Attiva per mantenere l’originale sopra. Si applica dopo il salvataggio senza tradurre di nuovo."
 }

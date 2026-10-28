@@ -136,7 +136,7 @@
   "请求缓存最多 100 条、有效期 5 分钟；自动翻译按频道保留译文，返回频道时直接恢复，不受相邻消息上下文变化影响。最多保留最近 20 个频道，每个频道 500 条消息；修改翻译配置或停用插件后清空。": "As solicitações são armazenadas em cache por 5 minutos, até 100 entradas. As traduções automáticas são retidas por canal e restauradas ao retornar. Até 20 canais com 500 mensagens cada são mantidos. Alterar as configurações de tradução ou desativar o plugin as limpa.",
   "pluginDescription": "Tradução do Discord com LLM: automática, por mensagem e antes do envio.",
   "settingsHeading": "Tradução de mensagens com LLM",
-  "settingsIntro": "Oferece tradução automática, por mensagem e antes do envio. A tradução automática mostra apenas o texto traduzido; clique com o botão direito para ver o original. Clique em uma etiqueta de idioma para mudar o idioma de uma mensagem, ou use as setas circulares para mudar o idioma automático padrão. O botão de avião de papel ao lado da caixa de texto controla a tradução antes do envio. As traduções podem considerar o assunto do canal, o contexto, as respostas originais e os glossários personalizados.",
+  "settingsIntro": "Oferece tradução automática, por mensagem e antes do envio. Por padrão, a tradução automática mostra apenas o texto traduzido; clique com o botão direito para ver o original. Clique em uma etiqueta de idioma para mudar o idioma de uma mensagem, ou use as setas circulares para mudar o idioma automático padrão. O botão de avião de papel ao lado da caixa de texto controla a tradução antes do envio. As traduções podem considerar o assunto do canal, o contexto, as respostas originais e os glossários personalizados.",
   "defaultLanguageHelp": "O idioma é salvo e aplicado imediatamente, redefinindo os idiomas por mensagem e as traduções. Não é necessário clicar em Salvar no final. A tradução automática mantém seu estado; o idioma de envio é independente.",
   "applyDefaultLanguage": "Aplicar idioma padrão e redefinir idiomas por mensagem",
   "unknownUser": "Usuário desconhecido",
@@ -217,5 +217,7 @@
   "deepseekVisionHelp": "Imagens exigem deepseek-flash. A imagem e o contexto são enviados ao DeepSeek configurado e podem gerar custos e alto consumo de tokens.",
   "outgoingReferencesChanged": "A tradução adicionou menções ou links ausentes no original. O rascunho foi preservado; confira antes de tentar novamente.",
   "settingsRecovered": "Configurações não confidenciais inválidas foram corrigidas na memória. Confira e salve. O endereço, a chave e a configuração salva não foram sobrescritos automaticamente.",
-  "messageToggleTranslation": "Alternar original/tradução"
+  "messageToggleTranslation": "Alternar original/tradução",
+  "autoTranslateShowOriginal": "Mostrar o original na tradução automática",
+  "autoTranslateShowOriginalHelp": "Por padrão, apenas a tradução é exibida. Ative para manter o original acima. Aplicado após salvar, sem traduzir novamente."
 }

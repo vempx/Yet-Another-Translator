@@ -136,7 +136,7 @@
   "请求缓存最多 100 条、有效期 5 分钟；自动翻译按频道保留译文，返回频道时直接恢复，不受相邻消息上下文变化影响。最多保留最近 20 个频道，每个频道 500 条消息；修改翻译配置或停用插件后清空。": "Anfragen werden 5 Minuten lang zwischengespeichert, bis zu 100 Einträge. Automatische Übersetzungen werden pro Kanal beibehalten und bei Rückkehr wiederhergestellt. Bis zu 20 Kanäle mit jeweils 500 Nachrichten werden behalten. Ändern der Übersetzungseinstellungen oder Deaktivieren des Plugins löscht sie.",
   "pluginDescription": "Discord-Übersetzung mit LLM: automatisch, für einzelne Nachrichten und vor dem Senden.",
   "settingsHeading": "Nachrichtenübersetzung mit LLM",
-  "settingsIntro": "Unterstützt automatische Übersetzung, einzelne Nachrichten und Übersetzung vor dem Senden. Automatisch übersetzte Nachrichten zeigen nur die Übersetzung; per Rechtsklick lässt sich das Original anzeigen. Ein Klick auf das Sprachlabel ändert die Zielsprache einer Nachricht, die kreisförmigen Pfeile ändern die Standardsprache der automatischen Übersetzung. Der Papierflieger-Schalter am Eingabefeld steuert die Übersetzung vor dem Senden. Kanalthemen, Gesprächskontext, Originalantworten und eigene Glossare können berücksichtigt werden.",
+  "settingsIntro": "Unterstützt automatische Übersetzung, einzelne Nachrichten und Übersetzung vor dem Senden. Standardmäßig zeigen automatisch übersetzte Nachrichten nur die Übersetzung; per Rechtsklick lässt sich das Original anzeigen. Ein Klick auf das Sprachlabel ändert die Zielsprache einer Nachricht, die kreisförmigen Pfeile ändern die Standardsprache der automatischen Übersetzung. Der Papierflieger-Schalter am Eingabefeld steuert die Übersetzung vor dem Senden. Kanalthemen, Gesprächskontext, Originalantworten und eigene Glossare können berücksichtigt werden.",
   "defaultLanguageHelp": "Die Sprachauswahl wird sofort gespeichert und angewendet. Einzelne Nachrichtensprachen werden zurückgesetzt und Übersetzungen aktualisiert. Die Speichern-Schaltfläche unten ist nicht nötig. Der Ein/Aus-Zustand bleibt erhalten; die ausgehende Sprache ist unabhängig.",
   "applyDefaultLanguage": "Standardsprache anwenden und Nachrichtensprachen zurücksetzen",
   "unknownUser": "Unbekannter Benutzer",
@@ -217,5 +217,7 @@
   "deepseekVisionHelp": "Bildübersetzung benötigt deepseek-flash. Bilder und Referenzkontext werden an den konfigurierten DeepSeek-Dienst gesendet und können Kosten sowie hohen Tokenverbrauch verursachen.",
   "outgoingReferencesChanged": "Die Übersetzung enthält zusätzliche Erwähnungen oder Links. Der Entwurf bleibt erhalten. Bitte vor einem erneuten Versuch prüfen.",
   "settingsRecovered": "Ungültige nicht vertrauliche Einstellungen wurden im Speicher korrigiert. Bitte prüfen und speichern. Endpunkt, Schlüssel und gespeicherte Konfiguration wurden nicht automatisch überschrieben.",
-  "messageToggleTranslation": "Original/Übersetzung umschalten"
+  "messageToggleTranslation": "Original/Übersetzung umschalten",
+  "autoTranslateShowOriginal": "Original bei automatischer Übersetzung anzeigen",
+  "autoTranslateShowOriginalHelp": "Standardmäßig wird nur die Übersetzung angezeigt. Aktivieren, um das Original darüber zu behalten. Wird nach dem Speichern ohne erneute Übersetzung angewendet."
 }

@@ -36,6 +36,7 @@ An LLM-powered BetterDiscord plugin for automatic message translation, individua
 - The settings target language applies with Save and close. To remove per-message overrides, select the explicit apply-and-clear-overrides action before saving.
 - Click a source-language badge, then a language name to retranslate just that message. The circular arrows permanently change the shared default target and enable automatic translation for the message's area, preserving other areas' on/off states. Settings persist across plugin sessions.
 - On upgrade, an enabled legacy global switch migrates only to the currently identifiable area. Other areas remain off. If the current area cannot be identified, enable it using a context menu.
+- Show original during automatic translation is off by default. Enable it to keep the original above the translation. Saving updates existing translations without another model request.
 - Open the manual translator from the context menu to translate text you enter yourself.
 
 Local, generic online and DeepSeek services remember their own endpoint, model, API key, timeout and token limits, including DeepSeek thinking options. Switching restores each profile; Save and close persists all edits, while Cancel discards them. Existing settings are retained for the active service. Unconfigured services start with defaults; previously overwritten settings must be entered again.

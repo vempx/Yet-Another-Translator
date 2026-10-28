@@ -136,7 +136,7 @@
   "请求缓存最多 100 条、有效期 5 分钟；自动翻译按频道保留译文，返回频道时直接恢复，不受相邻消息上下文变化影响。最多保留最近 20 个频道，每个频道 500 条消息；修改翻译配置或停用插件后清空。": "Requests are cached for 5 minutes, up to 100 entries. Automatic translations are retained by channel and restored on return. Up to 20 channels with 500 messages each are kept. Changing translation settings or disabling the plugin clears them.",
   "pluginDescription": "LLM-powered Discord translation with automatic, per-message, and pre-send translation.",
   "settingsHeading": "LLM message translation",
-  "settingsIntro": "Supports automatic, per-message, and pre-send translation. Automatic translation shows only the translation; right-click to view the original. Click a language badge to change one message's target language, or use the circular arrows to change the default automatic target. The paper-plane toggle beside the composer controls pre-send translation. Translations can use channel topics, chat context, original replies, and custom glossaries.",
+  "settingsIntro": "Supports automatic, per-message, and pre-send translation. By default, automatic translation shows only the translation; right-click to view the original. Click a language badge to change one message's target language, or use the circular arrows to change the default automatic target. The paper-plane toggle beside the composer controls pre-send translation. Translations can use channel topics, chat context, original replies, and custom glossaries.",
   "defaultLanguageHelp": "Selecting a language saves and applies it immediately, clears message overrides and refreshes translations. No bottom Save button is needed. Automatic translation keeps its on/off state; the outgoing language is independent.",
   "applyDefaultLanguage": "Apply default language and clear message overrides",
   "unknownUser": "Unknown user",
@@ -217,5 +217,7 @@
   "deepseekVisionHelp": "Image translation requires deepseek-flash. Images and reference context are sent to the configured DeepSeek service and may incur charges and high token usage.",
   "outgoingReferencesChanged": "The translation added mentions or links not present in the original. Your draft was kept; check it before retrying.",
   "settingsRecovered": "Invalid non-sensitive settings were repaired in memory. Review and save them; the endpoint, key and saved configuration were not automatically overwritten.",
-  "messageToggleTranslation": "Switch original/translation"
+  "messageToggleTranslation": "Switch original/translation",
+  "autoTranslateShowOriginal": "Show original during automatic translation",
+  "autoTranslateShowOriginalHelp": "Off by default: only the translation is shown. Enable to keep the original above the translation. Applies after saving without translating again."
 }

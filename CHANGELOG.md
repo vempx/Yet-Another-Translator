@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 0.10.5 — 2026-10-28
+
+- Add a setting to keep original messages above automatic translations; update existing results after saving without new model requests.
+
 ## 0.10.4 — 2026-10-26
 
 - Preserve complete Unicode URL paths and queries during destination checks; accept equivalent percent-escape hex casing without decoding reserved delimiters.
